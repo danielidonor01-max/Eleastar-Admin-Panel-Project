@@ -30,6 +30,7 @@ export interface Notification {
     timestamp: string;
     isRead: boolean;
     link: string;
+    targetUserId?: string; // Optional: Only visible to this specific user
 }
 
 // Role & Permissions Types
@@ -151,8 +152,37 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     const updateEmployee = (id: string, updates: Partial<Employee>) => {
-        setEmployees(prev => prev.map(emp => emp.id === id ? { ...emp, ...updates } : emp));
-        logAction('Updated Employee', `Updated profile for ${id}`);
+        setEmployees(prev => prev.map(emp => {
+            if (emp.id === id) {
+                const oldEmp = emp;
+                const newEmp = { ...emp, ...updates };
+
+                // Detect Financial/Role Changes and Notify
+                if (updates.salary && updates.salary !== oldEmp.salary) {
+                    const diff = updates.salary - oldEmp.salary;
+                    const type = diff > 0 ? 'Salary Increase' : 'Salary Adjustment';
+                    addNotification('Payroll', `Your salary has been updated to ₦${updates.salary.toLocaleString()}`, '/user/profile', id);
+                    logAction(type, `Updated salary for ${id} from ${oldEmp.salary} to ${updates.salary}`);
+                }
+
+                if (updates.title && updates.title !== oldEmp.title) {
+                    addNotification('HR', `Congratulations on your new role: ${updates.title}!`, '/user/profile', id);
+                    logAction('Promotion/Role Change', `Updated title for ${id} to ${updates.title}`);
+                }
+
+                if (updates.department && updates.department !== oldEmp.department) {
+                    addNotification('HR', `You have been moved to the ${updates.department} department`, '/user/profile', id);
+                }
+
+                return newEmp;
+            }
+            return emp;
+        }));
+
+        // Log generic update if not captured above or simple profile update
+        if (!updates.salary && !updates.title) {
+            logAction('Updated Employee', `Updated profile for ${id}`);
+        }
     };
 
     const updateUserProfile = (updates: Partial<Employee>) => {
@@ -278,14 +308,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     // Notification Actions
-    const addNotification = (type: NotificationType, message: string, link: string) => {
+    const addNotification = (type: NotificationType, message: string, link: string, targetUserId?: string) => {
         const newNotif: Notification = {
             id: Math.random().toString(36).substr(2, 9),
             type,
             message,
             timestamp: new Date().toISOString(),
             isRead: false,
-            link
+            link,
+            targetUserId
         };
         setNotifications(prev => [newNotif, ...prev]);
     };
