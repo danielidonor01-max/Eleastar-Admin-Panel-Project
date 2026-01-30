@@ -99,7 +99,8 @@ export const employees: Employee[] = [
         socialLinks: {
             linkedin: "https://linkedin.com/in/odirinsuccess",
             twitter: "https://x.com/odirin_dev"
-        }
+        },
+
     },
     {
         id: "EMP-004",
@@ -1284,3 +1285,5 @@ export const initialSpecificITServicesContent: CMSSection[] = [
         ctaLink: '/contact'
     }
 ];
+
+
