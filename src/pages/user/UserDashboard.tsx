@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { User, CreditCard, Bell, ShieldCheck, TrendingUp, TrendingDown, DollarSign, Calendar } from 'lucide-react';
+import { Bell, TrendingUp, TrendingDown, Calendar, FileDown, CreditCard } from 'lucide-react';
+import { generatePayslipPDF } from '../../utils/generatePayslip';
 
 export const UserDashboard: React.FC = () => {
     const { payrollStatus, employees, currentUserId, notifications, markNotificationAsRead } = useAdmin();
@@ -93,8 +93,8 @@ export const UserDashboard: React.FC = () => {
                                 <p className="text-xs text-slate-500">
                                     Cycle: {payrollStatus.month} {payrollStatus.year} •
                                     <span className={`ml-1 font-bold ${payrollStatus.status === 'Paid' ? 'text-green-600' :
-                                            payrollStatus.status === 'Approved' ? 'text-blue-600' :
-                                                'text-amber-600'
+                                        payrollStatus.status === 'Approved' ? 'text-blue-600' :
+                                            'text-amber-600'
                                         }`}>
                                         {payrollStatus.status}
                                     </span>
@@ -106,6 +106,13 @@ export const UserDashboard: React.FC = () => {
                             <div className="text-right">
                                 <div className="text-xs text-slate-500 uppercase font-bold">Estimated Net Pay</div>
                                 <div className="text-2xl font-bold text-slate-900 font-mono">₦{netPay.toLocaleString()}</div>
+                                <button
+                                    onClick={() => currentUser && generatePayslipPDF(currentUser, payrollStatus)}
+                                    className="mt-2 text-xs flex items-center gap-1 text-brand-600 hover:text-brand-800 font-medium ml-auto"
+                                >
+                                    <FileDown size={14} />
+                                    Download Payslip
+                                </button>
                             </div>
                         )}
                     </div>

@@ -16,6 +16,8 @@ import { QRPage } from './pages/admin/QRPage';
 import { PayrollPage } from './pages/admin/PayrollPage';
 import { RecruitmentPage } from './pages/admin/RecruitmentPage';
 import { CMSPage } from './pages/admin/CMSPage';
+import { LeaveManagement } from './pages/admin/LeaveManagement';
+import { PerformancePage } from './pages/admin/PerformancePage';
 import { SettingsPage } from './pages/admin/SettingsPage';
 
 import { AdminProvider } from './context/AdminContext';
@@ -23,6 +25,8 @@ import { ProfilePage } from './pages/admin/ProfilePage';
 import { UserLayout } from './layouts/UserLayout';
 import { UserDashboard } from './pages/user/UserDashboard';
 import { UserProfilePage } from './pages/user/UserProfilePage';
+import { LeavePage } from './pages/user/LeavePage';
+import { PerformanceReviewPage } from './pages/user/PerformanceReviewPage';
 import PreviewBadge from './components/PreviewBadge';
 
 function App() {
@@ -52,6 +56,8 @@ function App() {
             <Route path="qr" element={<QRPage />} />
             <Route path="payroll" element={<PayrollPage />} />
             <Route path="recruitment" element={<RecruitmentPage />} />
+            <Route path="leave" element={<LeaveManagement />} /> {/* Added route */}
+            <Route path="performance" element={<PerformancePage />} />
             <Route path="cms" element={<CMSPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="profile" element={<ProfilePage />} />
@@ -64,6 +70,8 @@ function App() {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<UserDashboard />} />
             <Route path="profile" element={<UserProfilePage />} />
+            <Route path="leave" element={<LeavePage />} />
+            <Route path="performance" element={<PerformanceReviewPage />} />
           </Route>
         </Routes>
       </Router>

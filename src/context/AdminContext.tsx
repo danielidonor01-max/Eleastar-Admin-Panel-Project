@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
-import { employees as initialEmployees, jobs as initialJobs, initialCMSContent, initialAboutContent, initialServicesContent, initialIndustrialSolutionsContent, initialInformationTechnologyContent, initialResearchAndDevelopmentContent, initialElectronicsManufacturingContent, initialSpecificITServicesContent, initialFooterContent } from '../data/mockData';
-import type { Employee, Job, CMSSection, FooterContent, FooterSection } from '../data/mockData';
+import { employees as initialEmployees, jobs as initialJobs, initialLeaveRequests, initialReviewCycles, initialPerformanceReviews, initialCMSContent, initialAboutContent, initialServicesContent, initialIndustrialSolutionsContent, initialInformationTechnologyContent, initialResearchAndDevelopmentContent, initialElectronicsManufacturingContent, initialSpecificITServicesContent, initialFooterContent } from '../data/mockData';
+import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, CMSSection, FooterContent, FooterSection } from '../data/mockData';
 
 // Extended Types
 export interface ActivityLog {
@@ -35,7 +35,7 @@ export interface Notification {
 
 // Role & Permissions Types
 export type AdminRole = 'Super Admin' | 'Management Admin' | 'HR Admin' | 'Finance Admin' | 'Web Admin' | 'User';
-export type ModuleType = 'Dashboard' | 'Employees' | 'QR & ID' | 'Payroll' | 'Recruitment' | 'Website CMS' | 'Settings';
+export type ModuleType = 'Dashboard' | 'Employees' | 'QR & ID' | 'Payroll' | 'Recruitment' | 'Website CMS' | 'Settings' | 'Leave' | 'Performance';
 
 export interface AdminContextType {
     employees: Employee[];
@@ -48,7 +48,20 @@ export interface AdminContextType {
 
     // Notification State
     notifications: Notification[];
+
     unreadCount: number;
+
+    // Leave Management
+    leaveRequests: LeaveRequest[];
+    requestLeave: (userId: string, request: Omit<LeaveRequest, 'id' | 'employeeId' | 'status' | 'requestedAt'>) => void;
+    approveLeave: (requestId: string) => void;
+    rejectLeave: (requestId: string) => void;
+
+    // Performance Management
+    reviewCycles: ReviewCycle[];
+    performanceReviews: PerformanceReview[];
+    createReviewCycle: (cycle: Omit<ReviewCycle, 'id'>) => void;
+    submitSelfReview: (review: Omit<PerformanceReview, 'id' | 'status' | 'submittedAt'>) => void;
 
     // Role State
     currentUserRole: AdminRole;
@@ -114,6 +127,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // State
     const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
     const [jobs, setJobs] = useState<Job[]>(initialJobs);
+    const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(initialLeaveRequests);
     const [cmsContent, setCmsContent] = useState<CMSSection[]>([...initialCMSContent, ...initialAboutContent, ...initialServicesContent, ...initialIndustrialSolutionsContent, ...initialInformationTechnologyContent, ...initialResearchAndDevelopmentContent, ...initialElectronicsManufacturingContent, ...initialSpecificITServicesContent]);
     const [footerContent, setFooterContent] = useState<FooterContent>(initialFooterContent);
     const [ceoSignature, setCeoSignature] = useState<string | null>(null);
@@ -121,6 +135,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [currentUserRole, setCurrentUserRole] = useState<AdminRole>('Super Admin');
     const [currentUserId, setCurrentUserId] = useState<string | null>('EMP-001'); // Default to Super Admin ID
     const [rolePermissions, setRolePermissions] = useState<Record<AdminRole, ModuleType[]>>(INITIAL_PERMISSIONS);
+    const [reviewCycles, setReviewCycles] = useState<ReviewCycle[]>(initialReviewCycles);
+    const [performanceReviews, setPerformanceReviews] = useState<PerformanceReview[]>(initialPerformanceReviews);
 
     // Auth State - Default to false for preview environment security
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -330,6 +346,81 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         logAction('Notifications', 'Marked all notifications as read');
     };
 
+    // Leave Actions
+    const requestLeave = (userId: string, requestData: Omit<LeaveRequest, 'id' | 'employeeId' | 'status' | 'requestedAt'>) => {
+        const newRequest: LeaveRequest = {
+            id: `LR-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+            employeeId: userId,
+            status: 'Pending',
+            requestedAt: new Date().toISOString(),
+            ...requestData
+        };
+        setLeaveRequests(prev => [newRequest, ...prev]);
+        logAction('Leave Request', `New ${requestData.type} leave request from user ${userId}`);
+        addNotification('HR', `New leave request received from ${userId}`, '/admin/leave');
+    };
+
+    const approveLeave = (requestId: string) => {
+        const request = leaveRequests.find(r => r.id === requestId);
+        if (!request) return;
+
+        // Deduct balance
+        setEmployees(prev => prev.map(emp => {
+            if (emp.id === request.employeeId && emp.leaveBalance) {
+                const isAnnual = request.type === 'Annual';
+                const isSick = request.type === 'Sick';
+
+                return {
+                    ...emp,
+                    leaveBalance: {
+                        ...emp.leaveBalance,
+                        annual: isAnnual ? emp.leaveBalance.annual - request.days : emp.leaveBalance.annual,
+                        sick: isSick ? emp.leaveBalance.sick - request.days : emp.leaveBalance.sick,
+                        used: emp.leaveBalance.used + request.days
+                    }
+                };
+            }
+            return emp;
+        }));
+
+        setLeaveRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'Approved' } : r));
+        addNotification('HR', 'Your leave request has been approved!', '/user/leave', request.employeeId);
+        logAction('Leave Approval', `Approved leave request ${requestId} for user ${request.employeeId}`);
+    };
+
+    const rejectLeave = (requestId: string) => {
+        const request = leaveRequests.find(r => r.id === requestId);
+        if (!request) return;
+
+        setLeaveRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'Rejected' } : r));
+        addNotification('HR', 'Your leave request has been rejected.', '/user/leave', request.employeeId);
+        addNotification('HR', 'Your leave request has been rejected.', '/user/leave', request.employeeId);
+        logAction('Leave Rejection', `Rejected leave request ${requestId}`);
+    };
+
+    // Performance Actions
+    const createReviewCycle = (cycle: Omit<ReviewCycle, 'id'>) => {
+        const newCycle: ReviewCycle = {
+            id: `CYC-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+            ...cycle
+        };
+        setReviewCycles(prev => [newCycle, ...prev]);
+        logAction('Review Cycle', `Created new review cycle: ${cycle.title}`);
+        addNotification('HR', `New Performance Review Cycle: ${cycle.title}`, '/user/performance');
+    };
+
+    const submitSelfReview = (review: Omit<PerformanceReview, 'id' | 'status' | 'submittedAt'>) => {
+        const newReview: PerformanceReview = {
+            id: `PR-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+            status: 'Submitted',
+            submittedAt: new Date().toISOString(),
+            ...review
+        };
+        setPerformanceReviews(prev => [newReview, ...prev]);
+        logAction('Performance Review', `User ${review.employeeId} submitted self-review.`);
+        addNotification('HR', `New Self-Review submitted by ${review.employeeId}`, '/admin/performance');
+    };
+
     // Role Actions
     const switchRole = (role: AdminRole) => {
         setCurrentUserRole(role);
@@ -405,6 +496,14 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             markAllNotificationsAsRead,
             switchRole,
             updateRolePermissions,
+            leaveRequests,
+            requestLeave,
+            approveLeave,
+            rejectLeave,
+            reviewCycles,
+            performanceReviews,
+            createReviewCycle,
+            submitSelfReview,
             isAuthenticated,
             login,
             logout

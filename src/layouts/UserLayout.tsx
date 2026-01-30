@@ -1,6 +1,5 @@
-import React from 'react';
-import { Outlet, Navigate, useNavigate } from 'react-router-dom';
-import { LogOut, User } from 'lucide-react';
+import { Outlet, Navigate, useNavigate, NavLink } from 'react-router-dom';
+import { LogOut, User, Calendar, BarChart2 } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 
 export const UserLayout: React.FC = () => {
@@ -34,6 +33,23 @@ export const UserLayout: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    {/* Navigation Links */}
+                    <div className="hidden md:flex items-center gap-2">
+                        <NavLink to="/user/profile" className={({ isActive }) => `flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-100'}`}>
+                            <User size={18} />
+                            <span>Profile</span>
+                        </NavLink>
+                        <NavLink to="/user/leave" className={({ isActive }) => `flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-100'}`}>
+                            <Calendar size={18} />
+                            <span>Leave</span>
+                        </NavLink>
+                        <NavLink to="/user/performance" className={({ isActive }) => `flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-100'}`}>
+                            <BarChart2 size={18} />
+                            <span>Performance</span>
+                        </NavLink>
+                    </div>
+
+                    {/* User Profile and Logout */}
                     <div
                         className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg transition-colors pr-3"
                         onClick={() => navigate('/user/profile')}

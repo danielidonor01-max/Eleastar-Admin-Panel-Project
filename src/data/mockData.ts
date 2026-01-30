@@ -23,6 +23,24 @@ export interface Employee {
         instagram?: string;
         twitter?: string;
     };
+    // Leave Management
+    leaveBalance?: {
+        annual: number; // e.g. 20
+        sick: number; // e.g. 10
+        used: number; // Total days used
+    };
+}
+
+export interface LeaveRequest {
+    id: string;
+    employeeId: string;
+    type: 'Annual' | 'Sick' | 'Unpaid' | 'Maternity' | 'Paternity';
+    startDate: string;
+    endDate: string;
+    days: number;
+    reason: string;
+    status: 'Pending' | 'Approved' | 'Rejected';
+    requestedAt: string;
 }
 
 export interface Application {
@@ -100,7 +118,11 @@ export const employees: Employee[] = [
             linkedin: "https://linkedin.com/in/odirinsuccess",
             twitter: "https://x.com/odirin_dev"
         },
-
+        leaveBalance: {
+            annual: 20,
+            sick: 10,
+            used: 0
+        }
     },
     {
         id: "EMP-004",
@@ -161,6 +183,50 @@ export const employees: Employee[] = [
         email: "victory@eleastar.com",
         systemRole: 'Viewer',
         accessGranted: true
+    }
+];
+
+export interface ReviewCycle {
+    id: string;
+    title: string;
+    status: 'Draft' | 'Active' | 'Completed';
+    startDate: string;
+    endDate: string;
+}
+
+export interface PerformanceReview {
+    id: string;
+    employeeId: string;
+    cycleId: string;
+    selfReview: string;
+    rating: number; // 1-5
+    status: 'Pending' | 'Submitted' | 'Reviewed';
+    submittedAt?: string;
+}
+
+export const initialReviewCycles: ReviewCycle[] = [
+    {
+        id: 'CYC-001',
+        title: 'Q1 2026 Performance Review',
+        status: 'Active',
+        startDate: '2026-03-01',
+        endDate: '2026-03-31'
+    }
+];
+
+export const initialPerformanceReviews: PerformanceReview[] = [];
+
+export const initialLeaveRequests: LeaveRequest[] = [
+    {
+        id: "LR-001",
+        employeeId: "EMP-003", // Odirin Success
+        type: 'Annual',
+        startDate: '2026-02-10',
+        endDate: '2026-02-12',
+        days: 3,
+        reason: "Personal time off to attend a wedding.",
+        status: 'Pending',
+        requestedAt: '2026-01-29T10:00:00Z'
     }
 ];
 

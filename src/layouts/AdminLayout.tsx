@@ -1,27 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
-import {
-    LayoutDashboard,
-    Users,
-    QrCode,
-    Wallet,
-    FileText,
-    Globe,
-    Settings,
-    Bell,
-    Search,
-    LogOut,
-    ChevronDown,
-    ChevronRight,
-    User,
-    Lock,
-    Check,
-    Share2,
-    Layout,
-    Briefcase,
-    Info,
-    Phone
-} from 'lucide-react';
+import { LayoutDashboard, Users, UserPlus, CreditCard, Scan, Palette, Settings, Building2, Globe, Laptop, Briefcase, ChevronDown, ChevronRight, Menu, LogOut, CheckCircle, Calendar, Share2, Info, Phone, BarChart2, Layout } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import type { AdminRole, ModuleType } from '../context/AdminContext';
 import { PUBLIC_LINK } from '../config';
@@ -150,6 +129,18 @@ export const AdminLayout: React.FC = () => {
                                 <NavLink to="/admin/recruitment" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
                                     <FileText size={20} />
                                     Recruitment
+                                </NavLink>
+                            )}
+                            {hasAccess('Leave') && (
+                                <NavLink to="/admin/leave" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                    <Calendar size={20} />
+                                    Leave Mgmt
+                                </NavLink>
+                            )}
+                            {hasAccess('Performance') && (
+                                <NavLink to="/admin/performance" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                    <BarChart2 size={20} />
+                                    Performance
                                 </NavLink>
                             )}
                         </>
