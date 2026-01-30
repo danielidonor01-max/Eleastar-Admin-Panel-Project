@@ -1,0 +1,24 @@
+src/components/ActionStack.tsx(2,25): error TS6133: 'MessageSquare' is declared but its value is never read.
+src/pages/About.tsx(6,41): error TS6133: 'Github' is declared but its value is never read.
+src/pages/About.tsx(14,5): error TS6196: 'CMSSection' is declared but never used.
+src/pages/About.tsx(107,37): error TS2339: Property 'linkedinUrl' does not exist on type 'TeamMember'.
+src/pages/About.tsx(108,49): error TS2339: Property 'linkedinUrl' does not exist on type 'TeamMember'.
+src/pages/admin/ProfilePage.tsx(3,28): error TS6133: 'Shield' is declared but its value is never read.
+src/pages/admin/ProfilePage.tsx(3,44): error TS6133: 'Check' is declared but its value is never read.
+src/pages/admin/SettingsPage.tsx(4,18): error TS6133: 'Clock' is declared but its value is never read.
+src/pages/admin/SettingsPage.tsx(4,76): error TS6133: 'Unlock' is declared but its value is never read.
+src/pages/CareersPage.tsx(3,10): error TS6133: 'ArrowRight' is declared but its value is never read.
+src/pages/CareersPage.tsx(232,26): error TS2339: Property 'imageUrl' does not exist on type 'CMSSection'.
+  Property 'imageUrl' does not exist on type 'HeroSection'.
+src/pages/CareersPage.tsx(234,43): error TS2339: Property 'imageUrl' does not exist on type 'CMSSection'.
+  Property 'imageUrl' does not exist on type 'HeroSection'.
+src/pages/CareersPage.tsx(239,34): error TS2339: Property 'title' does not exist on type 'CMSSection'.
+  Property 'title' does not exist on type 'HeroSection'.
+src/pages/CareersPage.tsx(242,34): error TS2339: Property 'body' does not exist on type 'CMSSection'.
+  Property 'body' does not exist on type 'HeroSection'.
+src/pages/Home.tsx(5,10): error TS6133: 'ChevronRight' is declared but its value is never read.
+src/pages/Home.tsx(5,36): error TS6133: 'CheckCircle2' is declared but its value is never read.
+src/pages/Home.tsx(5,50): error TS6133: 'Monitor' is declared but its value is never read.
+src/pages/Home.tsx(5,79): error TS6133: 'Download' is declared but its value is never read.
+src/pages/Home.tsx(6,15): error TS6196: 'HomepageSection' is declared but never used.
+src/pages/Services.tsx(23,41): error TS6133: 'index' is declared but its value is never read.
