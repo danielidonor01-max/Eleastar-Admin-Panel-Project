@@ -12,10 +12,15 @@ import {
     Search,
     LogOut,
     ChevronDown,
+    ChevronRight,
     User,
     Lock,
     Check,
-    Share2
+    Share2,
+    Layout,
+    Briefcase,
+    Info,
+    Phone
 } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import type { AdminRole, ModuleType } from '../context/AdminContext';
@@ -45,6 +50,37 @@ export const AdminLayout: React.FC = () => {
     const [showNotifMenu, setShowNotifMenu] = useState(false);
     const [showRoleMenu, setShowRoleMenu] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
+
+    // Sidebar State
+    const [expandedCMS, setExpandedCMS] = useState(true); // Default open for visibility
+    const [expandedServices, setExpandedServices] = useState(false);
+    const [expandedCareers, setExpandedCareers] = useState(false);
+
+    // Auto-expand sidebar sections based on active route
+    React.useEffect(() => {
+        const isCMS = location.pathname.includes('/admin/cms');
+
+        if (isCMS) {
+            setExpandedCMS(true);
+            const search = location.search;
+            const isServices = search.includes('page=IndustrialSolutions') ||
+                search.includes('page=InformationTechnology') ||
+                search.includes('page=ResearchAndDevelopment') ||
+                search.includes('page=ElectronicsManufacturing') ||
+                search.includes('page=SpecificITServices') ||
+                search.includes('page=Services');
+
+            setExpandedServices(isServices);
+
+            const isCareers = search.includes('page=Careers');
+            setExpandedCareers(isCareers);
+        } else {
+            // "Global Navigation Consistency": Clicking a non-CMS module should deactivate/collapse Website CMS.
+            setExpandedCMS(false);
+            setExpandedServices(false);
+            setExpandedCareers(false);
+        }
+    }, [location.pathname, location.search]);
 
     // Click outside to close (simplified)
     // In production, use click-outside hooks.
@@ -122,12 +158,127 @@ export const AdminLayout: React.FC = () => {
                     {(hasAccess('Website CMS') || hasAccess('Settings')) && (
                         <>
                             <div className="text-xs font-bold text-slate-500 uppercase px-3 mb-2 mt-6">System</div>
+
                             {hasAccess('Website CMS') && (
-                                <NavLink to="/admin/cms" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
-                                    <Globe size={20} />
-                                    Website CMS
-                                </NavLink>
+                                <div className="mb-2">
+                                    <button
+                                        onClick={() => setExpandedCMS(!expandedCMS)}
+                                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${location.pathname.includes('/admin/cms') ? 'bg-brand-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Globe size={20} />
+                                            <span>Website CMS</span>
+                                        </div>
+                                        {expandedCMS ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                    </button>
+
+                                    {expandedCMS && (
+                                        <div className="ml-9 mt-1 space-y-1 border-l border-slate-700 pl-3">
+                                            {/* Home */}
+                                            <NavLink to="/admin/cms?page=Home" className={() => {
+                                                const search = useLocation().search;
+                                                const isCurrent = location.pathname === '/admin/cms' && (!search || search.includes('page=Home'));
+                                                return `block px-3 py-1.5 text-sm rounded-md transition-colors ${isCurrent ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
+                                            }}>
+                                                Home Page
+                                            </NavLink>
+
+                                            {/* About */}
+                                            <NavLink to="/admin/cms?page=About" className={() => {
+                                                const search = useLocation().search;
+                                                const isCurrent = location.pathname === '/admin/cms' && search.includes('page=About');
+                                                return `block px-3 py-1.5 text-sm rounded-md transition-colors ${isCurrent ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
+                                            }}>
+                                                About Page
+                                            </NavLink>
+
+                                            {/* Services Parent */}
+                                            <div>
+                                                <button
+                                                    onClick={() => setExpandedServices(!expandedServices)}
+                                                    className="w-full text-left flex items-center justify-between px-3 py-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+                                                >
+                                                    <span className="flex items-center gap-2">
+                                                        <Layout size={14} /> Services
+                                                    </span>
+                                                    {expandedServices ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                                </button>
+
+                                                {expandedServices && (
+                                                    <div className="ml-2 pl-2 border-l border-slate-700 mt-1 space-y-1">
+                                                        <NavLink to="/admin/cms?page=Services" className={() => {
+                                                            const search = useLocation().search;
+                                                            return `block px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === '/admin/cms' && search.includes('page=Services') ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
+                                                        }}>Main Page</NavLink>
+                                                        <NavLink to="/admin/cms?page=IndustrialSolutions" className={() => {
+                                                            const search = useLocation().search;
+                                                            return `block px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === '/admin/cms' && search.includes('page=IndustrialSolutions') ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
+                                                        }}>Industrial</NavLink>
+                                                        <NavLink to="/admin/cms?page=InformationTechnology" className={() => {
+                                                            const search = useLocation().search;
+                                                            return `block px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === '/admin/cms' && search.includes('page=InformationTechnology') ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
+                                                        }}>IT Services</NavLink>
+                                                        <NavLink to="/admin/cms?page=ResearchAndDevelopment" className={() => {
+                                                            const search = useLocation().search;
+                                                            return `block px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === '/admin/cms' && search.includes('page=ResearchAndDevelopment') ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
+                                                        }}>R&D</NavLink>
+                                                        <NavLink to="/admin/cms?page=ElectronicsManufacturing" className={() => {
+                                                            const search = useLocation().search;
+                                                            return `block px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === '/admin/cms' && search.includes('page=ElectronicsManufacturing') ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
+                                                        }}>Electronics</NavLink>
+                                                        <NavLink to="/admin/cms?page=SpecificITServices" className={() => {
+                                                            const search = useLocation().search;
+                                                            return `block px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === '/admin/cms' && search.includes('page=SpecificITServices') ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
+                                                        }}>Specific IT</NavLink>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Eleastar & You Parent */}
+                                            <div>
+                                                <button
+                                                    onClick={() => setExpandedCareers(!expandedCareers)}
+                                                    className="w-full text-left flex items-center justify-between px-3 py-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+                                                >
+                                                    <span className="flex items-center gap-2">
+                                                        <Briefcase size={14} /> Eleastar & You
+                                                    </span>
+                                                    {expandedCareers ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                                </button>
+
+                                                {expandedCareers && (
+                                                    <div className="ml-2 pl-2 border-l border-slate-700 mt-1 space-y-1">
+                                                        <NavLink to="/admin/cms?page=Careers" className={() => {
+                                                            const search = useLocation().search;
+                                                            return `block px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === '/admin/cms' && search.includes('page=Careers') ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
+                                                        }}>Careers</NavLink>
+                                                        {/* Future: Tech Hub */}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Contact */}
+                                            <NavLink to="/admin/cms?page=Contact" className={() => {
+                                                const search = useLocation().search;
+                                                const isCurrent = location.pathname === '/admin/cms' && search.includes('page=Contact');
+                                                return `block px-3 py-1.5 text-sm rounded-md transition-colors ${isCurrent ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
+                                            }}>
+                                                Contact Us
+                                            </NavLink>
+
+                                            {/* Footer */}
+                                            <NavLink to="/admin/cms?page=Footer" className={() => {
+                                                const search = useLocation().search;
+                                                const isCurrent = location.pathname === '/admin/cms' && search.includes('page=Footer');
+                                                return `block px-3 py-1.5 text-sm rounded-md transition-colors ${isCurrent ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
+                                            }}>
+                                                Footer
+                                            </NavLink>
+                                        </div>
+                                    )}
+                                </div>
                             )}
+
                             {hasAccess('Settings') && (
                                 <NavLink to="/admin/settings" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
                                     <Settings size={20} />

@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { PageContainer } from '../../components/PageContainer';
 import {
-    Eye, Save, Layout, Plus, Trash2, Globe, Info
+    Eye, Save, Layout, Plus, Trash2, Globe, Info, ChevronRight
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { PUBLIC_LINK } from '../../config';
 import type {
     CMSSection,
@@ -615,9 +616,16 @@ const FooterCopyrightEditor: React.FC<{ section: FooterSection; onChange: (u: Pa
 
 export const CMSPage: React.FC = () => {
     const { cmsContent, updatePMSContent, publishPMSContent, addCMSContent, deleteCMSContent, footerContent, updateFooterContent } = useAdmin();
-    const [activePage, setActivePage] = useState<'Home' | 'About' | 'Services' | 'IndustrialSolutions' | 'InformationTechnology' | 'ResearchAndDevelopment' | 'ElectronicsManufacturing' | 'SpecificITServices' | 'Footer'>('Home');
+    const [searchParams] = useSearchParams();
+
+    // Derived Active Page from URL, default to Home
+    const rawPage = searchParams.get('page');
+    // Sanitize to valid type
+    const activePage: 'Home' | 'About' | 'Services' | 'IndustrialSolutions' | 'InformationTechnology' | 'ResearchAndDevelopment' | 'ElectronicsManufacturing' | 'SpecificITServices' | 'Careers' | 'Contact' | 'Footer' =
+        (rawPage as any) || 'Home';
 
     // Filter sections by active page
+    // Note: Careers page content handling might need specific check if it's not standard CMSSection
     const pageSections = cmsContent.filter(s => s.page === activePage);
 
     // Manage selection state per page or globally? Globally is fine, just reset on page switch if needed.
@@ -653,7 +661,11 @@ export const CMSPage: React.FC = () => {
                             ? `${PREVIEW_URL}/services/electronics-manufacturing`
                             : activePage === 'SpecificITServices'
                                 ? `${PREVIEW_URL}/services/specific-it-services`
-                                : PREVIEW_URL;
+                                : activePage === 'Careers'
+                                    ? `${PREVIEW_URL}/careers`
+                                    : activePage === 'Contact'
+                                        ? `${PREVIEW_URL}/contact`
+                                        : PREVIEW_URL;
 
     const handleUpdate = (updates: Partial<CMSSection>) => {
         if (selectedId) {
@@ -718,80 +730,53 @@ export const CMSPage: React.FC = () => {
         }
     };
 
+    // Breadcrumb Helper
+    const getBreadcrumbs = () => {
+        const base = <span className="text-slate-500">Website CMS</span>;
+        const separator = <ChevronRight size={14} className="text-slate-400" />;
+
+        let parent = null;
+        let current = activePage.replace(/([A-Z])/g, ' $1').trim();
+
+        if (['IndustrialSolutions', 'InformationTechnology', 'ResearchAndDevelopment', 'ElectronicsManufacturing', 'SpecificITServices'].includes(activePage)) {
+            parent = 'Services';
+        } else if (['Careers'].includes(activePage)) {
+            parent = 'Eleastar & You';
+        }
+
+        // Clean up title display
+        if (current === 'Services') current = 'Services Main';
+        if (current === 'Industrial Solutions') current = 'Industrial Solutions';
+        // ... mappings can be refined
+
+        return (
+            <div className="flex items-center gap-2 text-xs font-bold mb-4">
+                {base}
+                {separator}
+                {parent && (
+                    <>
+                        <span className="text-slate-500">{parent}</span>
+                        {separator}
+                    </>
+                )}
+                <span className="text-brand-600">{current}</span>
+            </div>
+        );
+    };
+
     return (
         <PageContainer title="Website CMS Manager">
             <div className="flex flex-col h-[calc(100vh-140px)]">
-                {/* Toolbar */}
-                <div className="flex justify-between items-center mb-6 pb-6 border-b border-slate-200">
-                    <div className="flex items-center gap-6">
-                        {/* Page Selector */}
-                        <div className="flex bg-slate-100 p-1 rounded-lg">
-                            <button
-                                onClick={() => setActivePage('Home')}
-                                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${activePage === 'Home' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                                    }`}
-                            >
-                                <Globe size={16} className="inline mr-2" /> Home Page
-                            </button>
-                            <button
-                                onClick={() => setActivePage('About')}
-                                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${activePage === 'About' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                                    }`}
-                            >
-                                <Info size={16} className="inline mr-2" /> About Page
-                            </button>
-                            <button
-                                onClick={() => setActivePage('Services')}
-                                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${activePage === 'Services' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                                    }`}
-                            >
-                                <Layout size={16} className="inline mr-2" /> Services Page
-                            </button>
-                            <button
-                                onClick={() => setActivePage('IndustrialSolutions')}
-                                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${activePage === 'IndustrialSolutions' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                                    }`}
-                            >
-                                <Layout size={16} className="inline mr-2" /> Industrial Solutions
-                            </button>
-                            <button
-                                onClick={() => setActivePage('InformationTechnology')}
-                                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${activePage === 'InformationTechnology' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                                    }`}
-                            >
-                                <Layout size={16} className="inline mr-2" /> IT Services
-                            </button>
-                            <button
-                                onClick={() => setActivePage('ResearchAndDevelopment')}
-                                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${activePage === 'ResearchAndDevelopment' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                                    }`}
-                            >
-                                <Layout size={16} className="inline mr-2" /> R&D
-                            </button>
-                            <button
-                                onClick={() => setActivePage('ElectronicsManufacturing')}
-                                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${activePage === 'ElectronicsManufacturing' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                                    }`}
-                            >
-                                <Layout size={16} className="inline mr-2" /> Electronics
-                            </button>
-                            <button
-                                onClick={() => setActivePage('SpecificITServices')}
-                                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${activePage === 'SpecificITServices' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                                    }`}
-                            >
-                                <Layout size={16} className="inline mr-2" /> Specific IT
-                            </button>
-                            <button
-                                onClick={() => setActivePage('Footer')}
-                                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${activePage === 'Footer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                                    }`}
-                            >
-                                <Layout size={16} className="inline mr-2" /> Footer
-                            </button>
+                {/* Breadcrumb & Context Header */}
+                <div className="mb-6 pb-4 border-b border-slate-200">
+                    {getBreadcrumbs()}
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-2xl font-bold text-slate-800">{activePage.replace(/([A-Z])/g, ' $1').trim()}</h2>
+                            <span className="px-2 py-0.5 rounded-md bg-green-100 text-green-700 text-xs font-bold uppercase border border-green-200">
+                                Live
+                            </span>
                         </div>
-
-                        <div className="h-8 w-px bg-slate-200 mx-2" />
 
                         <a
                             href={currentPagePreviewLink}
@@ -799,7 +784,7 @@ export const CMSPage: React.FC = () => {
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm"
                         >
-                            <Eye size={18} /> Preview {activePage}
+                            <Eye size={16} /> Preview Page
                         </a>
                     </div>
                     <div>
@@ -816,7 +801,7 @@ export const CMSPage: React.FC = () => {
                             </button>
                         )}
                     </div>
-                </div>
+                </div >
 
                 <div className="flex flex-grow gap-8 overflow-hidden">
                     {/* Section List (Sidebar) */}
@@ -1034,7 +1019,7 @@ export const CMSPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </div>
-        </PageContainer>
+            </div >
+        </PageContainer >
     );
 };
