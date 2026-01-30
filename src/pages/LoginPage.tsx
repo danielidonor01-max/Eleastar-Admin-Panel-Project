@@ -16,9 +16,16 @@ export const LoginPage: React.FC = () => {
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        const success = login(password);
-        if (success) {
-            navigate(from, { replace: true });
+        const role = login(password);
+        if (role) {
+            // Priority Redirect: If a specific "from" location was set (e.g. they tried to access a URL), 
+            // check if they are authorized for it. If not, go to their default dashboard.
+
+            if (role === 'User') {
+                navigate('/user/dashboard', { replace: true });
+            } else {
+                navigate('/admin/dashboard', { replace: true });
+            }
         } else {
             setError('Invalid access code');
         }

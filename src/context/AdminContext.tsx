@@ -33,7 +33,7 @@ export interface Notification {
 }
 
 // Role & Permissions Types
-export type AdminRole = 'Super Admin' | 'Management Admin' | 'HR Admin' | 'Finance Admin' | 'Web Admin';
+export type AdminRole = 'Super Admin' | 'Management Admin' | 'HR Admin' | 'Finance Admin' | 'Web Admin' | 'User';
 export type ModuleType = 'Dashboard' | 'Employees' | 'QR & ID' | 'Payroll' | 'Recruitment' | 'Website CMS' | 'Settings';
 
 export interface AdminContextType {
@@ -82,7 +82,7 @@ export interface AdminContextType {
 
     // Authentication
     isAuthenticated: boolean;
-    login: (password: string) => boolean;
+    login: (password: string) => AdminRole | false;
     logout: () => void;
 }
 
@@ -94,7 +94,8 @@ const INITIAL_PERMISSIONS: Record<AdminRole, ModuleType[]> = {
     'Management Admin': ['Dashboard', 'Employees', 'QR & ID', 'Payroll', 'Recruitment', 'Website CMS'],
     'HR Admin': ['Dashboard', 'Employees', 'Recruitment', 'QR & ID'],
     'Finance Admin': ['Dashboard', 'Payroll'],
-    'Web Admin': ['Dashboard', 'Website CMS']
+    'Web Admin': ['Dashboard', 'Website CMS'],
+    'User': [] // Users have no admin module access
 };
 
 // Mock Notifications
@@ -288,13 +289,24 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     // Auth Actions
-    const login = (password: string) => {
-        // Simple hardcoded check for preview
+    // Auth Actions
+    const login = (password: string): AdminRole | false => {
+        // Super Admin Login
         if (password === 'admin123') {
+            setCurrentUserRole('Super Admin');
             setIsAuthenticated(true);
             logAction('Login', 'Admin logged in successfully');
-            return true;
+            return 'Super Admin';
         }
+
+        // Basic User Login
+        if (password === 'user123') {
+            setCurrentUserRole('User');
+            setIsAuthenticated(true);
+            logAction('Login', 'User logged in successfully');
+            return 'User';
+        }
+
         return false;
     };
 

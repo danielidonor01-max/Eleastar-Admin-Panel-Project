@@ -20,6 +20,8 @@ import { SettingsPage } from './pages/admin/SettingsPage';
 
 import { AdminProvider } from './context/AdminContext';
 import { ProfilePage } from './pages/admin/ProfilePage';
+import { UserLayout } from './layouts/UserLayout';
+import { UserDashboard } from './pages/user/UserDashboard';
 import PreviewBadge from './components/PreviewBadge';
 
 function App() {
@@ -54,6 +56,12 @@ function App() {
             <Route path="profile" element={<ProfilePage />} />
             {/* Fallback for unimplemented admin routes */}
             <Route path="*" element={<Dashboard />} />
+          </Route>
+
+          {/* User Routes */}
+          <Route path="/user" element={<UserLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<UserDashboard />} />
           </Route>
         </Routes>
       </Router>
