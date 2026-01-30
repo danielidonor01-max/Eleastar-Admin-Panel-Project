@@ -22,6 +22,7 @@ import { AdminProvider } from './context/AdminContext';
 import { ProfilePage } from './pages/admin/ProfilePage';
 import { UserLayout } from './layouts/UserLayout';
 import { UserDashboard } from './pages/user/UserDashboard';
+import { UserProfilePage } from './pages/user/UserProfilePage';
 import PreviewBadge from './components/PreviewBadge';
 
 function App() {
@@ -62,6 +63,7 @@ function App() {
           <Route path="/user" element={<UserLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<UserDashboard />} />
+            <Route path="profile" element={<UserProfilePage />} />
           </Route>
         </Routes>
       </Router>

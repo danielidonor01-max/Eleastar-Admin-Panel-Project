@@ -15,6 +15,14 @@ export interface Employee {
     // Access Control Fields
     systemRole: 'Super Admin' | 'Management Admin' | 'User' | 'Viewer';
     accessGranted: boolean;
+    // Self-Service Editable
+    phoneNumber?: string;
+    socialLinks?: {
+        linkedin?: string;
+        facebook?: string;
+        instagram?: string;
+        twitter?: string;
+    };
 }
 
 export interface Application {
@@ -86,7 +94,12 @@ export const employees: Employee[] = [
         employmentType: 'Full-time',
         email: "odirin@eleastar.com",
         systemRole: 'User',
-        accessGranted: true
+        accessGranted: true,
+        phoneNumber: "+234 812 345 6789",
+        socialLinks: {
+            linkedin: "https://linkedin.com/in/odirinsuccess",
+            twitter: "https://x.com/odirin_dev"
+        }
     },
     {
         id: "EMP-004",

@@ -51,10 +51,12 @@ export interface AdminContextType {
 
     // Role State
     currentUserRole: AdminRole;
+    currentUserId: string | null; // Track specific logged-in user
     rolePermissions: Record<AdminRole, ModuleType[]>;
 
     // Actions
     updateEmployee: (id: string, updates: Partial<Employee>) => void;
+    updateUserProfile: (updates: Partial<Employee>) => void; // Safe update for self
     addEmployee: (employee: Employee) => void;
     regenerateQR: (ids: string[]) => void;
     toggleQRStatus: (id: string, status: 'active' | 'suspended') => void;
@@ -116,6 +118,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [ceoSignature, setCeoSignature] = useState<string | null>(null);
     const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
     const [currentUserRole, setCurrentUserRole] = useState<AdminRole>('Super Admin');
+    const [currentUserId, setCurrentUserId] = useState<string | null>('EMP-001'); // Default to Super Admin ID
     const [rolePermissions, setRolePermissions] = useState<Record<AdminRole, ModuleType[]>>(INITIAL_PERMISSIONS);
 
     // Auth State - Default to false for preview environment security
@@ -150,6 +153,25 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const updateEmployee = (id: string, updates: Partial<Employee>) => {
         setEmployees(prev => prev.map(emp => emp.id === id ? { ...emp, ...updates } : emp));
         logAction('Updated Employee', `Updated profile for ${id}`);
+    };
+
+    const updateUserProfile = (updates: Partial<Employee>) => {
+        if (!currentUserId) return;
+
+        // Security: Filter allowed fields. This prevents users from editing their Salary or Role explicitly via this action.
+        const allowedUpdates: Partial<Employee> = {
+            photoUrl: updates.photoUrl,
+            phoneNumber: updates.phoneNumber,
+            socialLinks: updates.socialLinks
+        };
+
+        // If no allowed updates, do nothing
+        if (Object.keys(allowedUpdates).length === 0) return;
+
+        setEmployees(prev => prev.map(emp => emp.id === currentUserId ? { ...emp, ...allowedUpdates } : emp));
+        logAction('Profile Update', `User ${currentUserId} updated their profile`);
+
+        addNotification('System', `User ${currentUserId} updated their profile details`, '/admin/employees');
     };
 
     const addEmployee = (employee: Employee) => {
@@ -302,6 +324,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Basic User Login
         if (password === 'user123') {
             setCurrentUserRole('User');
+            setCurrentUserId('EMP-003'); // Linked to Odirin Success
             setIsAuthenticated(true);
             logAction('Login', 'User logged in successfully');
             return 'User';
@@ -326,8 +349,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             notifications,
             unreadCount,
             currentUserRole,
+            currentUserId,
             rolePermissions,
             updateEmployee,
+            updateUserProfile,
             addEmployee,
             regenerateQR,
             toggleQRStatus,
