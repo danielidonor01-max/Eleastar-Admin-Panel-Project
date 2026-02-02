@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, UserPlus, CreditCard, Scan, Palette, Settings, Building2, Globe, Laptop, Briefcase, ChevronDown, ChevronRight, Menu, LogOut, CheckCircle, Calendar, Share2, Info, Phone, BarChart2, Layout } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Globe, Briefcase, ChevronDown, ChevronRight, LogOut, Calendar, Share2, BarChart2, Layout, QrCode, Wallet, FileText, Search, Check, Lock, User } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
+import { NotificationMenu } from '../components/NotificationMenu';
 import type { AdminRole, ModuleType } from '../context/AdminContext';
 import { PUBLIC_LINK } from '../config';
 
 export const AdminLayout: React.FC = () => {
     const {
-        notifications,
-        unreadCount,
-        markNotificationAsRead,
-        markAllNotificationsAsRead,
         currentUserRole,
         switchRole,
         rolePermissions,
@@ -26,7 +23,6 @@ export const AdminLayout: React.FC = () => {
     }
 
     // UI State for Dropdowns
-    const [showNotifMenu, setShowNotifMenu] = useState(false);
     const [showRoleMenu, setShowRoleMenu] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -327,55 +323,7 @@ export const AdminLayout: React.FC = () => {
                         )}
 
                         {/* Notifications */}
-                        <div className="relative">
-                            <button
-                                onClick={() => setShowNotifMenu(!showNotifMenu)}
-                                className="relative text-slate-500 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition-colors"
-                            >
-                                <Bell size={20} />
-                                {unreadCount > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />}
-                            </button>
-
-                            {/* Notif Dropdown */}
-                            {showNotifMenu && (
-                                <>
-                                    <div className="fixed inset-0 z-10" onClick={() => setShowNotifMenu(false)} />
-                                    <div className="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-xl border border-slate-200 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                                        <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                                            <h3 className="font-bold text-sm text-slate-900">Notifications</h3>
-                                            <button onClick={markAllNotificationsAsRead} className="text-xs text-brand-600 hover:text-brand-700 font-medium">Mark all read</button>
-                                        </div>
-                                        <div className="max-h-[300px] overflow-y-auto">
-                                            {notifications.length === 0 ? (
-                                                <div className="p-8 text-center text-slate-400 text-sm">No notifications</div>
-                                            ) : (
-                                                notifications.map(n => (
-                                                    <div
-                                                        key={n.id}
-                                                        onClick={() => {
-                                                            markNotificationAsRead(n.id);
-                                                            setShowNotifMenu(false);
-                                                            navigate(n.link);
-                                                        }}
-                                                        className={`p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors flex gap-3 ${!n.isRead ? 'bg-brand-50/30' : ''}`}
-                                                    >
-                                                        <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${!n.isRead ? 'bg-brand-500' : 'bg-slate-300'}`} />
-                                                        <div>
-                                                            <div className="text-xs font-bold text-slate-500 mb-0.5 uppercase">{n.type}</div>
-                                                            <div className="text-sm text-slate-900 leading-snug mb-1">{n.message}</div>
-                                                            <div className="text-[10px] text-slate-400">{new Date(n.timestamp).toLocaleString()}</div>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                        <div className="p-2 border-t border-slate-100 bg-slate-50 text-center">
-                                            <a href="#" className="text-xs font-bold text-slate-600 hover:text-slate-900">View All History</a>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                        <NotificationMenu />
 
                         {/* User Menu & Role Switcher */}
                         <div className="flex items-center gap-3">

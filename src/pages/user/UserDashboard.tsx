@@ -1,174 +1,298 @@
+import React from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { Bell, TrendingUp, TrendingDown, Calendar, FileDown, CreditCard } from 'lucide-react';
+import { Calendar, FileDown, CreditCard, TrendingUp, Clock, User, ArrowRight, Briefcase } from 'lucide-react';
 import { generatePayslipPDF } from '../../utils/generatePayslip';
 
 export const UserDashboard: React.FC = () => {
-    const { payrollStatus, employees, currentUserId, notifications, markNotificationAsRead } = useAdmin();
+    const { payrollStatus, employees, currentUserId, leaveRequests, performanceReviews } = useAdmin();
 
     const currentUser = employees.find(e => e.id === currentUserId);
-
-    // Filter Notifications: Show System/Global ones + Targeted ones for this user
-    const myNotifications = notifications.filter(n => (!n.targetUserId || n.targetUserId === currentUserId));
-    const unreadCount = myNotifications.filter(n => !n.isRead).length;
-
-    // Financial Data Calculation
     const myAdjustments = payrollStatus.adjustments.filter(a => a.empId === currentUserId);
+    const isPayrollVisible = payrollStatus.status === 'Approved' || payrollStatus.status === 'Paid';
+
+    // Calculations
+    const baseSalary = currentUser?.salary || 0;
     const totalBonuses = myAdjustments.filter(a => a.type === 'Bonus').reduce((sum, a) => sum + a.amount, 0);
     const totalDeductions = myAdjustments.filter(a => a.type === 'Deduction' || a.type === 'Fine').reduce((sum, a) => sum + a.amount, 0);
-
-    // Only show calculations if payroll is visible (Approved or Paid)
-    const isPayrollVisible = payrollStatus.status === 'Approved' || payrollStatus.status === 'Paid';
-    const baseSalary = currentUser?.salary || 0;
     const netPay = baseSalary + totalBonuses - totalDeductions;
 
+    // Mock Payroll History Data (Last 6 Months)
+    const history = [
+        { cycle: 'Dec 2025', gross: baseSalary, bonus: 50000, deduction: 0, net: baseSalary + 50000, status: 'Paid' },
+        { cycle: 'Nov 2025', gross: baseSalary, bonus: 0, deduction: 0, net: baseSalary, status: 'Paid' },
+        { cycle: 'Oct 2025', gross: baseSalary, bonus: 0, deduction: 10000, net: baseSalary - 10000, status: 'Paid' },
+        { cycle: 'Sep 2025', gross: baseSalary, bonus: 15000, deduction: 0, net: baseSalary + 15000, status: 'Paid' },
+        { cycle: 'Aug 2025', gross: baseSalary - 50000, bonus: 0, deduction: 0, net: baseSalary - 50000, status: 'Paid' }, // simulating raise
+    ];
+
+    // Finance Timeline Mock Data
+    const timeline = [
+        ...myAdjustments.map(adj => ({
+            type: adj.type,
+            title: `${adj.type} Applied`,
+            desc: adj.reason,
+            amount: adj.amount,
+            date: 'Jan 2026'
+        })),
+        { type: 'Salary', title: 'Salary Credited', desc: 'December 2025 Salary Paid', amount: null, date: 'Dec 25, 2025' },
+        { type: 'Promotion', title: 'Role Update', desc: `Promoted to ${currentUser?.title}`, amount: null, date: 'Nov 01, 2025' }
+    ];
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'Paid': return 'text-emerald-600 bg-emerald-50 border-emerald-100';
+            case 'Approved': return 'text-blue-600 bg-blue-50 border-blue-100';
+            case 'Draft': return 'text-amber-600 bg-amber-50 border-amber-100';
+            default: return 'text-slate-600 bg-slate-50 border-slate-100';
+        }
+    };
+
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Welcome Banner */}
-            <div className="bg-gradient-to-r from-brand-600 to-indigo-700 rounded-2xl p-8 text-white shadow-lg overflow-hidden relative">
-                <div className="relative z-10 flex justify-between items-start">
-                    <div>
-                        <h1 className="text-3xl font-bold mb-2">Welcome back, {currentUser?.name || 'User'}</h1>
-                        <p className="text-brand-100 max-w-xl">
-                            {currentUser?.title} • {currentUser?.department}
-                        </p>
+        <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+            {/* Header */}
+            <div>
+                <h1 className="text-2xl font-bold text-slate-900">Home</h1>
+                <p className="text-slate-500">Overview of your employment and payroll information</p>
+            </div>
+
+            {/* Pending Actions / Feedback Cards */}
+            <div className="space-y-4">
+                {leaveRequests.some(r => r.employeeId === currentUserId && r.status === 'Pending') && (
+                    <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                        <div className="p-2 bg-blue-100 text-blue-600 rounded-lg shrink-0">
+                            <Clock size={20} />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-blue-900">Leave Request Pending</h4>
+                            <p className="text-sm text-blue-700 mt-0.5">Your recent leave request is awaiting approval from management.</p>
+                        </div>
                     </div>
-                    <div className="hidden md:block text-right">
-                        <div className="text-sm text-brand-200 font-bold uppercase tracking-wider">System Status</div>
-                        <div className="text-2xl font-bold flex items-center gap-2 justify-end">
-                            <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
-                            Online
+                )}
+
+                {performanceReviews.some(r => r.employeeId === currentUserId && r.status === 'Submitted') && (
+                    <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                        <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg shrink-0">
+                            <TrendingUp size={20} />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-indigo-900">Performance Review Submitted</h4>
+                            <p className="text-sm text-indigo-700 mt-0.5">Your self-evaluation has been submitted and is under review.</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Top Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                {/* 1. Employment Info */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                                <User size={18} />
+                            </div>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Employment</span>
+                        </div>
+                        <h3 className="font-bold text-slate-900 leading-tight mb-1">{currentUser?.title}</h3>
+                        <p className="text-slate-500 text-sm">{currentUser?.department}</p>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-slate-50 flex items-center gap-2">
+                        <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded">
+                            {currentUser?.employmentType}
+                        </span>
+                        <span className="text-xs text-slate-400">• ID: {currentUser?.id}</span>
+                    </div>
+                    {/* Employment Status Badge */}
+                    <div className="mt-3 bg-slate-50 rounded-lg p-2 border border-slate-100 flex justify-between items-center">
+                        <span className="text-xs font-bold text-slate-500 uppercase">Status</span>
+                        {/* Logic: If verifiedAt exists, assume Onboarded/Active. For now, we mock based on 'status' */}
+                        <div className="flex items-center gap-1.5">
+                            <span className={`w-2 h-2 rounded-full ${currentUser?.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                            <span className="text-xs font-bold text-slate-700">
+                                {currentUser?.status === 'active' ? 'Onboarded' : 'Probation'}
+                            </span>
                         </div>
                     </div>
                 </div>
-                {/* Decorative Pattern */}
-                <div className="absolute right-0 top-0 h-full w-1/3 opacity-10 pointer-events-none">
-                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                        <path fill="#FFFFFF" d="M44.7,-76.4C58.9,-69.2,71.8,-59.1,81.6,-46.6C91.4,-34.1,98.1,-19.2,95.8,-4.9C93.5,9.4,82.2,23.1,70.6,34.3C59,45.5,47.1,54.2,34.4,61.9C21.7,69.6,8.2,76.3,-4.6,84.3C-17.4,92.3,-29.4,101.6,-39.8,98.1C-50.2,94.6,-58.9,78.3,-66.1,64.2C-73.3,50.1,-79,38.2,-81.9,25.4C-84.8,12.6,-84.9,-1.1,-80.7,-12.9C-76.5,-24.7,-68,-34.6,-57.8,-42.6C-47.6,-50.6,-35.7,-56.7,-23.7,-65.4C-11.7,-74.1,0.4,-85.4,14,-87.8C27.6,-90.2,42.7,-83.7,44.7,-76.4Z" transform="translate(100 100)" />
-                    </svg>
+
+                {/* 2. Payroll Status */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                                <Clock size={18} />
+                            </div>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Current Cycle</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-slate-900 text-lg">{payrollStatus.month} {payrollStatus.year}</h3>
+                            <span className={`px-2 py-0.5 rounded text-xs font-bold ${getStatusColor(payrollStatus.status)}`}>
+                                {payrollStatus.status}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-slate-50 text-xs text-slate-500">
+                        Process Ref: #{payrollStatus.id}
+                    </div>
+                </div>
+
+                {/* 3. Latest Net Pay */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <CreditCard size={64} className="text-emerald-800" />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                                <CreditCard size={18} />
+                            </div>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Estimated Net Pay</span>
+                        </div>
+                        {isPayrollVisible ? (
+                            <div className="font-mono text-2xl font-bold text-slate-900">
+                                ₦{netPay.toLocaleString()}
+                            </div>
+                        ) : (
+                            <div className="text-slate-400 italic">Processing...</div>
+                        )}
+                        <p className="text-xs text-emerald-600/80 font-medium mt-1">Includes bonuses & deductions</p>
+                    </div>
+                    {isPayrollVisible && (
+                        <div className="mt-4 pt-4 border-t border-slate-50">
+                            <button
+                                onClick={() => currentUser && generatePayslipPDF(currentUser, payrollStatus)}
+                                className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
+                            >
+                                <FileDown size={14} /> Download Payslip
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* 4. Next Cycle Info */}
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
+                                <Calendar size={18} />
+                            </div>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Next Payout</span>
+                        </div>
+                        <h3 className="font-bold text-slate-900 text-lg">Next Month</h3>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-slate-50 text-xs text-slate-500">
+                        Projected: 25th Feb 2026
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid lg:grid-cols-3 gap-8">
 
-                {/* 1. Notifications Center */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-0 flex flex-col h-full hover:shadow-md transition-shadow overflow-hidden">
-                    <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                        <div className="flex items-center gap-3">
-                            <Bell size={20} className="text-slate-500" />
-                            <h3 className="font-bold text-slate-900">Notifications</h3>
+                {/* Payroll History Table */}
+                <div className="lg:col-span-2">
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                                <Briefcase size={18} className="text-slate-400" />
+                                Payroll History
+                            </h3>
                         </div>
-                        {unreadCount > 0 && <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{unreadCount} New</span>}
-                    </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="text-xs text-slate-500 uppercase bg-slate-50">
+                                    <tr>
+                                        <th className="px-6 py-3 font-medium">Cycle</th>
+                                        <th className="px-6 py-3 font-medium text-right">Gross Pay</th>
+                                        <th className="px-6 py-3 font-medium text-right text-green-600">Bonus</th>
+                                        <th className="px-6 py-3 font-medium text-right text-red-600">Deduction</th>
+                                        <th className="px-6 py-3 font-medium text-right">Net Pay</th>
+                                        <th className="px-6 py-3 font-medium text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {/* Current Month (if visible) */}
+                                    {isPayrollVisible && (
+                                        <tr className="bg-blue-50/30 hover:bg-blue-50/50 transition-colors">
+                                            <td className="px-6 py-4 font-medium text-brand-600">{payrollStatus.month} {payrollStatus.year}</td>
+                                            <td className="px-6 py-4 text-right text-slate-600">₦{baseSalary.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-right text-green-600">+{totalBonuses.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-right text-red-600">-{totalDeductions.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-right font-bold text-slate-900">₦{netPay.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getStatusColor(payrollStatus.status)}`}>
+                                                    {payrollStatus.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    )}
 
-                    <div className="flex-grow max-h-[300px] overflow-y-auto p-2 space-y-1">
-                        {myNotifications.length === 0 ? (
-                            <div className="text-center p-8 text-slate-400 text-sm">No new notifications</div>
-                        ) : (
-                            myNotifications.slice(0, 5).map(notif => (
-                                <div
-                                    key={notif.id}
-                                    onClick={() => markNotificationAsRead(notif.id)}
-                                    className={`p-3 rounded-lg text-sm flex gap-3 transition-colors cursor-pointer ${notif.isRead ? 'opacity-60 hover:opacity-100' : 'bg-blue-50 hover:bg-blue-100'}`}
-                                >
-                                    <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${notif.isRead ? 'bg-slate-300' : 'bg-blue-500'}`}></div>
-                                    <div>
-                                        <p className="font-medium text-slate-900">{notif.message}</p>
-                                        <p className="text-xs text-slate-500 mt-1">{new Date(notif.timestamp).toLocaleDateString()}</p>
-                                    </div>
-                                </div>
-                            ))
-                        )}
+                                    {/* History Rows */}
+                                    {history.map((record, idx) => (
+                                        <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                            <td className="px-6 py-4 font-medium text-slate-900">{record.cycle}</td>
+                                            <td className="px-6 py-4 text-right text-slate-500">₦{record.gross.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-right text-slate-400">{record.bonus > 0 ? `+${record.bonus.toLocaleString()}` : '-'}</td>
+                                            <td className="px-6 py-4 text-right text-slate-400">{record.deduction > 0 ? `-${record.deduction.toLocaleString()}` : '-'}</td>
+                                            <td className="px-6 py-4 text-right font-medium text-slate-700">₦{record.net.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase text-emerald-600 bg-emerald-50 border border-emerald-100">
+                                                    Paid
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                {/* 2. Payroll Breakdown */}
-                <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-                                <CreditCard size={24} />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-slate-900">Financial Overview</h3>
-                                <p className="text-xs text-slate-500">
-                                    Cycle: {payrollStatus.month} {payrollStatus.year} •
-                                    <span className={`ml-1 font-bold ${payrollStatus.status === 'Paid' ? 'text-green-600' :
-                                        payrollStatus.status === 'Approved' ? 'text-blue-600' :
-                                            'text-amber-600'
-                                        }`}>
-                                        {payrollStatus.status}
-                                    </span>
-                                </p>
-                            </div>
-                        </div>
-                        {/* Only show amount if approved/paid */}
-                        {isPayrollVisible && (
-                            <div className="text-right">
-                                <div className="text-xs text-slate-500 uppercase font-bold">Estimated Net Pay</div>
-                                <div className="text-2xl font-bold text-slate-900 font-mono">₦{netPay.toLocaleString()}</div>
-                                <button
-                                    onClick={() => currentUser && generatePayslipPDF(currentUser, payrollStatus)}
-                                    className="mt-2 text-xs flex items-center gap-1 text-brand-600 hover:text-brand-800 font-medium ml-auto"
-                                >
-                                    <FileDown size={14} />
-                                    Download Payslip
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {isPayrollVisible ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                                <div className="text-sm text-slate-500 mb-1">Base Salary</div>
-                                <div className="font-bold text-lg text-slate-900">₦{baseSalary.toLocaleString()}</div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center p-3 rounded-lg bg-green-50 border border-green-100">
-                                    <div className="flex items-center gap-2">
-                                        <TrendingUp size={16} className="text-green-600" />
-                                        <span className="text-sm font-medium text-green-800">Bonuses</span>
-                                    </div>
-                                    <span className="font-bold text-green-700">+ ₦{totalBonuses.toLocaleString()}</span>
-                                </div>
-
-                                <div className="flex justify-between items-center p-3 rounded-lg bg-red-50 border border-red-100">
-                                    <div className="flex items-center gap-2">
-                                        <TrendingDown size={16} className="text-red-600" />
-                                        <span className="text-sm font-medium text-red-800">Deductions</span>
-                                    </div>
-                                    <span className="font-bold text-red-700">- ₦{totalDeductions.toLocaleString()}</span>
-                                </div>
-                            </div>
-
-                            {/* Detailed Adjustments List */}
-                            {myAdjustments.length > 0 && (
-                                <div className="sm:col-span-2 mt-4">
-                                    <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Breakdown</h4>
-                                    <div className="divide-y divide-slate-100 border rounded-lg overflow-hidden">
-                                        {myAdjustments.map((adj, idx) => (
-                                            <div key={idx} className="flex justify-between p-3 bg-white text-sm">
-                                                <span className="text-slate-700">{adj.reason}</span>
-                                                <span className={`font-mono font-medium ${adj.type === 'Bonus' ? 'text-green-600' : 'text-red-600'}`}>
-                                                    {adj.type === 'Bonus' ? '+' : '-'} ₦{adj.amount.toLocaleString()}
-                                                </span>
+                {/* Finance Updates Timeline */}
+                <div className="space-y-6">
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                        <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
+                            <TrendingUp size={18} className="text-slate-400" />
+                            Recent Finance Updates
+                        </h3>
+                        <div className="relative border-l border-slate-200 ml-3 space-y-8">
+                            {timeline.length > 0 ? timeline.map((item, idx) => (
+                                <div key={idx} className="relative pl-6">
+                                    <div className={`
+                                        absolute -left-1.5 top-1 w-3 h-3 rounded-full border-2 border-white
+                                        ${item.type === 'Bonus' ? 'bg-green-500' : item.type === 'Deduction' ? 'bg-red-500' : 'bg-blue-500'}
+                                    `}></div>
+                                    <div>
+                                        <div className="text-xs font-bold text-slate-400 uppercase mb-0.5">{item.type}</div>
+                                        <h4 className="text-sm font-bold text-slate-900">{item.title}</h4>
+                                        <p className="text-xs text-slate-500 mt-1 mb-2">{item.desc}</p>
+                                        {item.amount && (
+                                            <div className={`text-xs font-mono font-bold ${item.type === 'Bonus' ? 'text-green-600' : 'text-red-600'}`}>
+                                                {item.type === 'Bonus' ? '+' : '-'} ₦{item.amount.toLocaleString()}
                                             </div>
-                                        ))}
+                                        )}
+                                        <div className="text-[10px] text-slate-300 mt-2">{item.date}</div>
                                     </div>
                                 </div>
+                            )) : (
+                                <div className="text-sm text-slate-400 italic pl-6">No recent updates</div>
                             )}
                         </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-10 text-center bg-slate-50 rounded-xl border border-slate-100 border-dashed">
-                            <Calendar className="text-slate-300 mb-3" size={48} />
-                            <h4 className="font-bold text-slate-600">Payroll Processing</h4>
-                            <p className="text-sm text-slate-400 max-w-xs mt-1">
-                                The payroll for {payrollStatus.month} is currently being reviewed.
-                                Details will safely appear here once approved.
-                            </p>
+                    </div>
+
+                    {/* Quick Action */}
+                    <div className="bg-gradient-to-br from-brand-900 to-slate-900 rounded-xl shadow-lg p-6 text-white relative overflow-hidden">
+                        <div className="relative z-10">
+                            <h3 className="font-bold text-lg mb-2">My Profile</h3>
+                            <p className="text-brand-200 text-sm mb-4">Keep your personal and contact details up to date.</p>
+                            <a href="/user/profile" className="inline-flex items-center gap-2 text-sm font-bold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors border border-white/10">
+                                View Profile <ArrowRight size={14} />
+                            </a>
                         </div>
-                    )}
+                        <div className="absolute right-[-20px] bottom-[-20px] opacity-10">
+                            <User size={120} />
+                        </div>
+                    </div>
                 </div>
 
             </div>

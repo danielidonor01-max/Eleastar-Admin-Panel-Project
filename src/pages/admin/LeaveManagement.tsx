@@ -6,6 +6,35 @@ export const LeaveManagement: React.FC = () => {
     const { employees, leaveRequests, approveLeave, rejectLeave } = useAdmin();
     const [filter, setFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('Pending');
 
+    // UI State
+    const [rejectModalOpen, setRejectModalOpen] = useState(false);
+    const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+    const [rejectionReason, setRejectionReason] = useState('');
+    const [actionError, setActionError] = useState<string | null>(null);
+
+    const handleApprove = (id: string) => {
+        setActionError(null);
+        const result = approveLeave(id);
+        if (!result.success && result.error) {
+            setActionError(result.error);
+            setTimeout(() => setActionError(null), 5000);
+        }
+    };
+
+    const handleRejectClick = (id: string) => {
+        setSelectedRequestId(id);
+        setRejectModalOpen(true);
+        setActionError(null);
+    };
+
+    const confirmReject = () => {
+        if (!selectedRequestId || !rejectionReason.trim()) return;
+        rejectLeave(selectedRequestId, rejectionReason);
+        setRejectModalOpen(false);
+        setRejectionReason('');
+        setSelectedRequestId(null);
+    };
+
     const getEmployeeName = (id: string) => {
         const emp = employees.find(e => e.id === id);
         return emp ? emp.name : 'Unknown User';
@@ -41,6 +70,14 @@ export const LeaveManagement: React.FC = () => {
                     ))}
                 </div>
             </div>
+
+            {/* Error Feedback */}
+            {actionError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 animate-in slide-in-from-top-2">
+                    <XCircle size={18} />
+                    <span className="font-bold">{actionError}</span>
+                </div>
+            )}
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -120,8 +157,8 @@ export const LeaveManagement: React.FC = () => {
                                         <td className="p-4 text-slate-600 max-w-xs truncate" title={req.reason}>{req.reason}</td>
                                         <td className="p-4">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${req.status === 'Approved' ? 'bg-green-100 text-green-700' :
-                                                    req.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                                                        'bg-amber-100 text-amber-700'
+                                                req.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                                    'bg-amber-100 text-amber-700'
                                                 }`}>
                                                 {req.status}
                                             </span>
@@ -130,14 +167,14 @@ export const LeaveManagement: React.FC = () => {
                                             {req.status === 'Pending' && (
                                                 <div className="flex justify-end gap-2">
                                                     <button
-                                                        onClick={() => approveLeave(req.id)}
+                                                        onClick={() => handleApprove(req.id)}
                                                         className="p-1.5 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors"
                                                         title="Approve"
                                                     >
                                                         <CheckCircle size={18} />
                                                     </button>
                                                     <button
-                                                        onClick={() => rejectLeave(req.id)}
+                                                        onClick={() => handleRejectClick(req.id)}
                                                         className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
                                                         title="Reject"
                                                     >
@@ -153,6 +190,47 @@ export const LeaveManagement: React.FC = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Rejection Modal */}
+            {rejectModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setRejectModalOpen(false)} />
+                    <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95">
+                        <div className="p-6 border-b border-slate-100 bg-slate-50">
+                            <h3 className="font-bold text-slate-900">Reject Leave Request</h3>
+                            <p className="text-xs text-slate-500 mt-1">Please provide a reason for this rejection.</p>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">Reason</label>
+                                <textarea
+                                    autoFocus
+                                    rows={3}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-shadow resize-none"
+                                    placeholder="e.g. Schedule conflict with project deadline..."
+                                    value={rejectionReason}
+                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-2">
+                                <button
+                                    onClick={() => setRejectModalOpen(false)}
+                                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmReject}
+                                    disabled={!rejectionReason.trim()}
+                                    className="px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Reject Request
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { PageContainer } from '../../components/PageContainer';
 import {
-    Eye, Save, Layout, Plus, Trash2, Globe, Info, ChevronRight
+    Eye, Save, Layout, Plus, Trash2, Info, ChevronRight
 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { PUBLIC_LINK } from '../../config';

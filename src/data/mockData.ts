@@ -41,6 +41,12 @@ export interface LeaveRequest {
     reason: string;
     status: 'Pending' | 'Approved' | 'Rejected';
     requestedAt: string;
+    rejectionReason?: string;
+    actionBy?: string; // ID of the approver/rejector
+    actionAt?: string; // Timestamp of action
+    // Reminder Logic
+    reminderLevel?: number; // 0=None, 1=24h, 2=72h, 3=Escalated
+    lastRemindedAt?: string;
 }
 
 export interface Application {
@@ -200,8 +206,18 @@ export interface PerformanceReview {
     cycleId: string;
     selfReview: string;
     rating: number; // 1-5
-    status: 'Pending' | 'Submitted' | 'Reviewed';
+    status: 'Pending' | 'Submitted' | 'Under Review' | 'Revision Requested' | 'Approved';
     submittedAt?: string;
+    // Reviewer Fields
+    managerRating?: number;
+    managerFeedback?: string;
+    internalNotes?: string;
+    recommendation?: 'None' | 'Promotion' | 'Salary Increase' | 'Bonus';
+    reviewedBy?: string;
+    reviewedAt?: string;
+    // Reminder Logic
+    reminderLevel?: number; // 0=None, 1=24h, 2=72h, 3=Escalated
+    lastRemindedAt?: string;
 }
 
 export const initialReviewCycles: ReviewCycle[] = [
@@ -226,7 +242,32 @@ export const initialLeaveRequests: LeaveRequest[] = [
         days: 3,
         reason: "Personal time off to attend a wedding.",
         status: 'Pending',
-        requestedAt: '2026-01-29T10:00:00Z'
+        requestedAt: '2026-01-29T10:00:00Z', // ~3 days ago (Trigger 72h)
+        reminderLevel: 0
+    },
+    {
+        id: "LR-002",
+        employeeId: "EMP-004", // Victor
+        type: 'Sick',
+        startDate: '2026-02-05',
+        endDate: '2026-02-06',
+        days: 2,
+        reason: "Feeling unwell",
+        status: 'Pending',
+        requestedAt: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(), // ~25 hours ago (Trigger 24h)
+        reminderLevel: 0
+    },
+    {
+        id: "LR-003",
+        employeeId: "EMP-005", // Fegor
+        type: 'Unpaid',
+        startDate: '2026-03-01',
+        endDate: '2026-03-05',
+        days: 5,
+        reason: "Traveling",
+        status: 'Pending',
+        requestedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), // ~6 days ago (Trigger Escalation)
+        reminderLevel: 0
     }
 ];
 

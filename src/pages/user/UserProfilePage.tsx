@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { User, Save, Linkedin, Facebook, Instagram, Phone, Mail, MapPin, Building, Briefcase, Camera } from 'lucide-react';
-import { PageContainer } from '../../components/PageContainer'; // Using if appropriate or similar container
-import { Employee } from '../../data/mockData';
+import { Save, Linkedin, Facebook, Instagram, Phone, Mail, Camera, ShieldCheck } from 'lucide-react';
+
+
 
 export const UserProfilePage: React.FC = () => {
     const { employees, currentUserId, updateUserProfile } = useAdmin();
@@ -55,14 +55,7 @@ export const UserProfilePage: React.FC = () => {
         setIsEditing(false);
     };
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // In a real app, this would be a file upload. 
-        // For mock, we'll purposely not implement file reading to avoid complexity, 
-        // or we can allow pasting a URL if we want to be fancy.
-        // Let's stick to the requirements: "Profile photo". 
-        // We'll simulate it by alerting for now or allowing URL input if user wants.
-        alert("In this demo, please paste an image URL directly or keep the existing one.");
-    };
+
 
 
     return (
@@ -286,4 +279,4 @@ export const UserProfilePage: React.FC = () => {
     );
 };
 
-import { ShieldCheck } from 'lucide-react';
+
