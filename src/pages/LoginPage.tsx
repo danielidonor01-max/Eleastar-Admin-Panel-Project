@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Lock, ArrowRight } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 
@@ -9,10 +9,9 @@ export const LoginPage: React.FC = () => {
     const [error, setError] = useState('');
     const { login } = useAdmin();
     const navigate = useNavigate();
-    const location = useLocation();
 
-    // Get the redirect path from location state, or default to /admin/dashboard
-    const from = location.state?.from?.pathname || "/admin/dashboard";
+
+
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();

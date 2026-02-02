@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { Target, TrendingUp, Award, Calendar, Play, X, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Target, TrendingUp, Award, Calendar, Play, X, CheckCircle2 } from 'lucide-react';
 
 export const PerformanceReviewPage: React.FC = () => {
-    const { currentUserId, employees, performanceReviews, submitSelfReview, reviewCycles } = useAdmin();
+    const { currentUserId, performanceReviews, submitSelfReview, reviewCycles } = useAdmin();
     // Sort reviews by date descending
     const myReviews = performanceReviews
         .filter(r => r.employeeId === currentUserId)

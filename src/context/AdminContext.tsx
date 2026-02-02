@@ -176,7 +176,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const checkReminders = () => {
             const now = new Date();
             const ONE_HOUR = 60 * 60 * 1000;
-            const ONE_DAY = 24 * ONE_HOUR;
+
+
 
             // 1. Process Leave Requests
             setLeaveRequests(prev => prev.map(req => {
@@ -995,9 +996,23 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         logAction('Logout', 'Admin logged out');
     };
 
+    // Data Masking for Security
+    const visibleEmployees = React.useMemo(() => {
+        const sensitiveRoles: AdminRole[] = ['Super Admin', 'Finance Admin'];
+        const canViewSalary = sensitiveRoles.includes(currentUserRole);
+
+        if (canViewSalary) return employees;
+
+        return employees.map(emp => ({
+            ...emp,
+            // Mask Salary if not viewing own profile (optional: allow viewing own salary)
+            salary: emp.id === currentUserId ? emp.salary : 0
+        }));
+    }, [employees, currentUserRole, currentUserId]);
+
     return (
         <AdminContext.Provider value={{
-            employees,
+            employees: visibleEmployees,
             jobs,
             cmsContent,
             activityLogs,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { CheckCircle, XCircle, Clock, Calendar, User, Filter } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, User, Filter } from 'lucide-react';
 
 export const LeaveManagement: React.FC = () => {
     const { employees, leaveRequests, approveLeave, rejectLeave } = useAdmin();

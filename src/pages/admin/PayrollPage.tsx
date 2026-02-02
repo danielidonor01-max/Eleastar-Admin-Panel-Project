@@ -4,8 +4,21 @@ import { useAdmin } from '../../context/AdminContext';
 import { PayrollAdjustmentModal } from '../../components/PayrollAdjustmentModal';
 
 export const PayrollPage: React.FC = () => {
-    const { employees, payrollStatus, updatePayrollStatus, bulkPayrollAdjustment, logAction } = useAdmin();
+    const { employees, payrollStatus, updatePayrollStatus, bulkPayrollAdjustment, logAction, rolePermissions, currentUserRole } = useAdmin();
     const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
+
+    // Permission Guard
+    const canAccess = rolePermissions[currentUserRole]?.includes('Payroll') || currentUserRole === 'Super Admin';
+
+    if (!canAccess) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                <AlertCircle size={48} className="mb-4 text-red-500" />
+                <h2 className="text-xl font-bold text-slate-900">Access Denied</h2>
+                <p>You do not have permission to view the Payroll module.</p>
+            </div>
+        );
+    }
 
     // Selection & Filter State (Main Page)
     const [selectedIds, setSelectedIds] = useState<string[]>([]);

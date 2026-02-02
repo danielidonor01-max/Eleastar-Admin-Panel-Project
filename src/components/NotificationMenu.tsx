@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Bell, Check, Calendar, TrendingUp, Wallet, UserPlus, QrCode, FileText, Filter, CheckCheck } from 'lucide-react';
+import { Bell, Calendar, TrendingUp, Wallet, UserPlus, QrCode, FileText, CheckCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import type { Notification, NotificationType } from '../context/AdminContext';
