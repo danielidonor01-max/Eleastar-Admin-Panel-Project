@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Globe, Briefcase, ChevronDown, ChevronRight, LogOut, Calendar, Share2, BarChart2, Layout, QrCode, Wallet, FileText, Search, Check, Lock, User } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Globe, Briefcase, ChevronDown, ChevronRight, LogOut, Calendar, Share2, BarChart2, Layout, QrCode, Wallet, FileText, Search, Check } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { NotificationMenu } from '../components/NotificationMenu';
 import type { AdminRole, ModuleType } from '../context/AdminContext';
@@ -11,8 +11,7 @@ export const AdminLayout: React.FC = () => {
         currentUserRole,
         switchRole,
         rolePermissions,
-        isAuthenticated,
-        logout
+        isAuthenticated
     } = useAdmin();
 
     const navigate = useNavigate();

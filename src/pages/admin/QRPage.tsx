@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { QrCode, RefreshCw, Ban, CheckCircle2, AlertTriangle, FileBadge, Download, Search, RotateCw, Image as ImageIcon, FileText as FilePdf } from 'lucide-react';
+import { QrCode, RefreshCw, Ban, CheckCircle2, AlertTriangle, FileBadge, Download, Search, FileText as FilePdf } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -451,13 +451,13 @@ export const QRPage: React.FC = () => {
                                         onClick={() => handleExport('png')}
                                         className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold shadow-sm active:scale-95"
                                     >
-                                        <ImageIcon size={18} /> PNG
+                                        <Download size={18} /> PNG
                                     </button>
                                     <button
                                         onClick={() => handleExport('jpg')}
                                         className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold shadow-sm active:scale-95"
                                     >
-                                        <ImageIcon size={18} /> JPG
+                                        <Download size={18} /> JPG
                                     </button>
                                 </div>
                             </div>
