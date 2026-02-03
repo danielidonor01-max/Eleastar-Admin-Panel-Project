@@ -19,6 +19,7 @@ import { CMSPage } from './pages/admin/CMSPage';
 import { LeaveManagement } from './pages/admin/LeaveManagement';
 import { PerformancePage } from './pages/admin/PerformancePage';
 import { SettingsPage } from './pages/admin/SettingsPage';
+import { NotificationsPage } from './pages/admin/NotificationsPage';
 
 import { AdminProvider } from './context/AdminContext';
 import { ProfilePage } from './pages/admin/ProfilePage';
@@ -52,15 +53,17 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="notifications" element={<NotificationsPage />} />
             <Route path="employees" element={<Employees />} />
             <Route path="qr" element={<QRPage />} />
             <Route path="payroll" element={<PayrollPage />} />
             <Route path="recruitment" element={<RecruitmentPage />} />
-            <Route path="leave" element={<LeaveManagement />} /> {/* Added route */}
+            <Route path="leave" element={<LeaveManagement />} />
             <Route path="performance" element={<PerformancePage />} />
             <Route path="cms" element={<CMSPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="system/activity" element={<SettingsPage />} />
             {/* Fallback for unimplemented admin routes */}
             <Route path="*" element={<Dashboard />} />
           </Route>
@@ -69,6 +72,7 @@ function App() {
           <Route path="/user" element={<UserLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<UserDashboard />} />
+            <Route path="notifications" element={<NotificationsPage />} />
             <Route path="profile" element={<UserProfilePage />} />
             <Route path="leave" element={<LeavePage />} />
             <Route path="performance" element={<PerformanceReviewPage />} />

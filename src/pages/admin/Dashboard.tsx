@@ -1,9 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Users, TrendingUp, Clock, FileText } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 
 export const Dashboard: React.FC = () => {
     const { employees, payrollStatus, activityLogs, jobs } = useAdmin();
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [highlightedLogId, setHighlightedLogId] = useState<string | null>(null);
+
+    // Deep Linking Handler
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const logId = params.get('logId');
+        if (logId) {
+            setHighlightedLogId(logId);
+            // Optional: Scroll to view if list gets long
+        }
+    }, [location.search]);
 
     // Computed Data
     const totalEmployees = employees.length;
@@ -83,11 +97,17 @@ export const Dashboard: React.FC = () => {
                 <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                         <h3 className="font-bold text-slate-900">Recent System Activity</h3>
-                        <button className="text-sm text-brand-600 font-medium hover:underline">View All</button>
+                        <button onClick={() => navigate('/admin/system/activity')} className="text-sm text-brand-600 font-medium hover:underline">View All</button>
                     </div>
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-slate-100 relative">
                         {activityLogs.slice(0, 5).map((log) => (
-                            <div key={log.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                            <div
+                                key={log.id}
+                                className={`px-6 py-4 flex items-center justify-between transition-all duration-500 ${highlightedLogId === log.id
+                                    ? 'bg-blue-50 border-l-4 border-l-blue-500'
+                                    : 'hover:bg-slate-50'
+                                    }`}
+                            >
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">
                                         <FileText size={18} />
@@ -116,7 +136,7 @@ export const Dashboard: React.FC = () => {
                                     <div>
                                         <h4 className="text-sm font-bold text-orange-900">Payroll Approval Pending</h4>
                                         <p className="text-xs text-orange-700 mt-1">{payrollStatus.month} cycle needs review.</p>
-                                        <button className="mt-3 text-xs font-bold bg-white text-orange-800 px-3 py-1.5 rounded border border-orange-200 hover:bg-orange-50">Review Payroll</button>
+                                        <button onClick={() => navigate('/admin/payroll')} className="mt-3 text-xs font-bold bg-white text-orange-800 px-3 py-1.5 rounded border border-orange-200 hover:bg-orange-50">Review Payroll</button>
                                     </div>
                                 </div>
                             </div>
@@ -128,7 +148,7 @@ export const Dashboard: React.FC = () => {
                                 <div>
                                     <h4 className="text-sm font-bold text-brand-900">New Applications</h4>
                                     <p className="text-xs text-brand-700 mt-1">{totalApplicants} candidates waiting.</p>
-                                    <button className="mt-3 text-xs font-bold bg-white text-brand-800 px-3 py-1.5 rounded border border-brand-200 hover:bg-brand-50">View Candidates</button>
+                                    <button onClick={() => navigate('/admin/recruitment')} className="mt-3 text-xs font-bold bg-white text-brand-800 px-3 py-1.5 rounded border border-brand-200 hover:bg-brand-50">View Candidates</button>
                                 </div>
                             </div>
                         </div>

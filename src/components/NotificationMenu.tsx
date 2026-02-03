@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Bell, Calendar, TrendingUp, Wallet, UserPlus, QrCode, FileText, CheckCheck } from 'lucide-react';
+import { Bell, Calendar, TrendingUp, Wallet, UserPlus, QrCode, FileText, CheckCheck, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import type { Notification, NotificationType } from '../context/AdminContext';
+import { NotificationDetailsModal } from './NotificationDetailsModal';
 
 export const NotificationMenu: React.FC = () => {
     const {
@@ -15,6 +16,9 @@ export const NotificationMenu: React.FC = () => {
 
     const [showMenu, setShowMenu] = useState(false);
     const [activeFilter, setActiveFilter] = useState<'All' | 'Unread' | NotificationType>('All');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+
     const navigate = useNavigate();
 
     // 1. Base Filter (User/Role Target)
@@ -28,14 +32,22 @@ export const NotificationMenu: React.FC = () => {
 
     const unreadCount = myNotifications.filter(n => !n.isRead).length;
 
-    // 2. Active Tab Filter
+    // 2. Search & Active Tab Filter
     const filteredNotifications = useMemo(() => {
         return myNotifications.filter(n => {
+            // Search Filter
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                const matchesSearch = n.title.toLowerCase().includes(query) || n.message.toLowerCase().includes(query);
+                if (!matchesSearch) return false;
+            }
+
+            // Tab Filter
             if (activeFilter === 'All') return true;
             if (activeFilter === 'Unread') return !n.isRead;
             return n.type === activeFilter;
         });
-    }, [myNotifications, activeFilter]);
+    }, [myNotifications, activeFilter, searchQuery]);
 
     // 3. Time Grouping Helper
     const groupedNotifications = useMemo(() => {
@@ -65,8 +77,9 @@ export const NotificationMenu: React.FC = () => {
 
     const handleItemClick = (n: Notification) => {
         markNotificationAsRead(n.id);
+        setSelectedNotification(n);
+        // Do not close menu immediately, let user interact with modal which is outside the menu
         setShowMenu(false);
-        navigate(n.link);
     };
 
     // Helper: Icon Map
@@ -87,7 +100,7 @@ export const NotificationMenu: React.FC = () => {
     const FilterPill = ({ label, value }: { label: string, value: typeof activeFilter }) => (
         <button
             onClick={() => setActiveFilter(value)}
-            className={`px-3 py-1 text-xs font-bold rounded-full border transition-all whitespace-nowrap ${activeFilter === value
+            className={`px-3 py-1 text-xs font-bold rounded-full border transition-all whitespace-nowrap flex-shrink-0 ${activeFilter === value
                 ? 'bg-slate-900 text-white border-slate-900'
                 : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                 }`}
@@ -113,11 +126,11 @@ export const NotificationMenu: React.FC = () => {
             {showMenu && (
                 <>
                     <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                    <div className="absolute right-0 mt-3 w-96 bg-white rounded-xl shadow-2xl border border-slate-200 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right ring-1 ring-black/5">
+                    <div className="absolute right-0 mt-3 w-[400px] bg-white rounded-xl shadow-2xl border border-slate-200 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right ring-1 ring-black/5">
 
-                        {/* Header */}
-                        <div className="p-4 border-b border-slate-100 bg-white sticky top-0 z-10">
-                            <div className="flex justify-between items-center mb-4">
+                        {/* Sticky Header */}
+                        <div className="border-b border-slate-100 bg-white sticky top-0 z-20 shadow-sm">
+                            <div className="px-4 py-3 flex justify-between items-center bg-slate-50/50">
                                 <h3 className="font-bold text-slate-900 flex items-center gap-2">
                                     Notifications
                                     {unreadCount > 0 && <span className="bg-red-100 text-red-600 text-[10px] px-2 py-0.5 rounded-full">{unreadCount} New</span>}
@@ -132,32 +145,46 @@ export const NotificationMenu: React.FC = () => {
                                 </button>
                             </div>
 
+                            {/* Search Bar */}
+                            <div className="px-4 pb-2">
+                                <div className="relative">
+                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search notifications..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 focus:bg-white transition-all placeholder:text-slate-400"
+                                    />
+                                </div>
+                            </div>
+
                             {/* Filters */}
-                            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar mask-gradient">
+                            <div className="px-4 pb-3 flex gap-2 overflow-x-auto no-scrollbar mask-gradient pt-1">
                                 <FilterPill label="All" value="All" />
                                 <FilterPill label={`Unread ${unreadCount > 0 ? `(${unreadCount})` : ''}`} value="Unread" />
                                 <div className="w-px h-4 bg-slate-200 mx-1 self-center flex-shrink-0" />
                                 <FilterPill label="Leave" value="Leave" />
-                                <FilterPill label="Performance" value="Performance" />
                                 <FilterPill label="Payroll" value="Payroll" />
                                 <FilterPill label="System" value="System" />
+                                <FilterPill label="HR" value="HR" />
                             </div>
                         </div>
 
                         {/* Notification List */}
-                        <div className="max-h-[400px] overflow-y-auto bg-slate-50/50">
+                        <div className="max-h-[450px] overflow-y-auto bg-slate-50/50">
                             {filteredNotifications.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                                <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
                                     <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3 text-slate-400">
                                         <Bell size={24} />
                                     </div>
                                     <h4 className="text-slate-900 font-bold mb-1">
-                                        {activeFilter === 'All' ? "You're all caught up 🎉" : 'No notifications match this filter.'}
+                                        {searchQuery ? 'No matches found' : (activeFilter === 'All' ? "You're all caught up 🎉" : 'No notifications match this filter.')}
                                     </h4>
                                     <p className="text-xs text-slate-500 max-w-[200px]">
-                                        {activeFilter === 'All'
+                                        {searchQuery ? 'Try adjusting your search terms.' : (activeFilter === 'All'
                                             ? "Check back later for updates on leave, payroll, and more."
-                                            : "Try selecting a different category or clearing filters."}
+                                            : "Try selecting a different category or clearing filters.")}
                                     </p>
                                 </div>
                             ) : (
@@ -165,7 +192,7 @@ export const NotificationMenu: React.FC = () => {
                                     {Object.entries(groupedNotifications).map(([group, items]) => (
                                         items.length > 0 && (
                                             <div key={group}>
-                                                <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest sticky top-0 bg-slate-50/95 backdrop-blur-sm z-10 border-b border-slate-100/50">
+                                                <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest sticky top-0 bg-slate-50/95 backdrop-blur-sm z-10 border-b border-slate-100/50 shadow-sm">
                                                     {group}
                                                 </div>
                                                 <div>
@@ -173,7 +200,7 @@ export const NotificationMenu: React.FC = () => {
                                                         <div
                                                             key={n.id}
                                                             onClick={() => handleItemClick(n)}
-                                                            className={`group relative px-4 py-3.5 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-all flex gap-3.5 items-start ${!n.isRead ? 'bg-white' : 'bg-transparent opacity-80 hover:opacity-100'
+                                                            className={`group relative px-4 py-3 border-b border-slate-100 hover:bg-white hover:shadow-sm cursor-pointer transition-all grid grid-cols-[auto_1fr_auto] gap-3 items-start ${!n.isRead ? 'bg-blue-50/30' : 'bg-transparent'
                                                                 }`}
                                                         >
                                                             {/* Unread Indicator Bar */}
@@ -182,36 +209,33 @@ export const NotificationMenu: React.FC = () => {
                                                             )}
 
                                                             {/* Icon Box */}
-                                                            <div className={`mt-0.5 w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center border ${!n.isRead ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-100 border-slate-100 text-slate-400 grayscale'
+                                                            <div className={`mt-0.5 w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center border ${!n.isRead ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-100 border-slate-100 text-slate-400 grayscale'
                                                                 }`}>
                                                                 {getIcon(n.type)}
                                                             </div>
 
-                                                            {/* Content */}
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="flex justify-between items-start gap-2 mb-0.5">
-                                                                    <p className={`text-sm truncate pr-2 ${!n.isRead ? 'font-bold text-slate-900' : 'font-medium text-slate-600'
-                                                                        }`}>
-                                                                        {n.title}
-                                                                    </p>
-                                                                    <span className="text-[10px] text-slate-400 whitespace-nowrap flex-shrink-0">
-                                                                        {new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                    </span>
-                                                                </div>
+                                                            {/* Content - Using grid/flex to control layout strictly */}
+                                                            <div className="min-w-0 flex flex-col gap-0.5">
+                                                                <p className={`text-sm truncate pr-1 ${!n.isRead ? 'font-bold text-slate-900' : 'font-medium text-slate-600'
+                                                                    }`}>
+                                                                    {n.title}
+                                                                </p>
                                                                 <p className={`text-xs leading-relaxed line-clamp-2 ${!n.isRead ? 'text-slate-600' : 'text-slate-500'
                                                                     }`}>
                                                                     {n.message}
                                                                 </p>
-                                                                {/* Type Tag */}
-                                                                {/* <div className="mt-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-[10px] font-medium text-slate-500">
-                                                                    {n.type}
-                                                                </div> */}
+                                                                <span className="text-[10px] text-slate-400 mt-1">
+                                                                    {new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                </span>
                                                             </div>
 
-                                                            {/* Valid Read Indicator Dot for very quick scanning */}
-                                                            {!n.isRead && (
-                                                                <div className="w-2 h-2 bg-brand-500 rounded-full mt-2 flex-shrink-0 absolute right-4" />
-                                                            )}
+                                                            {/* Status Column */}
+                                                            <div className="flex flex-col items-end gap-2 h-full justify-start pt-1">
+                                                                {/* Isolated Red Dot */}
+                                                                {!n.isRead && (
+                                                                    <div className="w-2.5 h-2.5 bg-brand-500 rounded-full flex-shrink-0 shadow-sm" />
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -223,10 +247,13 @@ export const NotificationMenu: React.FC = () => {
                         </div>
 
                         {/* Footer */}
-                        <div className="p-3 border-t border-slate-100 bg-slate-50 text-center">
+                        <div className="p-3 border-t border-slate-100 bg-slate-50 text-center sticky bottom-0 z-20">
                             <button
-                                onClick={() => navigate('/admin/dashboard')} // Or a dedicated full page if it exists
-                                className="text-xs font-bold text-brand-600 hover:text-brand-700 transition-colors flex items-center justify-center gap-1 w-full py-1"
+                                onClick={() => {
+                                    setShowMenu(false);
+                                    navigate(currentUserRole === 'User' ? '/user/notifications' : '/admin/notifications');
+                                }}
+                                className="text-xs font-bold text-brand-600 hover:text-brand-700 transition-colors flex items-center justify-center gap-1 w-full py-1 hover:underline"
                             >
                                 View Full History
                             </button>
@@ -234,7 +261,13 @@ export const NotificationMenu: React.FC = () => {
                     </div>
                 </>
             )}
+
+            {/* Modal Logic */}
+            <NotificationDetailsModal
+                isOpen={!!selectedNotification}
+                onClose={() => setSelectedNotification(null)}
+                notification={selectedNotification}
+            />
         </div>
     );
 };
-

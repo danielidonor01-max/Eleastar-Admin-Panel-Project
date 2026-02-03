@@ -1,4 +1,4 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import { Calendar, FileDown, CreditCard, TrendingUp, Clock, User, ArrowRight, Briefcase } from 'lucide-react';
 import { generatePayslipPDF } from '../../utils/generatePayslip';
@@ -285,9 +285,9 @@ export const UserDashboard: React.FC = () => {
                         <div className="relative z-10">
                             <h3 className="font-bold text-lg mb-2">My Profile</h3>
                             <p className="text-brand-200 text-sm mb-4">Keep your personal and contact details up to date.</p>
-                            <a href="/user/profile" className="inline-flex items-center gap-2 text-sm font-bold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors border border-white/10">
+                            <Link to="/user/profile" className="inline-flex items-center gap-2 text-sm font-bold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors border border-white/10">
                                 View Profile <ArrowRight size={14} />
-                            </a>
+                            </Link>
                         </div>
                         <div className="absolute right-[-20px] bottom-[-20px] opacity-10">
                             <User size={120} />

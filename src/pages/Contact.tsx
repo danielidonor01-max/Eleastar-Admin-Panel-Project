@@ -1,5 +1,6 @@
 import React from 'react';
 import { StickyHeader } from '../components/StickyHeader';
+import { BrandFooter } from '../components/BrandFooter';
 import { MapPin, Phone, Mail, Send } from 'lucide-react';
 
 export const Contact: React.FC = () => {
@@ -99,15 +100,7 @@ export const Contact: React.FC = () => {
                 </section>
             </main>
 
-            <footer className="bg-slate-950 text-slate-400 py-16 border-t border-slate-900">
-                <div className="max-w-7xl mx-auto px-6 text-center">
-                    <h2 className="text-3xl font-bold text-white mb-6">Eleastar</h2>
-                    <p className="mb-8 max-w-lg mx-auto">Innovating for a better tomorrow. Connect with us to transform your business infrastructure.</p>
-                    <div className="text-sm">
-                        &copy; {new Date().getFullYear()} Eleastar Technologies Limited. All rights reserved.
-                    </div>
-                </div>
-            </footer>
+            <BrandFooter />
         </div>
     );
 };

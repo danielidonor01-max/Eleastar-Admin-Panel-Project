@@ -5,6 +5,8 @@ import { PageContainer } from '../../components/PageContainer';
 import {
     Eye, Save, Layout, Plus, Trash2, ChevronRight
 } from 'lucide-react';
+import { RichTextEditor } from '../../components/cms/RichTextEditor';
+import { ImageUploader } from '../../components/cms/ImageUploader';
 import { useSearchParams } from 'react-router-dom';
 import { PUBLIC_LINK } from '../../config';
 import type {
@@ -36,34 +38,47 @@ const HeroEditor: React.FC<{ section: HeroSection; onChange: (u: Partial<HeroSec
                 </div>
                 <h4 className="text-sm font-bold text-slate-500 mb-3 uppercase">Slide {idx + 1}</h4>
                 <div className="grid gap-4">
-                    <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">Headline</label>
-                        <input
-                            aria-label="Headline"
-                            type="text"
-                            className="w-full px-3 py-2 border rounded-md"
-                            value={card.headline}
-                            onChange={e => {
-                                const newCards = [...section.cards];
-                                newCards[idx] = { ...newCards[idx], headline: e.target.value };
-                                onChange({ cards: newCards });
-                            }}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">Subheadline</label>
-                        <input
-                            aria-label="Subheadline"
-                            type="text"
-                            className="w-full px-3 py-2 border rounded-md"
-                            value={card.subheadline}
-                            onChange={e => {
-                                const newCards = [...section.cards];
-                                newCards[idx] = { ...newCards[idx], subheadline: e.target.value };
-                                onChange({ cards: newCards });
-                            }}
-                        />
-                    </div>
+                    <RichTextEditor
+                        label="Headline"
+                        value={card.headline}
+                        onChange={val => {
+                            const newCards = [...section.cards];
+                            newCards[idx] = { ...newCards[idx], headline: val };
+                            onChange({ cards: newCards });
+                        }}
+                        minHeight="60px"
+                        charLimit={60}
+                        seoRecommend="Aim for 50-60 chars for best impact."
+                    />
+                    <RichTextEditor
+                        label="Subheadline"
+                        value={card.subheadline}
+                        onChange={val => {
+                            const newCards = [...section.cards];
+                            newCards[idx] = { ...newCards[idx], subheadline: val };
+                            onChange({ cards: newCards });
+                        }}
+                        minHeight="80px"
+                        charLimit={120}
+                        seoRecommend="Keep under 120 chars."
+                    />
+                    <ImageUploader
+                        label="Slide Background"
+                        imageUrl={card.imageUrl}
+                        altText={card.altText}
+                        onImageChange={val => {
+                            const newCards = [...section.cards];
+                            newCards[idx] = { ...newCards[idx], imageUrl: val };
+                            onChange({ cards: newCards });
+                        }}
+                        onAltTextChange={val => {
+                            const newCards = [...section.cards];
+                            newCards[idx] = { ...newCards[idx], altText: val };
+                            onChange({ cards: newCards });
+                        }}
+                        recommendedSize="1920 x 1080px"
+                        maxSizeInMB={2}
+                    />
                 </div>
             </div>
         ))}
@@ -89,84 +104,69 @@ const HeroEditor: React.FC<{ section: HeroSection; onChange: (u: Partial<HeroSec
 );
 
 const AboutEditor: React.FC<{ section: AboutSection; onChange: (u: Partial<AboutSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-4">
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Title</label>
-            <input
-                aria-label="Title"
-                className="w-full px-3 py-2 border rounded-md"
-                value={section.title}
-                onChange={e => onChange({ title: e.target.value })}
-            />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Text</label>
-            <textarea
-                aria-label="Text"
-                className="w-full px-3 py-2 border rounded-md h-32"
-                value={section.text}
-                onChange={e => onChange({ text: e.target.value })}
-            />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Image URL</label>
-            <input
-                aria-label="Image URL"
-                className="w-full px-3 py-2 border rounded-md text-sm text-slate-600"
-                value={section.imageUrl}
-                onChange={e => onChange({ imageUrl: e.target.value })}
-            />
-        </div>
+    <div className="space-y-6">
+        <RichTextEditor
+            label="Title"
+            value={section.title}
+            onChange={val => onChange({ title: val })}
+            minHeight="60px"
+            charLimit={60}
+            seoRecommend="Clear, concise titles perform better."
+        />
+        <RichTextEditor
+            label="Text"
+            value={section.text}
+            onChange={val => onChange({ text: val })}
+            minHeight="150px"
+            charLimit={400}
+        />
+        <ImageUploader
+            label="Section Image"
+            imageUrl={section.imageUrl}
+            altText={section.altText}
+            onImageChange={val => onChange({ imageUrl: val })}
+            onAltTextChange={val => onChange({ altText: val })}
+            recommendedSize="800 x 600px"
+            maxSizeInMB={1}
+        />
     </div>
 );
 
 const ServicesEditor: React.FC<{ section: ServicesSection; onChange: (u: Partial<ServicesSection>) => void }> = ({ section, onChange }) => (
     <div className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
-            <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Title</label>
-                <input
-                    aria-label="Title"
-                    className="w-full px-3 py-2 border rounded-md"
-                    value={section.title}
-                    onChange={e => onChange({ title: e.target.value })}
-                />
-            </div>
-            <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Subtitle</label>
-                <input
-                    aria-label="Subtitle"
-                    className="w-full px-3 py-2 border rounded-md"
-                    value={section.subtitle}
-                    onChange={e => onChange({ subtitle: e.target.value })}
-                />
-            </div>
+            <RichTextEditor label="Title" value={section.title} onChange={val => onChange({ title: val })} minHeight="60px" />
+            <RichTextEditor label="Subtitle" value={section.subtitle} onChange={val => onChange({ subtitle: val })} minHeight="60px" />
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
             <label className="block text-xs font-bold text-slate-700">Service List</label>
             {section.services.map((svc, idx) => (
-                <div key={svc.id} className="p-3 bg-slate-50 border rounded-md hover:border-slate-300">
-                    <input
-                        aria-label="Service Title"
-                        className="w-full bg-transparent font-bold mb-1 border-b border-transparent hover:border-slate-300 focus:border-brand-500 outline-none"
-                        value={svc.title}
-                        onChange={e => {
-                            const newSvcs = [...section.services];
-                            newSvcs[idx] = { ...newSvcs[idx], title: e.target.value };
-                            onChange({ services: newSvcs });
-                        }}
-                    />
-                    <input
-                        aria-label="Service Description"
-                        className="w-full bg-transparent text-sm text-slate-500 border-b border-transparent hover:border-slate-300 focus:border-brand-500 outline-none"
-                        value={svc.description}
-                        onChange={e => {
-                            const newSvcs = [...section.services];
-                            newSvcs[idx] = { ...newSvcs[idx], description: e.target.value };
-                            onChange({ services: newSvcs });
-                        }}
-                    />
+                <div key={svc.id} className="p-4 bg-slate-50 border rounded-lg hover:border-slate-300">
+                    <div className="space-y-3">
+                        <div className="border-b border-slate-200 pb-2">
+                            <input
+                                className="w-full bg-transparent font-bold outline-none placeholder-slate-400"
+                                placeholder="Service Title (Plain Text for ID usage)"
+                                value={svc.title}
+                                onChange={e => {
+                                    const newSvcs = [...section.services];
+                                    newSvcs[idx] = { ...newSvcs[idx], title: e.target.value };
+                                    onChange({ services: newSvcs });
+                                }}
+                            />
+                        </div>
+                        <RichTextEditor
+                            placeholder="Description"
+                            value={svc.description}
+                            onChange={val => {
+                                const newSvcs = [...section.services];
+                                newSvcs[idx] = { ...newSvcs[idx], description: val };
+                                onChange({ services: newSvcs });
+                            }}
+                            minHeight="80px"
+                        />
+                    </div>
                 </div>
             ))}
         </div>
@@ -176,23 +176,11 @@ const ServicesEditor: React.FC<{ section: ServicesSection; onChange: (u: Partial
 // --- About Page Specific Editors ---
 
 const AboutHeroEditor: React.FC<{ section: AboutHeroSection; onChange: (u: Partial<AboutHeroSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-4">
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Title</label>
-            <input aria-label="Title" className="w-full px-3 py-2 border rounded-md" value={section.title} onChange={e => onChange({ title: e.target.value })} />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Subtitle</label>
-            <input aria-label="Subtitle" className="w-full px-3 py-2 border rounded-md" value={section.subtitle} onChange={e => onChange({ subtitle: e.target.value })} />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Description</label>
-            <textarea aria-label="Description" className="w-full px-3 py-2 border rounded-md h-24" value={section.description} onChange={e => onChange({ description: e.target.value })} />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Image URL</label>
-            <input aria-label="Image URL" className="w-full px-3 py-2 border rounded-md text-sm text-slate-600" value={section.imageUrl} onChange={e => onChange({ imageUrl: e.target.value })} />
-        </div>
+    <div className="space-y-6">
+        <RichTextEditor label="Title" value={section.title} onChange={val => onChange({ title: val })} minHeight="60px" charLimit={60} seoRecommend="Max 60 chars." />
+        <RichTextEditor label="Subtitle" value={section.subtitle} onChange={val => onChange({ subtitle: val })} minHeight="60px" charLimit={120} />
+        <RichTextEditor label="Description" value={section.description} onChange={val => onChange({ description: val })} minHeight="120px" charLimit={300} />
+        <ImageUploader label="Hero Banner" imageUrl={section.imageUrl} altText={section.altText} onImageChange={val => onChange({ imageUrl: val })} onAltTextChange={val => onChange({ altText: val })} recommendedSize="1920 x 600px" maxSizeInMB={2} />
     </div>
 );
 
@@ -267,16 +255,28 @@ const MeetTeamEditor: React.FC<{ section: MeetTeamSection; onChange: (u: Partial
                             onChange({ members: newMembers });
                         }} />
                     </div>
-                    <input aria-label="Member Image URL" className="w-full px-2 py-1 border rounded text-xs text-slate-500 mb-2" placeholder="Image URL" value={member.imageUrl} onChange={e => {
-                        const newMembers = [...section.members];
-                        newMembers[idx] = { ...newMembers[idx], imageUrl: e.target.value };
-                        onChange({ members: newMembers });
-                    }} />
-                    <textarea aria-label="Member Bio" className="w-full px-2 py-1 border rounded text-sm h-16 placeholder:text-slate-400" placeholder="Short Bio" value={member.bio || ''} onChange={e => {
-                        const newMembers = [...section.members];
-                        newMembers[idx] = { ...newMembers[idx], bio: e.target.value };
-                        onChange({ members: newMembers });
-                    }} />
+                    <div className="mb-3">
+                        <ImageUploader
+                            label="Member Photo"
+                            imageUrl={member.imageUrl}
+                            onImageChange={val => {
+                                const newMembers = [...section.members];
+                                newMembers[idx] = { ...newMembers[idx], imageUrl: val };
+                                onChange({ members: newMembers });
+                            }}
+                            recommendedSize="400 x 400px (Square)"
+                        />
+                    </div>
+                    <RichTextEditor
+                        placeholder="Short Bio"
+                        value={member.bio || ''}
+                        onChange={val => {
+                            const newMembers = [...section.members];
+                            newMembers[idx] = { ...newMembers[idx], bio: val };
+                            onChange({ members: newMembers });
+                        }}
+                        minHeight="100px"
+                    />
                 </div>
             ))}
         </div>
@@ -286,23 +286,11 @@ const MeetTeamEditor: React.FC<{ section: MeetTeamSection; onChange: (u: Partial
 // --- Services Page Specific Editors ---
 
 const ServicesHeroEditor: React.FC<{ section: ServicesHeroSection; onChange: (u: Partial<ServicesHeroSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-4">
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Title (Small)</label>
-            <input aria-label="Title" className="w-full px-3 py-2 border rounded-md" value={section.title} onChange={e => onChange({ title: e.target.value })} />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Headline (Large)</label>
-            <input aria-label="Headline" className="w-full px-3 py-2 border rounded-md" value={section.headline} onChange={e => onChange({ headline: e.target.value })} />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Description</label>
-            <textarea className="w-full px-3 py-2 border rounded-md h-24" value={section.description} onChange={e => onChange({ description: e.target.value })} />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Image URL</label>
-            <input className="w-full px-3 py-2 border rounded-md text-sm text-slate-600" value={section.imageUrl} onChange={e => onChange({ imageUrl: e.target.value })} />
-        </div>
+    <div className="space-y-6">
+        <RichTextEditor label="Title (Small)" value={section.title} onChange={val => onChange({ title: val })} minHeight="60px" charLimit={40} />
+        <RichTextEditor label="Headline (Large)" value={section.headline} onChange={val => onChange({ headline: val })} minHeight="80px" charLimit={80} seoRecommend="Powerful, short headline." />
+        <RichTextEditor label="Description" value={section.description} onChange={val => onChange({ description: val })} minHeight="120px" charLimit={250} />
+        <ImageUploader label="Hero Banner" imageUrl={section.imageUrl} altText={section.altText} onImageChange={val => onChange({ imageUrl: val })} onAltTextChange={val => onChange({ altText: val })} recommendedSize="1920 x 600px" maxSizeInMB={2} />
     </div>
 );
 
@@ -335,15 +323,9 @@ const ServiceBlockEditor: React.FC<{ section: ServiceBlockSection; onChange: (u:
 );
 
 const ContactCTAEditor: React.FC<{ section: ContactCTASection; onChange: (u: Partial<ContactCTASection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-4">
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Title</label>
-            <input aria-label="Title" className="w-full px-3 py-2 border rounded-md" value={section.title} onChange={e => onChange({ title: e.target.value })} />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Text</label>
-            <textarea aria-label="Text" className="w-full px-3 py-2 border rounded-md h-24" value={section.text} onChange={e => onChange({ text: e.target.value })} />
-        </div>
+    <div className="space-y-6">
+        <RichTextEditor label="Title" value={section.title} onChange={val => onChange({ title: val })} minHeight="60px" charLimit={60} />
+        <RichTextEditor label="Text" value={section.text} onChange={val => onChange({ text: val })} minHeight="100px" charLimit={200} />
         <div className="grid grid-cols-2 gap-4">
             <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">CTA Label</label>
@@ -358,64 +340,59 @@ const ContactCTAEditor: React.FC<{ section: ContactCTASection; onChange: (u: Par
 );
 
 const ServiceDetailHeroEditor: React.FC<{ section: ServiceDetailHeroSection; onChange: (u: Partial<ServiceDetailHeroSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-4">
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Title</label>
-            <input aria-label="Title" className="w-full px-3 py-2 border rounded-md" value={section.title} onChange={e => onChange({ title: e.target.value })} />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Intro Text</label>
-            <textarea aria-label="Intro Text" className="w-full px-3 py-2 border rounded-md h-32" value={section.intro} onChange={e => onChange({ intro: e.target.value })} />
-        </div>
+    <div className="space-y-6">
+        <RichTextEditor
+            label="Page Title"
+            value={section.title}
+            onChange={val => onChange({ title: val })}
+            minHeight="60px"
+            charLimit={60}
+            seoRecommend="Primary keyword in title."
+        />
+        <RichTextEditor
+            label="Intro Text"
+            value={section.intro}
+            onChange={val => onChange({ intro: val })}
+            minHeight="120px"
+            charLimit={300}
+        />
     </div>
 );
 
 const ServiceDetailOverviewEditor: React.FC<{ section: ServiceDetailOverviewSection; onChange: (u: Partial<ServiceDetailOverviewSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-4">
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Image URL</label>
-            <input aria-label="Image URL" className="w-full px-3 py-2 border rounded-md text-sm text-slate-600" value={section.imageUrl} onChange={e => onChange({ imageUrl: e.target.value })} />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Alt Text</label>
-            <input aria-label="Alt Text" className="w-full px-3 py-2 border rounded-md" value={section.altText} onChange={e => onChange({ altText: e.target.value })} />
-        </div>
+    <div className="space-y-6">
+        <ImageUploader
+            label="Overview Image"
+            imageUrl={section.imageUrl}
+            altText={section.altText}
+            onImageChange={val => onChange({ imageUrl: val })}
+            onAltTextChange={val => onChange({ altText: val })}
+            recommendedSize="1920 x 800px"
+            maxSizeInMB={2}
+        />
     </div>
 );
 
 const ServiceDetailOfferingEditor: React.FC<{ section: ServiceDetailOfferingSection; onChange: (u: Partial<ServiceDetailOfferingSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-4">
+    <div className="space-y-6">
         <div className="flex gap-4">
             <div className="w-1/4">
                 <label className="block text-xs font-bold text-slate-700 mb-1">Number</label>
                 <input aria-label="Number" className="w-full px-3 py-2 border rounded-md" value={section.number} onChange={e => onChange({ number: e.target.value })} />
             </div>
             <div className="w-3/4">
-                <label className="block text-xs font-bold text-slate-700 mb-1">Title</label>
-                <input aria-label="Title" className="w-full px-3 py-2 border rounded-md" value={section.title} onChange={e => onChange({ title: e.target.value })} />
+                <RichTextEditor label="Title" value={section.title} onChange={val => onChange({ title: val })} minHeight="60px" />
             </div>
         </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Description</label>
-            <textarea aria-label="Description" className="w-full px-3 py-2 border rounded-md h-32" value={section.description} onChange={e => onChange({ description: e.target.value })} />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Image URL</label>
-            <input aria-label="Image URL" className="w-full px-3 py-2 border rounded-md text-sm text-slate-600" value={section.imageUrl} onChange={e => onChange({ imageUrl: e.target.value })} />
-        </div>
+        <RichTextEditor label="Description" value={section.description} onChange={val => onChange({ description: val })} minHeight="120px" />
+        <ImageUploader label="Section Image" imageUrl={section.imageUrl} altText={section.altText} onImageChange={val => onChange({ imageUrl: val })} onAltTextChange={val => onChange({ altText: val })} recommendedSize="800 x 600px" maxSizeInMB={1} />
     </div>
 );
 
 const ServiceDetailContactEditor: React.FC<{ section: ServiceDetailContactSection; onChange: (u: Partial<ServiceDetailContactSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-4">
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Title</label>
-            <input aria-label="Title" className="w-full px-3 py-2 border rounded-md" value={section.title} onChange={e => onChange({ title: e.target.value })} />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Description</label>
-            <textarea aria-label="Description" className="w-full px-3 py-2 border rounded-md h-24" value={section.description} onChange={e => onChange({ description: e.target.value })} />
-        </div>
+    <div className="space-y-6">
+        <RichTextEditor label="Title" value={section.title} onChange={val => onChange({ title: val })} minHeight="60px" />
+        <RichTextEditor label="Description" value={section.description} onChange={val => onChange({ description: val })} minHeight="100px" />
         <div className="grid grid-cols-2 gap-4">
             <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">CTA Label</label>

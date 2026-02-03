@@ -58,6 +58,10 @@ export interface AdminContextType {
     activityLogs: ActivityLog[];
     payrollStatus: PayrollCycle;
     ceoSignature: string | null;
+
+    // Auth
+    requestAuth: (level: 'CMS' | 'SENSITIVE', description: string, onConfirm: () => void) => void;
+
     cmsContent: CMSSection[]; // New CMS data
     footerContent: FooterContent; // Global Footer Data
 
@@ -151,7 +155,26 @@ const INITIAL_NOTIFICATIONS: Notification[] = [
     { id: '5', title: 'QR Maintenance', type: 'QR', message: 'Bulk QR regeneration completed', timestamp: new Date(Date.now() - 250000000).toISOString(), isRead: true, link: '/admin/qr' }
 ];
 
+import type { AuthLevel } from '../components/PinAuthorizationModal';
+import { PinAuthorizationModal } from '../components/PinAuthorizationModal';
+
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    // ...
+    const [authRequest, setAuthRequest] = useState<{ level: AuthLevel; description: string; onConfirm: () => void } | null>(null);
+
+    const requestAuth = (level: AuthLevel, description: string, onConfirm: () => void) => {
+        setAuthRequest({ level, description, onConfirm });
+    };
+
+    const handleAuthSuccess = () => {
+        if (authRequest) {
+            authRequest.onConfirm();
+            setAuthRequest(null);
+            // Log the clean auth event
+            logAction('Authorization', `PIN Verified for: ${authRequest.description} by ${authRequest.level === 'SENSITIVE' ? 'Super Admin' : 'User'}`);
+        }
+    };
+
     // State
     const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
     const [jobs, setJobs] = useState<Job[]>(initialJobs);
@@ -489,7 +512,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const addJob = (job: Job) => {
         setJobs(prev => [...prev, job]);
         logAction('Posted Job', `Created new job listing: ${job.title}`);
-        addNotification('Recruitment', `New Job Posted: ${job.title}`, '/admin/recruitment');
+        addNotification('Recruitment', `New Job Posted: ${job.title}`, `/admin/recruitment?jobId=${job.id}`);
     };
 
     const updateJob = (id: string, updates: Partial<Job>) => {
@@ -511,7 +534,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const publishPMSContent = (id: string) => {
         setCmsContent(prev => prev.map(c => c.id === id ? { ...c, status: 'Published' } : c));
         logAction('Published CMS Content', `Published updates for ${id}`);
-        addNotification('System', `New content published for ${id}`, '/');
+        addNotification('System', `New content published for ${id}`, '/admin/cms');
     };
 
     const addCMSContent = (section: CMSSection) => {
@@ -663,8 +686,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             return;
         }
 
+        const newId = `LR-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+
         const newRequest: LeaveRequest = {
-            id: `LR-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+            id: newId,
             employeeId: userId,
             status: 'Pending',
             requestedAt: new Date().toISOString(),
@@ -672,7 +697,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         };
         setLeaveRequests(prev => [newRequest, ...prev]);
         logAction('Leave Request', `New ${requestData.type} leave request from user ${userId}`);
-        addNotification('HR', `New leave request received from ${userId}`, '/admin/leave');
+        addNotification('HR', `New leave request received from ${userId}`, `/admin/leave?requestId=${newId}`);
 
         // Notify Admins
         dispatchNotification(
@@ -680,7 +705,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 title: 'New Leave Request',
                 message: `${requestData.type} Leave Request from ${userId}`,
                 type: 'Leave',
-                link: '/admin/leave'
+                link: `/admin/leave?requestId=${newId}`
             },
             { roles: ['HR Admin', 'Super Admin', 'Management Admin'] },
             ['in-app', 'email']
@@ -766,7 +791,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 title: 'Leave Approved',
                 message: 'Your leave request has been approved!',
                 type: 'Leave',
-                link: '/user/leave'
+                link: '/user/leave' // User side flow, sticking to generic as user page updates are out of scope
             },
             { userId: request.employeeId },
             ['in-app', 'email']
@@ -1017,6 +1042,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             cmsContent,
             activityLogs,
             payrollStatus,
+            requestAuth,
             ceoSignature,
             // Notification Engine
             emailLogs,
@@ -1065,6 +1091,14 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             login,
             logout
         }}>
+            {/* Global PIN Modal */}
+            <PinAuthorizationModal
+                isOpen={!!authRequest}
+                onClose={() => setAuthRequest(null)}
+                onSuccess={handleAuthSuccess}
+                requiredLevel={authRequest?.level || 'CMS'}
+                description={authRequest?.description || ''}
+            />
             {children}
         </AdminContext.Provider>
     );

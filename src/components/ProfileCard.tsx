@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Linkedin, Twitter, Instagram, Facebook } from 'lucide-react';
 import type { Employee } from '../data/mockData';
 
 interface ProfileCardProps {
@@ -57,6 +57,32 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ employee }) => {
                     }`}>
                     {employee.status === 'active' ? 'Active' : employee.status}
                 </div>
+
+                {/* Social Links */}
+                {employee.socialLinks && (
+                    <div className="mt-6 flex gap-3">
+                        {employee.socialLinks.linkedin && (
+                            <a href={employee.socialLinks.linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn Profile" className="p-2 text-slate-400 hover:text-[#0077b5] hover:bg-[#0077b5]/10 rounded-full transition-colors">
+                                <Linkedin size={20} />
+                            </a>
+                        )}
+                        {employee.socialLinks.twitter && (
+                            <a href={employee.socialLinks.twitter} target="_blank" rel="noreferrer" aria-label="Twitter Profile" className="p-2 text-slate-400 hover:text-black hover:bg-black/5 rounded-full transition-colors">
+                                <Twitter size={20} />
+                            </a>
+                        )}
+                        {employee.socialLinks.instagram && (
+                            <a href={employee.socialLinks.instagram} target="_blank" rel="noreferrer" aria-label="Instagram Profile" className="p-2 text-slate-400 hover:text-[#E1306C] hover:bg-[#E1306C]/10 rounded-full transition-colors">
+                                <Instagram size={20} />
+                            </a>
+                        )}
+                        {employee.socialLinks.facebook && (
+                            <a href={employee.socialLinks.facebook} target="_blank" rel="noreferrer" aria-label="Facebook Profile" className="p-2 text-slate-400 hover:text-[#1877F2] hover:bg-[#1877F2]/10 rounded-full transition-colors">
+                                <Facebook size={20} />
+                            </a>
+                        )}
+                    </div>
+                )}
 
             </div>
 

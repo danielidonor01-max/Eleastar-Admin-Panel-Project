@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Users, Briefcase, MapPin, Clock, School, Calendar, ChevronRight, FileText } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
+import { useLocation } from 'react-router-dom';
 import type { Job } from '../../data/mockData';
 
 export const RecruitmentPage: React.FC = () => {
@@ -8,6 +9,21 @@ export const RecruitmentPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'jobs' | 'techhub'>('jobs');
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+    const location = useLocation();
+
+    // Deep Linking Handler
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const jobId = params.get('jobId');
+        if (jobId) {
+            const job = jobs.find(j => j.id === jobId);
+            if (job) {
+                // Determine which tab to switch to? For now assumed 'jobs'
+                // If the job exists, we open the modal
+                setSelectedJobId(jobId);
+            }
+        }
+    }, [location.search, jobs]);
 
     const selectedJob = jobs.find(j => j.id === selectedJobId);
 
@@ -363,7 +379,7 @@ export const RecruitmentPage: React.FC = () => {
                                 <div className="divide-y divide-slate-100">
                                     {selectedJob.applicationList.map(app => (
                                         <div key={app.id} className="p-4 hover:bg-slate-50 flex items-center justify-between group">
-                                            <div className="flex items-center gap-4">
+                                            <div className="flex-1 flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500">
                                                     {app.candidateName.charAt(0)}
                                                 </div>

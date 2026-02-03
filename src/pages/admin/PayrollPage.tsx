@@ -4,8 +4,36 @@ import { useAdmin } from '../../context/AdminContext';
 import { PayrollAdjustmentModal } from '../../components/PayrollAdjustmentModal';
 
 export const PayrollPage: React.FC = () => {
-    const { employees, payrollStatus, updatePayrollStatus, bulkPayrollAdjustment, logAction, rolePermissions, currentUserRole } = useAdmin();
+    const { employees, payrollStatus, updatePayrollStatus, bulkPayrollAdjustment, logAction, rolePermissions, currentUserRole, requestAuth } = useAdmin();
     const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
+
+    // --- Cycle Selection State ---
+    const [viewCycleId, setViewCycleId] = useState<string>('JAN-2026');
+
+    // Mock Past Cycles
+    const pastCycles = useMemo(() => [
+        {
+            id: 'DEC-2025',
+            month: 'December',
+            year: 2025,
+            status: 'Paid' as const,
+            adjustments: [
+                { empId: 'EMP-001', type: 'Bonus' as const, amount: 50000, reason: 'Year End Bonus' },
+                { empId: 'EMP-003', type: 'Deduction' as const, amount: 2500, reason: 'Damaged Equipment' }
+            ]
+        },
+        {
+            id: 'NOV-2025',
+            month: 'November',
+            year: 2025,
+            status: 'Paid' as const,
+            adjustments: []
+        }
+    ], []);
+
+    const allCycles = useMemo(() => [payrollStatus, ...pastCycles], [payrollStatus, pastCycles]);
+    const targetCycle = allCycles.find(c => c.id === viewCycleId) || payrollStatus;
+    const isCurrentCycle = targetCycle.id === payrollStatus.id;
 
     // Permission Guard
     const canAccess = rolePermissions[currentUserRole]?.includes('Payroll') || currentUserRole === 'Super Admin';
@@ -42,7 +70,7 @@ export const PayrollPage: React.FC = () => {
 
     // Derived Totals
     const totalBaseSalary = employees.reduce((sum, emp) => sum + (emp.salary || 0), 0);
-    const totalAdjustments = payrollStatus.adjustments.reduce((sum, adj) => {
+    const totalAdjustments = targetCycle.adjustments.reduce((sum, adj) => {
         return sum + (adj.type === 'Bonus' ? adj.amount : -adj.amount);
     }, 0);
     const totalPayout = totalBaseSalary + totalAdjustments;
@@ -65,21 +93,23 @@ export const PayrollPage: React.FC = () => {
     };
 
     const handleApprove = () => {
+        if (!isCurrentCycle) return; // Guard: Can only approve current cycle
+
         if (payrollStatus.status === 'Draft') {
             if (window.confirm('Submit payroll for review? This will notify the Finance team.')) {
                 updatePayrollStatus('Reviewed');
                 logAction('Payroll Review', 'Payroll marked as Reviewed');
             }
         } else if (payrollStatus.status === 'Reviewed') {
-            if (window.confirm('Approve Payroll? This will LOCK the adjustments and finalize the amounts.')) {
+            requestAuth('SENSITIVE', 'Approve Payroll & Lock Funds', () => {
                 updatePayrollStatus('Approved');
                 logAction('Payroll Approved', 'Payroll Approved. Funds locked.');
-            }
+            });
         } else if (payrollStatus.status === 'Approved') {
-            if (window.confirm('Mark as Paid? This will close the current cycle and disburse funds.')) {
+            requestAuth('SENSITIVE', 'Authorize Fund Disbursement', () => {
                 updatePayrollStatus('Paid');
                 logAction('Payroll Paid', 'Funds Disbursed. Cycle Closed.');
-            }
+            });
         }
     };
 
@@ -90,7 +120,7 @@ export const PayrollPage: React.FC = () => {
     };
 
     const getEmployeeNet = (empId: string, baseSalary: number) => {
-        const empAdjustments = payrollStatus.adjustments.filter(a => a.empId === empId);
+        const empAdjustments = targetCycle.adjustments.filter(a => a.empId === empId);
         const totalAdj = empAdjustments.reduce((sum, adj) => sum + (adj.type === 'Bonus' ? adj.amount : -adj.amount), 0);
         return baseSalary + totalAdj;
     };
@@ -103,27 +133,36 @@ export const PayrollPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Payroll Management</h1>
-                    <div className="flex items-center gap-2 mt-1">
-                        <p className="text-slate-500">Cycle: {payrollStatus.month} {payrollStatus.year}</p>
-                        <span className="text-slate-300">•</span>
-                        <span className={`font-bold px-2 py-0.5 rounded text-xs uppercase ${payrollStatus.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
-                            payrollStatus.status === 'Approved' ? 'bg-blue-100 text-blue-700' :
+                    <div className="flex items-center gap-3 mt-1">
+                        <select
+                            value={viewCycleId}
+                            onChange={(e) => setViewCycleId(e.target.value)}
+                            className="bg-transparent border-none text-slate-500 font-medium focus:ring-0 cursor-pointer p-0 pr-8 text-base"
+                        >
+                            {allCycles.map(cycle => (
+                                <option key={cycle.id} value={cycle.id}>
+                                    Cycle: {cycle.month} {cycle.year}
+                                </option>
+                            ))}
+                        </select>
+                        <span className={`font-bold px-2 py-0.5 rounded text-xs uppercase ${targetCycle.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
+                            targetCycle.status === 'Approved' ? 'bg-blue-100 text-blue-700' :
                                 'bg-orange-100 text-orange-700'
                             }`}>
-                            {payrollStatus.status}
+                            {targetCycle.status}
                         </span>
                     </div>
                 </div>
                 <div className="flex gap-3">
                     <button
                         onClick={() => setShowAdjustmentModal(true)}
-                        disabled={payrollStatus.status === 'Paid'}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 text-slate-700 font-medium transition-colors disabled:opacity-50 shadow-sm"
+                        disabled={!isCurrentCycle || payrollStatus.status === 'Paid'}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-700 font-medium transition-colors shadow-sm"
                     >
                         <Plus size={18} />
                         {selectedIds.length > 0 ? `Adjust Selected (${selectedIds.length})` : 'New Adjustment'}
                     </button>
-                    {(payrollStatus.status !== 'Paid') && (
+                    {(payrollStatus.status !== 'Paid' && isCurrentCycle) && (
                         <button
                             onClick={handleApprove}
                             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium transition-colors shadow-sm"
@@ -242,7 +281,7 @@ export const PayrollPage: React.FC = () => {
                         <tbody className="divide-y divide-slate-100">
                             {filteredEmployees.length > 0 ? (
                                 filteredEmployees.map(emp => {
-                                    const adjustments = payrollStatus.adjustments.filter(a => a.empId === emp.id);
+                                    const adjustments = targetCycle.adjustments.filter(a => a.empId === emp.id);
                                     const net = getEmployeeNet(emp.id, emp.salary || 0);
                                     const isSelected = selectedIds.includes(emp.id);
 

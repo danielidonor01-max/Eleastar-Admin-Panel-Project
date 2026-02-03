@@ -1,16 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { CheckCircle, XCircle, Clock, User, Filter } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 export const LeaveManagement: React.FC = () => {
     const { employees, leaveRequests, approveLeave, rejectLeave } = useAdmin();
     const [filter, setFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('Pending');
+    const location = useLocation();
 
     // UI State
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
     const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
     const [actionError, setActionError] = useState<string | null>(null);
+    const [highlightedId, setHighlightedId] = useState<string | null>(null);
+
+    // Deep Linking Handler
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const requestId = params.get('requestId');
+        if (requestId) {
+            const req = leaveRequests.find(r => r.id === requestId);
+            if (req) {
+                setFilter('All'); // Ensure it's visible regardless of status
+                setHighlightedId(requestId);
+                // Optional: Scroll to item logic could go here
+            }
+        }
+    }, [location.search, leaveRequests]);
 
     const handleApprove = (id: string) => {
         setActionError(null);
@@ -46,6 +63,8 @@ export const LeaveManagement: React.FC = () => {
     };
 
     const filteredRequests = leaveRequests.filter(req => {
+        // If deep linked, we prioritize showing the specific item if intended, 
+        // but here 'All' filter with highlight is sufficient.
         if (filter === 'All') return true;
         return req.status === filter;
     }).sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
@@ -133,7 +152,13 @@ export const LeaveManagement: React.FC = () => {
                                 </tr>
                             ) : (
                                 filteredRequests.map((req) => (
-                                    <tr key={req.id} className="hover:bg-slate-50 transition-colors">
+                                    <tr
+                                        key={req.id}
+                                        className={`transition-all duration-500 ${highlightedId === req.id
+                                                ? 'bg-brand-50 hover:bg-brand-100 border-l-4 border-l-brand-500 shadow-inner'
+                                                : 'hover:bg-slate-50'
+                                            }`}
+                                    >
                                         <td className="p-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">

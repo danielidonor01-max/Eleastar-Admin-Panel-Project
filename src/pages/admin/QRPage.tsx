@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { QrCode, RefreshCw, Ban, CheckCircle2, AlertTriangle, FileBadge, Download, Search } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { QrCode, RefreshCw, Ban, CheckCircle2, AlertTriangle, FileBadge, Download, Search, RotateCw, Image as ImageIcon, FileText as FilePdf } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 export const QRPage: React.FC = () => {
     const { employees, regenerateQR, ceoSignature, logAction } = useAdmin();
@@ -14,8 +16,13 @@ export const QRPage: React.FC = () => {
         showDept: true,
         showRole: true,
         showQRC: true,
-        showSignature: true
+        showSignature: true,
+        viewSide: 'front' as 'front' | 'back'
     });
+
+    // Refs for Export
+    const frontCardRef = useRef<HTMLDivElement>(null);
+    const backCardRef = useRef<HTMLDivElement>(null);
 
     const selectedEmployee = employees.find(e => e.id === selectedEmpId) || employees[0];
 
@@ -31,12 +38,201 @@ export const QRPage: React.FC = () => {
         alert('All QR codes regenerated. Please reprint ID cards.');
     };
 
-    // Mock Print/Export
-    const handleExportPDF = () => {
-        logAction('ID Card Export', `Exported ID Card for ${selectedEmployee.name}`);
-        alert(`Generating PDF for ${selectedEmployee.name}... (System: Print Window will open)`);
-        window.print();
+    const validateExport = (): boolean => {
+        if (!selectedEmployee) {
+            alert("Export Blocked: No employee selected.");
+            return false;
+        }
+
+        // Block if QR is missing (per requirements)
+        if (!templateConfig.showQRC) {
+            alert("Export Blocked: QR Code must be visible for valid ID Cards.");
+            return false;
+        }
+
+        // Warn for quality issues
+        const warnings: string[] = [];
+        if (templateConfig.showSignature && !ceoSignature) warnings.push("Authorized Signature is missing.");
+        if (!templateConfig.showPhoto) warnings.push("Employee photo is hidden.");
+
+        if (warnings.length > 0) {
+            return window.confirm(`Export Warning:\n\n- ${warnings.join('\n- ')}\n\nDo you want to proceed with the export?`);
+        }
+        return true;
     };
+
+    const generateImages = async () => {
+        if (!frontCardRef.current || !backCardRef.current) return null;
+
+        // Use high scale for print quality (300 DPI approx)
+        const options = {
+            scale: 4,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false
+        };
+
+        const frontCanvas = await html2canvas(frontCardRef.current, options);
+        const backCanvas = await html2canvas(backCardRef.current, options);
+
+        return {
+            front: frontCanvas.toDataURL('image/png', 1.0),
+            back: backCanvas.toDataURL('image/png', 1.0)
+        };
+    };
+
+    const handleExport = async (format: 'pdf' | 'png' | 'jpg') => {
+        if (!validateExport()) return;
+
+        const safeName = selectedEmployee.name.replace(/[^a-z0-9]/gi, '_');
+        const fileName = `ID_${safeName}_${selectedEmployee.id}`;
+
+        logAction('ID Card Export', `Started export (${format}) for ${selectedEmployee.name}`);
+
+        const images = await generateImages();
+        if (!images) {
+            alert("Export Error: Failed to generate high-resolution images.");
+            return;
+        }
+
+        if (format === 'pdf') {
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'in',
+                format: [2.13, 3.38] // CR-80 Standard
+            });
+
+            // Page 1: Front
+            pdf.addImage(images.front, 'PNG', 0, 0, 2.13, 3.38);
+
+            // Page 2: Back
+            pdf.addPage();
+            pdf.addImage(images.back, 'PNG', 0, 0, 2.13, 3.38);
+
+            pdf.save(`${fileName}.pdf`);
+        } else {
+            // Download as individual images
+            const link = document.createElement('a');
+
+            // Download Front
+            link.href = images.front;
+            link.download = `${fileName}_Front.${format}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Download Back (delayed to ensure browser handles both)
+            setTimeout(() => {
+                const link2 = document.createElement('a');
+                link2.href = images.back;
+                link2.download = `${fileName}_Back.${format}`;
+                document.body.appendChild(link2);
+                link2.click();
+                document.body.removeChild(link2);
+            }, 800);
+        }
+    };
+
+    // Components for the Card Faces
+    const CardFront = ({ isPreview = false }: { isPreview?: boolean }) => (
+        <div className={`w-[320px] h-[508px] bg-white rounded-xl shadow-sm overflow-hidden relative border border-slate-200 flex flex-col ${isPreview ? 'shadow-2xl' : ''}`}>
+            {/* Header Branding */}
+            <div className="h-32 bg-slate-900 relative shrink-0">
+                <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                <div className="relative z-10 flex flex-col items-center justify-center h-full text-white p-6">
+                    <img
+                        src="/assets/logo-horizontal-white.png"
+                        alt="Eleastar Technologies"
+                        className="w-full max-w-[180px] object-contain"
+                    />
+                </div>
+                {/* Decorative Curve */}
+                <div className="absolute -bottom-6 left-0 right-0 h-12 bg-white rounded-t-[50%] z-20"></div>
+            </div>
+
+            {/* Main Content */}
+            <div className="flex-1 px-6 pt-2 pb-6 relative z-30 flex flex-col items-center">
+                {/* Photo: Reduced size and adjusted margin to clear logo */}
+                {templateConfig.showPhoto && (
+                    <div className="w-28 h-28 rounded-full border-[5px] border-white shadow-lg bg-slate-200 overflow-hidden mb-3 -mt-10 relative z-30 ring-1 ring-slate-100">
+                        <img src={selectedEmployee.photoUrl} alt="Employee" className="w-full h-full object-cover" />
+                    </div>
+                )}
+
+                {/* Name & Title */}
+                <h2 className="text-2xl font-bold text-slate-900 text-center leading-tight mb-1">{selectedEmployee.name}</h2>
+
+                {templateConfig.showRole && (
+                    <p className="text-brand-600 font-bold text-sm mb-1 uppercase tracking-wide">{selectedEmployee.title}</p>
+                )}
+
+                {templateConfig.showDept && (
+                    <p className="text-slate-400 text-xs uppercase tracking-widest font-semibold">{selectedEmployee.department}</p>
+                )}
+
+                {/* QR Code Area */}
+                {templateConfig.showQRC && (
+                    <div className="mt-auto mb-2 p-3 bg-white rounded-xl border border-slate-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                        <QrCode size={80} className="text-slate-900" />
+                    </div>
+                )}
+
+                {/* Footer Info: Split Layout */}
+                <div className="mt-4 w-full border-t border-slate-100 pt-3 flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                    <div>
+                        ID: <span className="text-slate-600 font-bold">{selectedEmployee.id}</span>
+                    </div>
+                    <div>
+                        ISS: <span className="text-slate-600">JAN 26</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    const CardBack = ({ isPreview = false }: { isPreview?: boolean }) => (
+        <div className={`w-[320px] h-[508px] bg-white rounded-xl shadow-sm overflow-hidden relative border border-slate-200 flex flex-col ${isPreview ? 'shadow-2xl' : ''}`}>
+
+            <div className="flex-1 p-8 flex flex-col items-center justify-center text-center">
+
+                {/* Loop Logo Watermark */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-[0.02] pointer-events-none">
+                    <FileBadge size={240} />
+                </div>
+
+                <div className="relative z-10 w-full flex flex-col h-full justify-center gap-12">
+
+                    {/* Signature Section - Primary Focus */}
+                    <div className="w-full">
+                        <div className="h-28 w-full border-b-2 border-slate-100 mb-3 relative flex items-end justify-center pb-2">
+                            {templateConfig.showSignature && ceoSignature ? (
+                                <img src={ceoSignature} alt="Authorized Signature" className="h-full max-w-[85%] object-contain" />
+                            ) : (
+                                <span className="text-slate-300 italic text-sm">No Signature Loaded</span>
+                            )}
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">AUTHORIZED SIGNATURE</p>
+                    </div>
+
+                    {/* Instructions & Contact */}
+                    <div className="space-y-6">
+                        <p className="text-sm font-medium text-slate-600 leading-relaxed px-1">
+                            If found, please return this card to<br />
+                            <strong className="text-slate-900 text-base block mt-1.5">Eleastar Technologies Limited</strong>
+                        </p>
+
+                        <div className="pt-2 text-[11px] text-slate-400 font-medium tracking-wide flex flex-col gap-1.5 opacity-80">
+                            <span>www.eleastar.com</span>
+                            <span>hr@eleastar.com</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Bottom bar */}
+            <div className="h-3 w-full bg-slate-900 shrink-0"></div>
+        </div>
+    );
 
     return (
         <div>
@@ -49,7 +245,7 @@ export const QRPage: React.FC = () => {
                     onClick={() => setShowIDModal(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20"
                 >
-                    <FileBadge size={18} /> ID Card Templates
+                    <FileBadge size={18} /> ID Card Studio
                 </button>
             </div>
 
@@ -193,6 +389,24 @@ export const QRPage: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-3">
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Card View</label>
+                                    <div className="flex bg-slate-100 p-1 rounded-lg">
+                                        <button
+                                            onClick={() => setTemplateConfig(curr => ({ ...curr, viewSide: 'front' }))}
+                                            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${templateConfig.viewSide === 'front' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            Front
+                                        </button>
+                                        <button
+                                            onClick={() => setTemplateConfig(curr => ({ ...curr, viewSide: 'back' }))}
+                                            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${templateConfig.viewSide === 'back' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            Back
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
                                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Visible Fields</label>
 
                                     <label className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors group">
@@ -226,12 +440,24 @@ export const QRPage: React.FC = () => {
                                     </label>
                                 </div>
 
-                                <div className="mt-auto pt-6 border-t border-slate-100">
+                                <div className="mt-auto pt-6 border-t border-slate-100 grid grid-cols-2 gap-2">
                                     <button
-                                        onClick={handleExportPDF}
-                                        className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-3 rounded-xl hover:bg-slate-800 transition-all font-bold shadow-lg shadow-slate-900/20 active:scale-95"
+                                        onClick={() => handleExport('pdf')}
+                                        className="col-span-2 w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-3 rounded-xl hover:bg-slate-800 transition-all font-bold shadow-lg shadow-slate-900/20 active:scale-95"
                                     >
-                                        <Download size={18} /> Export / Print
+                                        <FilePdf size={18} /> Export PDF
+                                    </button>
+                                    <button
+                                        onClick={() => handleExport('png')}
+                                        className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold shadow-sm active:scale-95"
+                                    >
+                                        <ImageIcon size={18} /> PNG
+                                    </button>
+                                    <button
+                                        onClick={() => handleExport('jpg')}
+                                        className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold shadow-sm active:scale-95"
+                                    >
+                                        <ImageIcon size={18} /> JPG
                                     </button>
                                 </div>
                             </div>
@@ -243,76 +469,14 @@ export const QRPage: React.FC = () => {
                                 </div>
 
                                 {/* Card Preview Wrapper */}
-                                <div className="relative group">
-                                    {/* The ID Card */}
-                                    <div className="w-[320px] h-[500px] bg-white rounded-2xl shadow-2xl overflow-hidden relative border border-slate-200 flex flex-col transition-all duration-300 transform group-hover:scale-[1.02]">
-
-                                        {/* Header Branding */}
-                                        <div className="h-32 bg-slate-900 relative shrink-0">
-                                            <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                                            <div className="relative z-10 flex flex-col items-center justify-center h-full text-white p-6">
-                                                <img
-                                                    src="/assets/logo-horizontal-white.png"
-                                                    alt="Eleastar Technologies"
-                                                    className="w-full max-w-[180px] object-contain"
-                                                />
-                                            </div>
-                                            {/* Decorative Curve */}
-                                            <div className="absolute -bottom-6 left-0 right-0 h-12 bg-white rounded-t-[50%] z-20"></div>
-                                        </div>
-
-                                        {/* Main Content */}
-                                        <div className="flex-1 px-6 pt-2 pb-6 relative z-30 flex flex-col items-center">
-
-                                            {/* Photo */}
-                                            {templateConfig.showPhoto && (
-                                                <div className="w-32 h-32 rounded-full border-[6px] border-white shadow-lg bg-slate-200 overflow-hidden mb-4 -mt-16 relative z-30 ring-1 ring-slate-100">
-                                                    <img src={selectedEmployee.photoUrl} alt="Employee" className="w-full h-full object-cover" />
-                                                </div>
-                                            )}
-
-                                            {/* Name & Title */}
-                                            <h2 className="text-2xl font-bold text-slate-900 text-center leading-tight mb-1">{selectedEmployee.name}</h2>
-
-                                            {templateConfig.showRole && (
-                                                <p className="text-brand-600 font-bold text-sm mb-1 uppercase tracking-wide">{selectedEmployee.title}</p>
-                                            )}
-
-                                            {templateConfig.showDept && (
-                                                <p className="text-slate-400 text-xs uppercase tracking-widest font-semibold">{selectedEmployee.department}</p>
-                                            )}
-
-                                            {/* QR Code Area */}
-                                            {templateConfig.showQRC && (
-                                                <div className="mt-auto mb-2 p-3 bg-white rounded-xl border border-slate-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
-                                                    <QrCode size={80} className="text-slate-900" />
-                                                </div>
-                                            )}
-
-                                            {/* Footer Info */}
-                                            <div className="mt-4 w-full border-t border-slate-100 pt-3 flex justify-between items-end">
-                                                <div className="text-[10px] text-slate-400 font-mono">
-                                                    ID: <span className="text-slate-600 font-bold">{selectedEmployee.id}</span><br />
-                                                    ISS: <span className="text-slate-600">JAN 26</span>
-                                                </div>
-
-                                                {templateConfig.showSignature && (
-                                                    <div className="h-10 w-24 relative opacity-80">
-                                                        {ceoSignature ? (
-                                                            <img
-                                                                src={ceoSignature}
-                                                                alt="CEO Signature"
-                                                                className="w-full h-full object-contain object-right"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-end text-[8px] text-slate-300 italic">
-                                                                No Signature
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
+                                <div className="relative group perspective-1000">
+                                    <div className="transition-all duration-500 relative">
+                                        {/* View Toggle */}
+                                        {templateConfig.viewSide === 'front' ? (
+                                            <CardFront isPreview={true} />
+                                        ) : (
+                                            <CardBack isPreview={true} />
+                                        )}
                                     </div>
 
                                     {/* Print Guide Lines */}
@@ -325,6 +489,12 @@ export const QRPage: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Hidden Export Staging Area */}
+            <div style={{ position: 'fixed', left: '-9999px', top: 0 }}>
+                <div ref={frontCardRef}><CardFront /></div>
+                <div ref={backCardRef}><CardBack /></div>
+            </div>
         </div>
     );
 };

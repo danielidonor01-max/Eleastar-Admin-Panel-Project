@@ -5,10 +5,11 @@ import type { Employee } from '../../data/mockData';
 import { EmployeeProfileModal } from '../../components/EmployeeProfileModal';
 
 export const Employees: React.FC = () => {
-    const { employees, addEmployee, updateEmployee, toggleQRStatus, logAction } = useAdmin();
+    const { employees, addEmployee, updateEmployee, toggleQRStatus, logAction, requestAuth } = useAdmin();
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Form State
     const [newEmp, setNewEmp] = useState<Partial<Employee>>({
@@ -43,19 +44,60 @@ export const Employees: React.FC = () => {
     const handleAction = (action: string, emp: Employee) => {
         setActiveMenuId(null);
         if (action === 'suspend_qr') {
-            toggleQRStatus(emp.id, 'suspended');
-            alert(`QR Access suspended for ${emp.name}`);
+            requestAuth('SENSITIVE', `Suspend QR Access for ${emp.name}`, () => {
+                toggleQRStatus(emp.id, 'suspended');
+            });
         } else if (action === 'enable_qr') {
-            toggleQRStatus(emp.id, 'active');
-            alert(`QR Access enabled for ${emp.name}`);
+            // Enabling is less critical but let's consistency check? No, constraint says Termination/Deactivation.
+            // "Employee status updates" -> SENSITIVE.
+            requestAuth('SENSITIVE', `Re-activate QR Access for ${emp.name}`, () => {
+                toggleQRStatus(emp.id, 'active');
+            });
         } else if (action === 'view_profile') {
             setSelectedEmployee(emp);
         } else if (action === 'terminate') {
-            if (confirm(`Are you sure you want to TERMINATE ${emp.name}? This will revoke all access.`)) {
+            requestAuth('SENSITIVE', `PERMANENTLY TERMINATE ${emp.name}`, () => {
                 updateEmployee(emp.id, { status: 'terminated', accessGranted: false });
                 logAction('Employee Termination', `Terminated ${emp.name} (ID: ${emp.id})`);
-            }
+            });
         }
+    };
+
+
+
+    const filteredEmployees = employees.filter(emp => {
+        const query = searchQuery.toLowerCase();
+        return (
+            emp.name.toLowerCase().includes(query) ||
+            emp.title.toLowerCase().includes(query) ||
+            emp.department.toLowerCase().includes(query) ||
+            emp.id.toLowerCase().includes(query) ||
+            emp.status.toLowerCase().includes(query)
+        );
+    });
+
+    const handleExport = () => {
+        if (filteredEmployees.length === 0) return;
+
+        const headers = ['Full Name', 'Role', 'Department', 'Employment Status', 'Date Joined'];
+        const rows = filteredEmployees.map(emp => [
+            emp.name,
+            emp.title,
+            emp.department,
+            emp.status,
+            new Date(emp.joinedAt).toISOString().split('T')[0]
+        ].map(val => `"${val}"`).join(','));
+
+        const csvContent = [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `eleastar-employees-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     return (
@@ -66,7 +108,12 @@ export const Employees: React.FC = () => {
                     <p className="text-slate-500">Manage your team members and their access.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 text-slate-700 font-medium transition-colors" title="Export List">
+                    <button
+                        onClick={handleExport}
+                        disabled={filteredEmployees.length === 0}
+                        className={`flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg font-medium transition-colors ${filteredEmployees.length === 0 ? 'opacity-50 cursor-not-allowed text-slate-400' : 'hover:bg-slate-50 text-slate-700'}`}
+                        title="Export List"
+                    >
                         <Download size={18} />
                         Export
                     </button>
@@ -85,7 +132,14 @@ export const Employees: React.FC = () => {
             <div className="bg-white p-4 rounded-t-xl border border-slate-200 border-b-0 flex items-center justify-between">
                 <div className="relative w-72">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                    <input id="search-emp" type="text" placeholder="Search by name, ID, or role..." className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500" />
+                    <input
+                        id="search-emp"
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search by name, ID, or role..."
+                        className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    />
                 </div>
             </div>
 
@@ -105,7 +159,7 @@ export const Employees: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {employees.map((emp) => (
+                            {filteredEmployees.map((emp) => (
                                 <tr key={emp.id} className="hover:bg-slate-50 transition-colors group relative">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">

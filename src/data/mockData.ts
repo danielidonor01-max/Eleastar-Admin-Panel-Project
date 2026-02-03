@@ -88,7 +88,12 @@ export const employees: Employee[] = [
         employmentType: 'Full-time',
         email: "stephen@eleastar.com",
         systemRole: 'Super Admin',
-        accessGranted: true
+        accessGranted: true,
+        socialLinks: {
+            linkedin: "https://linkedin.com",
+            twitter: "https://twitter.com",
+            instagram: "https://instagram.com"
+        }
     },
     {
         id: "EMP-002",
@@ -369,6 +374,7 @@ export interface HeroSection extends BaseSection {
         ctaLabel: string;
         ctaLink: string;
         imageUrl: string;
+        altText?: string;
     }[];
 }
 
@@ -379,6 +385,7 @@ export interface AboutSection extends BaseSection {
     ctaLabel: string;
     ctaLink: string;
     imageUrl: string;
+    altText?: string;
 }
 
 export interface ServicesSection extends BaseSection {
@@ -402,6 +409,7 @@ export interface KnowMoreSection extends BaseSection {
     ctaLabel: string;
     ctaLink: string;
     imageUrl: string;
+    altText?: string;
 }
 
 export interface ApproachSection extends BaseSection {
@@ -427,6 +435,7 @@ export interface NewestTechSection extends BaseSection {
     showAndroid: boolean;
     showIOS: boolean;
     imageUrl: string;
+    altText?: string;
 }
 
 export interface ContactSection extends BaseSection {
@@ -459,6 +468,7 @@ export interface CEOQuoteSection extends BaseSection {
     authorName: string;
     authorTitle: string;
     imageUrl: string;
+    altText?: string;
 }
 
 // --- About Page Section Interfaces ---
@@ -469,6 +479,7 @@ export interface AboutHeroSection extends BaseSection {
     subtitle: string;
     description: string;
     imageUrl: string;
+    altText?: string;
 }
 
 export interface OurMissionSection extends BaseSection {
@@ -479,6 +490,7 @@ export interface OurMissionSection extends BaseSection {
     visionTitle: string;
     visionText: string;
     imageUrl: string;
+    altText?: string;
 }
 
 export interface TeamNarrativeSection extends BaseSection {
@@ -486,6 +498,7 @@ export interface TeamNarrativeSection extends BaseSection {
     title: string;
     text: string;
     imageUrl: string;
+    altText?: string;
 }
 
 export interface TeamMember {
@@ -493,6 +506,7 @@ export interface TeamMember {
     name: string;
     role: string;
     imageUrl: string;
+    altText?: string;
     bio?: string;
     linkedinUrl?: string; // Added for About Page
 }
@@ -511,6 +525,7 @@ export interface JoinTeamCTASection extends BaseSection {
     ctaLabel: string;
     ctaLink: string;
     imageUrl: string;
+    altText?: string;
 }
 
 export interface ContactCTASection extends BaseSection {
@@ -540,6 +555,7 @@ export interface ServicesHeroSection extends BaseSection {
     headline: string;       // "Our Solutions Are Innovative"
     description: string;
     imageUrl: string;
+    altText?: string;
 }
 
 export interface ServiceBlockSection extends BaseSection {
@@ -550,6 +566,7 @@ export interface ServiceBlockSection extends BaseSection {
     ctaLabel: string;
     ctaLink: string;
     imageUrl: string;
+    altText?: string;
 }
 
 // Reuse ContactCTASection for Services Contact
@@ -1066,6 +1083,7 @@ export interface ServiceDetailOfferingSection extends BaseSection {
     // Let's assume standardizing on 'description' is better but we must support 'text' if used.
     // Actually, let's look at the implementation of ServiceDetail.tsx to see what it expects.
     imageUrl: string;
+    altText?: string;
     ctaLabel?: string;
     ctaLink?: string;
 }
