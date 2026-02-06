@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import { Calendar, FileDown, CreditCard, TrendingUp, Clock, User, ArrowRight, Briefcase } from 'lucide-react';
+import { useState } from 'react';
 import { generatePayslipPDF } from '../../utils/generatePayslip';
+import { generatePastCycles } from '../../utils/payrollUtils';
 
 export const UserDashboard: React.FC = () => {
     const { payrollStatus, employees, currentUserId, leaveRequests, performanceReviews } = useAdmin();
@@ -16,14 +18,34 @@ export const UserDashboard: React.FC = () => {
     const totalDeductions = myAdjustments.filter(a => a.type === 'Deduction' || a.type === 'Fine').reduce((sum, a) => sum + a.amount, 0);
     const netPay = baseSalary + totalBonuses - totalDeductions;
 
-    // Mock Payroll History Data (Last 6 Months)
-    const history = [
-        { cycle: 'Dec 2025', gross: baseSalary, bonus: 50000, deduction: 0, net: baseSalary + 50000, status: 'Paid' },
-        { cycle: 'Nov 2025', gross: baseSalary, bonus: 0, deduction: 0, net: baseSalary, status: 'Paid' },
-        { cycle: 'Oct 2025', gross: baseSalary, bonus: 0, deduction: 10000, net: baseSalary - 10000, status: 'Paid' },
-        { cycle: 'Sep 2025', gross: baseSalary, bonus: 15000, deduction: 0, net: baseSalary + 15000, status: 'Paid' },
-        { cycle: 'Aug 2025', gross: baseSalary - 50000, bonus: 0, deduction: 0, net: baseSalary - 50000, status: 'Paid' }, // simulating raise
+    // Mock Payroll History Data (Last 6 Months) -> Replaced with Dynamic
+    const [historyPage, setHistoryPage] = useState(0);
+    const ITEMS_PER_PAGE = 12;
+
+    const allPastCycles = generatePastCycles(payrollStatus, 36); // Generate last 3 years
+    // Add current cycle status to history view
+    const historyData = [
+        { ...payrollStatus, gross: baseSalary, bonus: totalBonuses, deduction: totalDeductions, net: netPay },
+        ...allPastCycles.map(c => ({
+            ...c,
+            gross: baseSalary, // Simplified mock: assuming constant salary for history
+            bonus: 0,
+            deduction: 0,
+            net: baseSalary
+        }))
     ];
+
+    const currentHistoryPage = historyData.slice(historyPage * ITEMS_PER_PAGE, (historyPage + 1) * ITEMS_PER_PAGE);
+
+    // Derived History for Table (Compatible mapping)
+    const history = currentHistoryPage.map(h => ({
+        cycle: `${h.month} ${h.year}`,
+        gross: (h as any).gross || baseSalary,
+        bonus: (h as any).bonus || 0,
+        deduction: (h as any).deduction || 0,
+        net: (h as any).net || baseSalary,
+        status: h.status
+    }));
 
     // Finance Timeline Mock Data
     const timeline = [
@@ -212,21 +234,6 @@ export const UserDashboard: React.FC = () => {
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {/* Current Month (if visible) */}
-                                    {isPayrollVisible && (
-                                        <tr className="bg-blue-50/30 hover:bg-blue-50/50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-brand-600">{payrollStatus.month} {payrollStatus.year}</td>
-                                            <td className="px-6 py-4 text-right text-slate-600">₦{baseSalary.toLocaleString()}</td>
-                                            <td className="px-6 py-4 text-right text-green-600">+{totalBonuses.toLocaleString()}</td>
-                                            <td className="px-6 py-4 text-right text-red-600">-{totalDeductions.toLocaleString()}</td>
-                                            <td className="px-6 py-4 text-right font-bold text-slate-900">₦{netPay.toLocaleString()}</td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getStatusColor(payrollStatus.status)}`}>
-                                                    {payrollStatus.status}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    )}
-
                                     {/* History Rows */}
                                     {history.map((record, idx) => (
                                         <tr key={idx} className="hover:bg-slate-50 transition-colors">
@@ -236,14 +243,32 @@ export const UserDashboard: React.FC = () => {
                                             <td className="px-6 py-4 text-right text-slate-400">{record.deduction > 0 ? `-${record.deduction.toLocaleString()}` : '-'}</td>
                                             <td className="px-6 py-4 text-right font-medium text-slate-700">₦{record.net.toLocaleString()}</td>
                                             <td className="px-6 py-4 text-center">
-                                                <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase text-emerald-600 bg-emerald-50 border border-emerald-100">
-                                                    Paid
+                                                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getStatusColor(record.status)}`}>
+                                                    {record.status}
                                                 </span>
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                        {/* Pagination Controls */}
+                        <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex justify-between items-center text-xs text-slate-500 font-medium">
+                            <button
+                                onClick={() => setHistoryPage(p => Math.max(0, p - 1))}
+                                disabled={historyPage === 0}
+                                className="disabled:opacity-30 hover:text-slate-800"
+                            >
+                                Previous Year
+                            </button>
+                            <span>Page {historyPage + 1}</span>
+                            <button
+                                onClick={() => setHistoryPage(p => p + 1)}
+                                disabled={(historyPage + 1) * ITEMS_PER_PAGE >= historyData.length}
+                                className="disabled:opacity-30 hover:text-slate-800"
+                            >
+                                Next Year
+                            </button>
                         </div>
                     </div>
                 </div>

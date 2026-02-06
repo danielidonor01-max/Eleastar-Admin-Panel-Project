@@ -2,37 +2,38 @@ import React, { useState, useMemo } from 'react';
 import { Check, AlertCircle, Plus, Filter, X } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { PayrollAdjustmentModal } from '../../components/PayrollAdjustmentModal';
+import { generatePastCycles } from '../../utils/payrollUtils';
 
 export const PayrollPage: React.FC = () => {
     const { employees, payrollStatus, updatePayrollStatus, bulkPayrollAdjustment, logAction, rolePermissions, currentUserRole, requestAuth } = useAdmin();
     const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
 
     // --- Cycle Selection State ---
-    const [viewCycleId, setViewCycleId] = useState<string>('JAN-2026');
+    const initialYear = useMemo(() => new Date().getFullYear(), []);
+    const [selectedYear, setSelectedYear] = useState<number>(initialYear);
+    const [viewCycleId, setViewCycleId] = useState<string>('');
 
-    // Mock Past Cycles
-    const pastCycles = useMemo(() => [
-        {
-            id: 'DEC-2025',
-            month: 'December',
-            year: 2025,
-            status: 'Paid' as const,
-            adjustments: [
-                { empId: 'EMP-001', type: 'Bonus' as const, amount: 50000, reason: 'Year End Bonus' },
-                { empId: 'EMP-003', type: 'Deduction' as const, amount: 2500, reason: 'Damaged Equipment' }
-            ]
-        },
-        {
-            id: 'NOV-2025',
-            month: 'November',
-            year: 2025,
-            status: 'Paid' as const,
-            adjustments: []
+    // Dynamic Past Cycles
+    const pastCycles = useMemo(() => generatePastCycles(payrollStatus, 24), [payrollStatus]);
+
+    // Filter cycles by selected year
+    const availableCycles = useMemo(() => {
+        const all = [payrollStatus, ...pastCycles];
+        return all.filter(c => c.year === selectedYear);
+    }, [payrollStatus, pastCycles, selectedYear]);
+
+    // Set default view cycle when year changes or on mount
+    useMemo(() => {
+        if (availableCycles.length > 0 && !availableCycles.find(c => c.id === viewCycleId)) {
+            // Default to the first available cycle (usually the latest one in that year)
+            setViewCycleId(availableCycles[0].id);
         }
-    ], []);
+    }, [availableCycles, viewCycleId]);
 
-    const allCycles = useMemo(() => [payrollStatus, ...pastCycles], [payrollStatus, pastCycles]);
-    const targetCycle = allCycles.find(c => c.id === viewCycleId) || payrollStatus;
+    const targetCycle = useMemo(() => {
+        return availableCycles.find(c => c.id === viewCycleId) || payrollStatus;
+    }, [availableCycles, viewCycleId, payrollStatus]);
+
     const isCurrentCycle = targetCycle.id === payrollStatus.id;
 
     // Permission Guard
@@ -134,14 +135,25 @@ export const PayrollPage: React.FC = () => {
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Payroll Management</h1>
                     <div className="flex items-center gap-3 mt-1">
+                        {/* Year Selector */}
+                        <select
+                            value={selectedYear}
+                            onChange={(e) => setSelectedYear(Number(e.target.value))}
+                            className="bg-transparent border-none text-slate-500 font-bold focus:ring-0 cursor-pointer p-0 pr-6 text-base"
+                        >
+                            <option value={initialYear}>{initialYear}</option>
+                            <option value={initialYear - 1}>{initialYear - 1}</option>
+                            <option value={initialYear - 2}>{initialYear - 2}</option>
+                        </select>
+                        <span className="text-slate-300">|</span>
                         <select
                             value={viewCycleId}
                             onChange={(e) => setViewCycleId(e.target.value)}
-                            className="bg-transparent border-none text-slate-500 font-medium focus:ring-0 cursor-pointer p-0 pr-8 text-base"
+                            className="bg-transparent border-none text-slate-900 font-bold focus:ring-0 cursor-pointer p-0 pr-8 text-xl"
                         >
-                            {allCycles.map(cycle => (
+                            {availableCycles.map(cycle => (
                                 <option key={cycle.id} value={cycle.id}>
-                                    Cycle: {cycle.month} {cycle.year}
+                                    {cycle.month}
                                 </option>
                             ))}
                         </select>
