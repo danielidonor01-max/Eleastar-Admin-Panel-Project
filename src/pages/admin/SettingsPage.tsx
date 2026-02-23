@@ -5,7 +5,6 @@ import type { ModuleType } from '../../context/AdminContext';
 import type { AdminRole } from '../../data/mockData';
 import { Shield, Upload, Save, AlertTriangle, Check, Lock, Eye, RefreshCw, Key, Activity } from 'lucide-react';
 import type { Employee } from '../../data/mockData';
-import { userService } from '../../services/userService';
 
 export const SettingsPage: React.FC = () => {
     const { activityLogs, employees, updateEmployee, ceoSignature, updateCeoSignature, rolePermissions, updateRolePermissions, currentUserRole, requestAuth, logAction, generateSystemPassword, sendEmail, addEmployee } = useAdmin();
@@ -112,50 +111,34 @@ export const SettingsPage: React.FC = () => {
             return;
         }
 
-        requestAuth('SENSITIVE', `Create new System USER: ${newUser.name} (${newUser.role})`, () => {
-            // We will await the real backend call
-            userService.createAdminUser({
-                email: newUser.email,
-                firstName: newUser.name.split(' ')[0],
-                lastName: newUser.name.split(' ').slice(1).join(' ') || '.',
-                role: newUser.role
-            }).then((res) => {
-                if (res.success) {
-                    // Note: We still add the employee to the frontend mock context so the UI updates
-                    const newEmpId = res.data.user.id || `EMP-${Math.floor(Math.random() * 10000)}`;
-                    const newEmployee: any = {
-                        id: newEmpId,
-                        name: newUser.name,
-                        email: newUser.email,
-                        systemRole: newUser.role,
-                        department: newUser.department,
-                        title: 'System USER',
-                        status: 'active',
-                        accessGranted: true,
-                        joinedAt: new Date().toISOString(),
-                        photoUrl: `https://ui-avatars.com/api/?name=${newUser.name}&background=random`,
-                        salary: 0,
-                        employmentType: 'Full-time',
-                        tenantId: 'tenant-default'
-                    };
+        const newPass = generateSystemPassword();
 
-                    addEmployee(newEmployee);
-                    logAction('User Creation', `Created new system user ${newUser.name} as ${newUser.role}`);
-                    showSuccess({ title: 'User Created', message: `${newUser.name} added. Check email for credentials.` });
+        const newEmpId = `EMP-${Math.floor(Math.random() * 10000)}`;
+        const newEmployee: any = {
+            id: newEmpId,
+            name: newUser.name,
+            email: newUser.email,
+            systemRole: newUser.role,
+            department: newUser.department,
+            title: 'System USER',
+            status: 'active',
+            accessGranted: true,
+            joinedAt: new Date().toISOString(),
+            photoUrl: `https://ui-avatars.com/api/?name=${newUser.name}&background=random`,
+            salary: 0,
+            employmentType: 'Full-time',
+            tenantId: 'tenant-default'
+        };
 
-                    // Critical: Show the generated password on screen once!
-                    alert(`CRITICAL: Securely transmit this password to ${newUser.name}: \n\n${res.data.initialPassword}`);
+        addEmployee(newEmployee);
+        logAction('User Creation', `Created new system user ${newUser.name} as ${newUser.role}`);
+        showSuccess({ title: 'User Created', message: `${newUser.name} added. Check email for credentials.` });
 
-                    // Simulate Emailing it
-                    sendEmail(newUser.email, 'Welcome to Eleastar Admin', `Your account has been created.\n\nLogin Email: ${newUser.email}\nTemporary Password: ${res.data.initialPassword}`);
+        // Simulating email
+        sendEmail(newUser.email, 'Welcome to Eleastar Admin', `Your account has been created.\n\nLogin Email: ${newUser.email}\nTemporary Password: ${newPass}`);
 
-                    setShowAddModal(false);
-                    setNewUSER({ name: '', email: '', role: 'USER', department: 'General' });
-                } else {
-                    showError({ title: 'Creation Failed', message: res.error || 'Failed to contact backend.' });
-                }
-            });
-        });
+        setShowAddModal(false);
+        setNewUSER({ name: '', email: '', role: 'USER', department: 'General' });
     };
 
     const modules: ModuleType[] = ['Employees', 'QR & ID', 'Payroll', 'Recruitment', 'Website CMS', 'Settings'];
@@ -374,16 +357,10 @@ export const SettingsPage: React.FC = () => {
                                                             <button
                                                                 onClick={() => {
                                                                     requestAuth('SENSITIVE', `Regenerate password for ${emp.name}`, () => {
-                                                                        userService.resetPassword(emp.id).then((res) => {
-                                                                            if (res.success) {
-                                                                                sendEmail(emp.email, 'Security Alert: Password Reset', `Your password has been reset by an administrator.\n\nNew Password: ${res.data.newPassword}\n\nPlease change this immediately after logging in.`);
-                                                                                showSuccess({ title: 'Password Reset', message: `Email sent to ${emp.email} with new credentials.` });
-                                                                                logAction('Security', `Regenerated password for user ${emp.name}`);
-                                                                                alert(`CRITICAL: Securely transmit this new password to ${emp.name}: \n\n${res.data.newPassword}`);
-                                                                            } else {
-                                                                                showError({ title: 'Password Reset Failed', message: res.error || 'Failed to contact backend.' });
-                                                                            }
-                                                                        });
+                                                                        const newPass = generateSystemPassword();
+                                                                        sendEmail(emp.email, 'Security Alert: Password Reset', `Your password has been reset by an administrator.\n\nNew Password: ${newPass}\n\nPlease change this immediately after logging in.`);
+                                                                        showSuccess({ title: 'Password Reset', message: `Email sent to ${emp.email} with new credentials.` });
+                                                                        logAction('Security', `Regenerated password for user ${emp.name}`);
                                                                     });
                                                                 }}
                                                                 className="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
@@ -650,16 +627,10 @@ export const SettingsPage: React.FC = () => {
                                         <button
                                             onClick={() => {
                                                 requestAuth('SENSITIVE', `Regenerate password for ${selectedUser.name}`, () => {
-                                                    userService.resetPassword(selectedUser.id).then((res) => {
-                                                        if (res.success) {
-                                                            sendEmail(selectedUser.email, 'Security Alert: Password Reset', `Your password has been reset by an administrator.\n\nNew Password: ${res.data.newPassword}`);
-                                                            showSuccess({ title: 'Password Reset', message: `Email sent to ${selectedUser.email}` });
-                                                            logAction('Security', `Regenerated password for user ${selectedUser.name}`);
-                                                            alert(`CRITICAL: Securely transmit this new password to ${selectedUser.name}: \n\n${res.data.newPassword}`);
-                                                        } else {
-                                                            showError({ title: 'Password Reset Failed', message: res.error });
-                                                        }
-                                                    });
+                                                    const newPass = generateSystemPassword();
+                                                    sendEmail(selectedUser.email, 'Security Alert: Password Reset', `Your password has been reset by an administrator.\n\nNew Password: ${newPass}`);
+                                                    showSuccess({ title: 'Password Reset', message: `Email sent to ${selectedUser.email}` });
+                                                    logAction('Security', `Regenerated password for user ${selectedUser.name}`);
                                                 });
                                             }}
                                             className="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 shadow-sm flex items-center gap-2"

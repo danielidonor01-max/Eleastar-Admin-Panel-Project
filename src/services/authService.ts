@@ -1,4 +1,4 @@
-import { type ApiResponse, mockSuccess, mockError, delay, api as _api } from './api';
+import { type ApiResponse, mockSuccess, mockError, delay } from './api';
 import type { AdminRole } from '../data/mockData';
 import { employees } from '../data/mockData';
 import Cookies from 'js-cookie';
