@@ -1245,6 +1245,9 @@ export const CMSPage: React.FC = () => {
                                     <CMSPreviewPane
                                         url={currentPagePreviewLink}
                                         cmsContent={cmsContent}
+                                        globalContent={globalContent}
+                                        footerContent={footerContent}
+                                        servicesCollection={servicesCollection}
                                         pageName={activePage}
                                     />
                                 </div>

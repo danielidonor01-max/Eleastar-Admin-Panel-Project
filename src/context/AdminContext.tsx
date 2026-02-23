@@ -369,6 +369,22 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         init();
     }, []);
 
+    // Listen for CMS preview data from parent window (for iframe preview)
+    React.useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            if (event.data?.type === 'CMS_PREVIEW_DATA' && event.data?.payload) {
+                const { cmsContent: newCms, globalContent: newGlobal, footerContent: newFooter, servicesCollection: newServices } = event.data.payload;
+                if (newCms && Array.isArray(newCms)) setCmsContent(newCms);
+                if (newGlobal) setGlobalContent(newGlobal);
+                if (newFooter) setFooterContent(newFooter);
+                if (newServices) setServicesCollection(newServices);
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, []);
+
     // --- REMINDER ENGINE LOGIC ---
     React.useEffect(() => {
         const checkReminders = () => {

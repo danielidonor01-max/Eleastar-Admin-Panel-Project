@@ -1,14 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Loader2, RefreshCw, ExternalLink } from 'lucide-react';
-import type { CMSSection } from '../../data/mockData';
+import type { CMSSection, GlobalContent, FooterContent, ServiceCollection } from '../../data/mockData';
 
 interface CMSPreviewPaneProps {
     url: string;
     cmsContent: CMSSection[];
+    globalContent: GlobalContent;
+    footerContent: FooterContent;
+    servicesCollection: ServiceCollection;
     pageName: string;
 }
 
-export const CMSPreviewPane: React.FC<CMSPreviewPaneProps> = ({ url, cmsContent, pageName }) => {
+export const CMSPreviewPane: React.FC<CMSPreviewPaneProps> = ({ url, cmsContent, globalContent, footerContent, servicesCollection, pageName }) => {
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [lastSync, setLastSync] = useState<Date | null>(null);
@@ -21,7 +24,7 @@ export const CMSPreviewPane: React.FC<CMSPreviewPaneProps> = ({ url, cmsContent,
                 // The iframe (Active App) must listen for 'CMS_PREVIEW_DATA'
                 iframeRef.current.contentWindow.postMessage({
                     type: 'CMS_PREVIEW_DATA',
-                    payload: cmsContent
+                    payload: { cmsContent, globalContent, footerContent, servicesCollection }
                 }, '*');
                 setLastSync(new Date());
             }
@@ -37,7 +40,7 @@ export const CMSPreviewPane: React.FC<CMSPreviewPaneProps> = ({ url, cmsContent,
         }
 
         return () => clearTimeout(timer);
-    }, [cmsContent, isLoading, url]);
+    }, [cmsContent, globalContent, footerContent, servicesCollection, isLoading, url]);
 
     const handleLoad = () => {
         setIsLoading(false);
