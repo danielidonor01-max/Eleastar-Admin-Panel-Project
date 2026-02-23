@@ -1,89 +1,134 @@
 import React, { useState } from 'react';
-import { ShieldCheck, ChevronDown, User } from 'lucide-react';
+import { ShieldCheck, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAdmin } from '../context/AdminContext';
 
 export const StickyHeader: React.FC = () => {
+    const { globalContent } = useAdmin();
     const [isServicesOpen, setIsServicesOpen] = useState(false);
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+    // Filter visible items and sort by order
+    const navItems = globalContent.navigation
+        .filter(item => item.isVisible)
+        .sort((a, b) => a.order - b.order);
 
     return (
-        <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
-            <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm transition-all duration-300">
+            <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                 {/* Logo */}
-                <Link to="/" className="flex items-center gap-2 group">
-                    <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white group-hover:bg-brand-700 transition-colors">
-                        <ShieldCheck size={18} />
+                <Link to="/" className="flex items-center gap-3 group">
+                    <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white group-hover:bg-brand-700 transition-all shadow-lg shadow-brand-200">
+                        <ShieldCheck size={22} />
                     </div>
-                    <span className="font-bold text-slate-900 tracking-tight text-lg">Eleastar</span>
+                    <span className="font-bold text-slate-900 tracking-tight text-xl">Eleastar</span>
                 </Link>
 
                 {/* Desktop Navigation */}
                 <nav className="hidden md:flex items-center gap-8">
-                    <Link to="/" className="text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors">
-                        Home
-                    </Link>
+                    {navItems.map(item => {
+                        if (item.label === 'Services') {
+                            return (
+                                <div
+                                    key={item.id}
+                                    className="relative group h-20 flex items-center"
+                                    onMouseEnter={() => setIsServicesOpen(true)}
+                                    onMouseLeave={() => setIsServicesOpen(false)}
+                                >
+                                    <Link
+                                        to={item.path}
+                                        className="flex items-center gap-1 text-sm font-bold text-slate-600 hover:text-brand-600 transition-colors py-2"
+                                    >
+                                        {item.label} <ChevronDown size={14} className={`transition-transform duration-200 ${isServicesOpen ? 'rotate-180' : ''}`} />
+                                    </Link>
 
-                    {/* Services Dropdown */}
-                    <div
-                        className="relative group"
-                        onMouseEnter={() => setIsServicesOpen(true)}
-                        onMouseLeave={() => setIsServicesOpen(false)}
-                    >
-                        <Link
-                            to="/services"
-                            className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors py-2"
-                        >
-                            Services <ChevronDown size={14} className={`transition-transform duration-200 ${isServicesOpen ? 'rotate-180' : ''}`} />
-                        </Link>
-
-                        {/* Dropdown Menu */}
-                        <div className={`absolute top-full left-0 w-64 bg-white rounded-xl shadow-lg border border-slate-100 p-2 transition-all duration-200 origin-top-left ${isServicesOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'}`}>
-                            <div className="flex flex-col gap-1">
-                                <Link to="/services/industrial-solutions" className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600 rounded-lg transition-colors">
-                                    Industrial Solutions
-                                </Link>
-                                <Link to="/services/information-technology" className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600 rounded-lg transition-colors">
-                                    Information Technology
-                                </Link>
-                                <Link to="/services/research-and-development" className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600 rounded-lg transition-colors">
-                                    Research & Development
-                                </Link>
-                                <Link to="/services/electronics-manufacturing" className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600 rounded-lg transition-colors">
-                                    Electronics Manufacturing
-                                </Link>
-                                <Link to="/services/specific-it-services" className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600 rounded-lg transition-colors">
-                                    Specific IT Services
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-
-                    <Link to="/about" className="text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors">
-                        About
-                    </Link>
-                    <Link to="/contact" className="text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors">
-                        Contact
-                    </Link>
-                    <Link to="/careers" className="text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors">
-                        Eleastar and Me
-                    </Link>
+                                    {/* Dropdown Menu */}
+                                    <div className={`absolute top-[90%] left-0 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 p-3 transition-all duration-200 origin-top-left ${isServicesOpen ? 'opacity-100 scale-100 translate-y-0 visible' : 'opacity-0 scale-95 -translate-y-2 invisible'}`}>
+                                        <div className="flex flex-col gap-1">
+                                            {[
+                                                { name: 'Industrial Solutions', path: '/services/industrial-solutions' },
+                                                { name: 'Information Technology', path: '/services/information-technology' },
+                                                { name: 'Research & Development', path: '/services/research-and-development' },
+                                                { name: 'Electronics Manufacturing', path: '/services/electronics-manufacturing' },
+                                                { name: 'Specific IT Services', path: '/services/specific-it-services' }
+                                            ].map((sub) => (
+                                                <Link key={sub.path} to={sub.path} className="px-4 py-3 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-700 rounded-xl transition-colors flex items-center justify-between group/item">
+                                                    {sub.name}
+                                                    <ChevronDown size={14} className="-rotate-90 opacity-0 group-hover/item:opacity-100 transition-opacity text-brand-400" />
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        }
+                        return (
+                            <Link
+                                key={item.id}
+                                to={item.path}
+                                className="text-sm font-bold text-slate-600 hover:text-brand-600 transition-colors"
+                            >
+                                {item.label}
+                            </Link>
+                        );
+                    })}
                 </nav>
 
                 {/* Right Actions */}
                 <div className="flex items-center gap-4">
                     <Link
                         to="/login"
-                        className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition-all"
+                        className="hidden md:flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-slate-600 hover:text-brand-600 transition-colors"
                     >
-                        <User size={16} />
-                        Admin Login
+                        Login
+                    </Link>
+                    <Link
+                        to="/contact"
+                        className="hidden md:flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-slate-900 rounded-full hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+                    >
+                        Get Started
                     </Link>
 
-                    {/* Mobile Menu Button (Placeholder) */}
-                    <button className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg" aria-label="Toggle menu">
+                    {/* Mobile Menu Button */}
+                    <button
+                        className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+                        aria-label="Toggle menu"
+                        onClick={() => setIsMobileOpen(!isMobileOpen)}
+                    >
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
                     </button>
                 </div>
             </div>
+
+            {/* Mobile Navigation Overlay */}
+            {isMobileOpen && (
+                <div className="md:hidden absolute top-20 left-0 w-full bg-white border-b border-slate-100 shadow-xl p-6 flex flex-col gap-4 animate-in slide-in-from-top-2">
+                    {navItems.map(item => (
+                        <Link
+                            key={item.id}
+                            to={item.path}
+                            className="text-lg font-bold text-slate-800 py-2 border-b border-slate-50 last:border-0"
+                            onClick={() => setIsMobileOpen(false)}
+                        >
+                            {item.label}
+                        </Link>
+                    ))}
+                    <Link
+                        to="/login"
+                        className="text-lg font-bold text-slate-800 py-2 border-b border-slate-50 last:border-0"
+                        onClick={() => setIsMobileOpen(false)}
+                    >
+                        Login
+                    </Link>
+                    <Link
+                        to="/contact"
+                        className="mt-4 flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-white bg-brand-600 rounded-xl hover:bg-brand-700 transition-all"
+                        onClick={() => setIsMobileOpen(false)}
+                    >
+                        Get Started
+                    </Link>
+                </div>
+            )}
         </header>
     );
 };

@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
+import { useFeedback } from '../../context/FeedbackContext';
 import { User, Lock, Bell, LogOut } from 'lucide-react';
 
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export const ProfilePage: React.FC = () => {
-    const { currentUserRole, logAction } = useAdmin();
+    const { currentUserRole, logAction, logout } = useAdmin();
+    const { showSuccess } = useFeedback();
     const location = useLocation();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>(
         (location.state as any)?.activeTab || 'profile'
     );
@@ -30,14 +33,14 @@ export const ProfilePage: React.FC = () => {
     });
 
     const handleSave = () => {
-        logAction('Profile Update', 'Updated personal profile settings');
-        alert('Profile details updated successfully.');
+        logAction('UPDATE', 'System', 'Updated personal profile settings', 'SUCCESS');
+        showSuccess({ title: 'Profile Updated', message: 'Profile details updated successfully.' });
     };
 
     const handlePasswordChange = (e: React.FormEvent) => {
         e.preventDefault();
-        logAction('Password Change', 'User changed their password');
-        alert('Password updated successfully.');
+        logAction('SECURITY', 'System', 'User changed their password', 'SUCCESS');
+        showSuccess({ title: 'Password Changed', message: 'Password updated successfully.' });
         setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
     };
 
@@ -78,7 +81,13 @@ export const ProfilePage: React.FC = () => {
                     </nav>
 
                     <div className="mt-auto pt-8">
-                        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+                        <button
+                            onClick={() => {
+                                logout();
+                                navigate('/login');
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                        >
                             <LogOut size={18} /> Sign Out
                         </button>
                     </div>
@@ -103,7 +112,7 @@ export const ProfilePage: React.FC = () => {
                                     <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500" />
                                 </div>
                                 <div className="pt-4">
-                                    <button onClick={handleSave} className="px-6 py-2.5 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 shadow-sm">Save Changes</button>
+                                    <button onClick={handleSave} className="btn-primary">Save Changes</button>
                                 </div>
                             </div>
                         </div>
@@ -126,7 +135,7 @@ export const ProfilePage: React.FC = () => {
                                     <input type="password" required value={formData.confirmPassword} onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })} className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500" />
                                 </div>
                                 <div className="pt-4">
-                                    <button type="submit" className="px-6 py-2.5 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 shadow-sm">Update Password</button>
+                                    <button type="submit" className="btn-primary">Update Password</button>
                                 </div>
                             </form>
 
@@ -164,7 +173,7 @@ export const ProfilePage: React.FC = () => {
                                 ))}
                             </div>
                             <div className="pt-4 flex justify-end">
-                                <button onClick={handleSave} className="px-6 py-2.5 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 shadow-sm">Save Preferences</button>
+                                <button onClick={handleSave} className="btn-primary">Save Preferences</button>
                             </div>
                         </div>
                     )}

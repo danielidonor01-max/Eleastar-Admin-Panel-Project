@@ -80,7 +80,7 @@ export const UserProfilePage: React.FC = () => {
                             <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">
                                 <div className="relative group">
                                     <img
-                                        src={formData.photoUrl || "https://via.placeholder.com/150"}
+                                        src={formData.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=0D8ABC&color=fff`}
                                         alt={currentUser.name}
                                         className="w-24 h-24 rounded-full border-4 border-white object-cover bg-slate-200"
                                     />

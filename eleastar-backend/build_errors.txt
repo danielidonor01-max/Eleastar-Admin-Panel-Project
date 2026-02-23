@@ -1,0 +1,59 @@
+[96msrc/audit/audit.service.ts[0m:[93m3[0m:[93m24[0m - [91merror[0m[90m TS2307: [0mCannot find module '@prisma/client' or its corresponding type declarations.
+
+[7m3[0m import { Prisma } from '@prisma/client';
+[7m [0m [91m                       ~~~~~~~~~~~~~~~~[0m
+[96msrc/audit/audit.service.ts[0m:[93m16[0m:[93m28[0m - [91merror[0m[90m TS2339: [0mProperty 'auditLog' does not exist on type 'PrismaService'.
+
+[7m16[0m         return this.prisma.auditLog.create({
+[7m  [0m [91m                           ~~~~~~~~[0m
+[96msrc/audit/audit.service.ts[0m:[93m28[0m:[93m28[0m - [91merror[0m[90m TS2339: [0mProperty 'auditLog' does not exist on type 'PrismaService'.
+
+[7m28[0m         return this.prisma.auditLog.findMany({
+[7m  [0m [91m                           ~~~~~~~~[0m
+[96msrc/auth/auth.service.ts[0m:[93m35[0m:[93m27[0m - [91merror[0m[90m TS2339: [0mProperty 'refreshToken' does not exist on type 'PrismaService'.
+
+[7m35[0m         await this.prisma.refreshToken.create({
+[7m  [0m [91m                          ~~~~~~~~~~~~[0m
+[96msrc/auth/auth.service.ts[0m:[93m53[0m:[93m51[0m - [91merror[0m[90m TS2339: [0mProperty 'refreshToken' does not exist on type 'PrismaService'.
+
+[7m53[0m             const storedToken = await this.prisma.refreshToken.findUnique({ where: { token } });
+[7m  [0m [91m                                                  ~~~~~~~~~~~~[0m
+[96msrc/auth/roles.guard.ts[0m:[93m4[0m:[93m22[0m - [91merror[0m[90m TS2307: [0mCannot find module '@prisma/client' or its corresponding type declarations.
+
+[7m4[0m import { Role } from '@prisma/client';
+[7m [0m [91m                     ~~~~~~~~~~~~~~~~[0m
+[96msrc/prisma/prisma.service.ts[0m:[93m2[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '@prisma/client' or its corresponding type declarations.
+
+[7m2[0m import { PrismaClient } from '@prisma/client';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~[0m
+[96msrc/prisma/prisma.service.ts[0m:[93m7[0m:[93m20[0m - [91merror[0m[90m TS2339: [0mProperty '$connect' does not exist on type 'PrismaService'.
+
+[7m7[0m         await this.$connect();
+[7m [0m [91m                   ~~~~~~~~[0m
+[96msrc/prisma/prisma.service.ts[0m:[93m11[0m:[93m20[0m - [91merror[0m[90m TS2339: [0mProperty '$disconnect' does not exist on type 'PrismaService'.
+
+[7m11[0m         await this.$disconnect();
+[7m  [0m [91m                   ~~~~~~~~~~~[0m
+[96msrc/users/users.controller.ts[0m:[93m5[0m:[93m22[0m - [91merror[0m[90m TS2307: [0mCannot find module '@prisma/client' or its corresponding type declarations.
+
+[7m5[0m import { Role } from '@prisma/client';
+[7m [0m [91m                     ~~~~~~~~~~~~~~~~[0m
+[96msrc/users/users.service.ts[0m:[93m3[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '@prisma/client' or its corresponding type declarations.
+
+[7m3[0m import { User, Prisma } from '@prisma/client';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~[0m
+[96msrc/users/users.service.ts[0m:[93m10[0m:[93m28[0m - [91merror[0m[90m TS2339: [0mProperty 'user' does not exist on type 'PrismaService'.
+
+[7m10[0m         return this.prisma.user.findUnique({
+[7m  [0m [91m                           ~~~~[0m
+[96msrc/users/users.service.ts[0m:[93m16[0m:[93m28[0m - [91merror[0m[90m TS2339: [0mProperty 'user' does not exist on type 'PrismaService'.
+
+[7m16[0m         return this.prisma.user.findUnique({
+[7m  [0m [91m                           ~~~~[0m
+[96msrc/users/users.service.ts[0m:[93m22[0m:[93m28[0m - [91merror[0m[90m TS2339: [0mProperty 'user' does not exist on type 'PrismaService'.
+
+[7m22[0m         return this.prisma.user.create({
+[7m  [0m [91m                           ~~~~[0m
+
+Found 14 error(s).
+

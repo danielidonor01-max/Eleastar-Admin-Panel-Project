@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { QrCode, RefreshCw, Ban, CheckCircle2, AlertTriangle, FileBadge, Download, Search, FileText as FilePdf } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
+import { useFeedback } from '../../context/FeedbackContext';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
 export const QRPage: React.FC = () => {
     const { employees, regenerateQR, ceoSignature, logAction } = useAdmin();
+    const { showSuccess, showError, showConfirm } = useFeedback();
     const [showRegenModal, setShowRegenModal] = useState(false);
     const [showIDModal, setShowIDModal] = useState(false);
 
@@ -34,20 +36,20 @@ export const QRPage: React.FC = () => {
         const allIds = employees.map(e => e.id);
         regenerateQR(allIds);
         setShowRegenModal(false);
-        logAction('Bulk Regeneration', 'Regenerated all QR codes manually from Admin Panel.');
-        alert('All QR codes regenerated. Please reprint ID cards.');
+        logAction('UPDATE', 'Employee', 'Regenerated all QR codes manually from Admin Panel.', 'SUCCESS');
+        showSuccess({ title: 'Regeneration Complete', message: 'All QR codes have been regenerated. Please reprint ID cards.' });
     };
 
-    const validateExport = (): boolean => {
+    const validateAndExport = async (format: 'pdf' | 'png' | 'jpg') => {
         if (!selectedEmployee) {
-            alert("Export Blocked: No employee selected.");
-            return false;
+            showError({ title: 'Export Blocked', message: 'No employee selected.' });
+            return;
         }
 
         // Block if QR is missing (per requirements)
         if (!templateConfig.showQRC) {
-            alert("Export Blocked: QR Code must be visible for valid ID Cards.");
-            return false;
+            showError({ title: 'Export Blocked', message: 'QR Code must be visible for valid ID Cards.' });
+            return;
         }
 
         // Warn for quality issues
@@ -56,9 +58,15 @@ export const QRPage: React.FC = () => {
         if (!templateConfig.showPhoto) warnings.push("Employee photo is hidden.");
 
         if (warnings.length > 0) {
-            return window.confirm(`Export Warning:\n\n- ${warnings.join('\n- ')}\n\nDo you want to proceed with the export?`);
+            showConfirm({
+                title: 'Export Warning',
+                message: `Issues detected:\n\n• ${warnings.join('\n• ')}\n\nDo you want to proceed with the export?`,
+                confirmLabel: 'Proceed Anyway',
+                onConfirm: () => executeExport(format)
+            });
+        } else {
+            executeExport(format);
         }
-        return true;
     };
 
     const generateImages = async () => {
@@ -81,17 +89,15 @@ export const QRPage: React.FC = () => {
         };
     };
 
-    const handleExport = async (format: 'pdf' | 'png' | 'jpg') => {
-        if (!validateExport()) return;
-
+    const executeExport = async (format: 'pdf' | 'png' | 'jpg') => {
         const safeName = selectedEmployee.name.replace(/[^a-z0-9]/gi, '_');
         const fileName = `ID_${safeName}_${selectedEmployee.id}`;
 
-        logAction('ID Card Export', `Started export (${format}) for ${selectedEmployee.name}`);
+        logAction('SECURITY', 'Employee', `Started ID Card export (${format}) for ${selectedEmployee.name}`, 'SUCCESS', selectedEmployee.id);
 
         const images = await generateImages();
         if (!images) {
-            alert("Export Error: Failed to generate high-resolution images.");
+            showError({ title: 'Export Error', message: 'Failed to generate high-resolution images.' });
             return;
         }
 
@@ -131,6 +137,8 @@ export const QRPage: React.FC = () => {
                 document.body.removeChild(link2);
             }, 800);
         }
+
+        showSuccess({ title: 'Export Complete', message: `ID Card exported as ${format.toUpperCase()}` });
     };
 
     // Components for the Card Faces
@@ -243,7 +251,7 @@ export const QRPage: React.FC = () => {
                 </div>
                 <button
                     onClick={() => setShowIDModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20"
+                    className="btn-primary"
                 >
                     <FileBadge size={18} /> ID Card Studio
                 </button>
@@ -337,8 +345,8 @@ export const QRPage: React.FC = () => {
                             <span>Physical ID cards must be reprinted to work with the new system.</span>
                         </div>
                         <div className="flex justify-end gap-3">
-                            <button onClick={() => setShowRegenModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancel</button>
-                            <button onClick={handleBulkRegenerate} className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-sm">
+                            <button onClick={() => setShowRegenModal(false)} className="btn-ghost">Cancel</button>
+                            <button onClick={handleBulkRegenerate} className="btn-danger">
                                 Confirm & Regenerate
                             </button>
                         </div>
@@ -361,7 +369,7 @@ export const QRPage: React.FC = () => {
                                     <p className="text-xs text-slate-500">Design and Export Staff Identity Cards</p>
                                 </div>
                             </div>
-                            <button onClick={() => setShowIDModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600">
+                            <button onClick={() => setShowIDModal(false)} className="btn-ghost btn-icon rounded-full text-slate-400 hover:text-slate-600">
                                 <span className="sr-only">Close</span>
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
@@ -442,20 +450,20 @@ export const QRPage: React.FC = () => {
 
                                 <div className="mt-auto pt-6 border-t border-slate-100 grid grid-cols-2 gap-2">
                                     <button
-                                        onClick={() => handleExport('pdf')}
-                                        className="col-span-2 w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-3 rounded-xl hover:bg-slate-800 transition-all font-bold shadow-lg shadow-slate-900/20 active:scale-95"
+                                        onClick={() => validateAndExport('pdf')}
+                                        className="col-span-2 w-full btn-primary btn-lg justify-center shadow-lg active:scale-95"
                                     >
                                         <FilePdf size={18} /> Export PDF
                                     </button>
                                     <button
-                                        onClick={() => handleExport('png')}
-                                        className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold shadow-sm active:scale-95"
+                                        onClick={() => validateAndExport('png')}
+                                        className="w-full btn-secondary btn-lg justify-center active:scale-95"
                                     >
                                         <Download size={18} /> PNG
                                     </button>
                                     <button
-                                        onClick={() => handleExport('jpg')}
-                                        className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 py-3 rounded-xl hover:bg-slate-50 transition-all font-bold shadow-sm active:scale-95"
+                                        onClick={() => validateAndExport('jpg')}
+                                        className="w-full btn-secondary btn-lg justify-center active:scale-95"
                                     >
                                         <Download size={18} /> JPG
                                     </button>

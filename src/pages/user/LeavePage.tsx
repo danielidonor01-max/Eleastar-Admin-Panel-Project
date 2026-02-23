@@ -18,20 +18,19 @@ export const LeavePage: React.FC = () => {
 
     if (!currentUser) return <div>Loading...</div>;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!currentUserId) return;
 
         setIsSubmitting(true);
-        // Simulate network delay for "State Visibility"
-        setTimeout(() => {
+        try {
             // Calculate days (simple approximation)
             const start = new Date(formData.startDate);
             const end = new Date(formData.endDate);
             const diffTime = Math.abs(end.getTime() - start.getTime());
             const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-            requestLeave(currentUserId, {
+            await requestLeave(currentUserId, {
                 type: formData.type as any,
                 startDate: formData.startDate,
                 endDate: formData.endDate,
@@ -39,10 +38,13 @@ export const LeavePage: React.FC = () => {
                 reason: formData.reason
             });
 
-            setIsSubmitting(false);
             setIsModalOpen(false);
             setFormData({ type: 'Annual', startDate: '', endDate: '', reason: '' });
-        }, 800);
+        } catch (error) {
+            console.error("Failed to submit leave:", error);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (

@@ -1,0 +1,17 @@
+[96mprisma.config.ts[0m:[93m4[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module 'prisma/config' or its corresponding type declarations.
+
+[7m4[0m import { defineConfig } from "prisma/config";
+[7m [0m [91m                             ~~~~~~~~~~~~~~~[0m
+[96msrc/audit/audit.service.ts[0m:[93m22[0m:[93m17[0m - [91merror[0m[90m TS2322: [0mType 'InputJsonValue | null' is not assignable to type 'NullableJsonNullValueInput | InputJsonValue | undefined'.
+  Type 'null' is not assignable to type 'NullableJsonNullValueInput | InputJsonValue | undefined'.
+
+[7m22[0m                 details: data.details ? (data.details as Prisma.InputJsonValue) : null,
+[7m  [0m [91m                ~~~~~~~[0m
+
+  [96mnode_modules/.prisma/client/index.d.ts[0m:[93m4517[0m:[93m5[0m
+    [7m4517[0m     details?: NullableJsonNullValueInput | InputJsonValue
+    [7m    [0m [96m    ~~~~~~~[0m
+    The expected type comes from property 'details' which is declared here on type '(Without<AuditLogCreateInput, AuditLogUncheckedCreateInput> & AuditLogUncheckedCreateInput) | (Without<...> & AuditLogCreateInput)'
+
+Found 2 error(s).
+

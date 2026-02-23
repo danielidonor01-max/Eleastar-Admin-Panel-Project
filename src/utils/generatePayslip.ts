@@ -1,7 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { Employee } from '../data/mockData';
-import type { PayrollCycle } from '../context/AdminContext';
+import type { Employee, PayrollCycle } from '../data/mockData';
 
 export const generatePayslipPDF = (employee: Employee, payrollStatus: PayrollCycle) => {
     const doc = new jsPDF();

@@ -6,9 +6,10 @@ export type AuthLevel = 'CMS' | 'SENSITIVE';
 interface PinAuthorizationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess: (pin: string) => void;
     requiredLevel: AuthLevel;
     description: string;
+    title?: string;
 }
 
 export const PinAuthorizationModal: React.FC<PinAuthorizationModalProps> = ({
@@ -16,7 +17,8 @@ export const PinAuthorizationModal: React.FC<PinAuthorizationModalProps> = ({
     onClose,
     onSuccess,
     requiredLevel,
-    description
+    description,
+    title = 'Authorization Required'
 }) => {
     const [pin, setPin] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -47,7 +49,7 @@ export const PinAuthorizationModal: React.FC<PinAuthorizationModalProps> = ({
         const requiredPin = AUTH_CODES[requiredLevel];
 
         if (pin === requiredPin) {
-            onSuccess();
+            onSuccess(pin);
             onClose();
         } else {
             setAttempts(prev => prev + 1);
@@ -64,7 +66,7 @@ export const PinAuthorizationModal: React.FC<PinAuthorizationModalProps> = ({
                 <div className="bg-slate-900 px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-white font-bold">
                         <Lock size={18} className="text-amber-400" />
-                        <span>Authorization Required</span>
+                        <span>{title}</span>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
                         <X size={20} />

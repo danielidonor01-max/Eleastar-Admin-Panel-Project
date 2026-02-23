@@ -1,13 +1,16 @@
-
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
+import { useFeedback } from '../../context/FeedbackContext';
 import { PageContainer } from '../../components/PageContainer';
 import {
-    Eye, Save, Layout, Plus, Trash2, ChevronRight
+    Eye, Save, Layout, Plus, Trash2, ChevronRight, FileCode, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { RichTextEditor } from '../../components/cms/RichTextEditor';
 import { ImageUploader } from '../../components/cms/ImageUploader';
-import { useSearchParams } from 'react-router-dom';
+import { CMSPreviewPane } from '../../components/cms/CMSPreviewPane';
+import { CMSJsonPreview } from '../../components/cms/CMSJsonPreview';
+
 import { PUBLIC_LINK } from '../../config';
 import type {
     CMSSection,
@@ -15,7 +18,7 @@ import type {
     AboutSection, ServicesSection, TeamMember, ServicesHeroSection, ServiceBlockSection, ContactCTASection,
     AboutHeroSection, OurMissionSection, MeetTeamSection,
     ServiceDetailHeroSection, ServiceDetailOverviewSection, ServiceDetailOfferingSection, ServiceDetailContactSection,
-    FooterSection, FooterContent
+    FooterSection, FooterContent, ServiceContentBlock
 } from '../../data/mockData';
 
 // --- Specific Editor Components ---
@@ -589,17 +592,374 @@ const FooterCopyrightEditor: React.FC<{ section: FooterSection; onChange: (u: Pa
     </div>
 );
 
+// --- Global & Collection Editors ---
+
+const GlobalNavEditor: React.FC = () => {
+    const { globalContent, updateGlobal } = useAdmin();
+    return (
+        <div className="space-y-4">
+            <h3 className="font-bold text-lg text-slate-800">Navigation Menu</h3>
+            <p className="text-sm text-slate-500">Manage the main navigation menu items. Order determines display sequence.</p>
+            <div className="space-y-2">
+                {globalContent.navigation.map((item, idx) => (
+                    <div key={item.id} className="p-3 border rounded-md bg-slate-50 flex items-center gap-4">
+                        <div className="cursor-move text-slate-400"><Layout size={16} /></div>
+                        <input
+                            className="flex-grow px-2 py-1 border rounded text-sm font-medium"
+                            value={item.label}
+                            onChange={(e) => {
+                                const newNav = [...globalContent.navigation];
+                                newNav[idx] = { ...newNav[idx], label: e.target.value };
+                                updateGlobal('navigation', newNav);
+                            }}
+                        />
+                        <input
+                            className="w-1/3 px-2 py-1 border rounded text-sm text-slate-600"
+                            value={item.path}
+                            placeholder="/path"
+                            onChange={(e) => {
+                                const newNav = [...globalContent.navigation];
+                                newNav[idx] = { ...newNav[idx], path: e.target.value };
+                                updateGlobal('navigation', newNav);
+                            }}
+                        />
+                        <button
+                            onClick={() => {
+                                const newNav = [...globalContent.navigation];
+                                newNav[idx] = { ...newNav[idx], isVisible: !item.isVisible };
+                                updateGlobal('navigation', newNav);
+                            }}
+                            className={`p-1 rounded ${item.isVisible ? 'text-green-600 bg-green-50' : 'text-slate-400 bg-slate-100'}`}
+                        >
+                            <Eye size={16} />
+                        </button>
+                    </div>
+                ))}
+            </div>
+            <button
+                onClick={() => {
+                    const newItem = {
+                        id: `nav-${Date.now()}`,
+                        label: 'New Link',
+                        path: '/',
+                        type: 'Internal' as const,
+                        isVisible: true,
+                        order: globalContent.navigation.length + 1
+                    };
+                    updateGlobal('navigation', [...globalContent.navigation, newItem]);
+                }}
+                className="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-brand-500 hover:text-brand-600 font-medium flex items-center justify-center gap-2"
+            >
+                <Plus size={16} /> Add Menu Item
+            </button>
+        </div>
+    );
+};
+
+const GlobalSEOEditor: React.FC = () => {
+    const { globalContent, updateGlobal } = useAdmin();
+    return (
+        <div className="space-y-6">
+            <h3 className="font-bold text-lg text-slate-800">Global SEO Defaults</h3>
+            <p className="text-sm text-slate-500">These settings are used as fallbacks when a page doesn't have specific SEO data.</p>
+
+            <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Default Site Title</label>
+                <input
+                    className="w-full px-3 py-2 border rounded-md"
+                    value={globalContent.seoDefaults.siteTitle}
+                    onChange={(e) => updateGlobal('seoDefaults', { ...globalContent.seoDefaults, siteTitle: e.target.value })}
+                />
+            </div>
+            <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Default Meta Description</label>
+                <textarea
+                    className="w-full px-3 py-2 border rounded-md h-24"
+                    value={globalContent.seoDefaults.siteDescription}
+                    onChange={(e) => updateGlobal('seoDefaults', { ...globalContent.seoDefaults, siteDescription: e.target.value })}
+                />
+            </div>
+            <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Default OG Image URL</label>
+                <input
+                    className="w-full px-3 py-2 border rounded-md text-sm text-slate-600"
+                    value={globalContent.seoDefaults.ogImage}
+                    onChange={(e) => updateGlobal('seoDefaults', { ...globalContent.seoDefaults, ogImage: e.target.value })}
+                />
+            </div>
+        </div>
+    );
+};
+
+const ServiceContentBlockListEditor: React.FC<{ blocks: ServiceContentBlock[]; onChange: (blocks: ServiceContentBlock[]) => void }> = ({ blocks, onChange }) => {
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+
+    const addBlock = () => {
+        const newBlock: ServiceContentBlock = {
+            id: `sb-${Date.now()}`,
+            type: 'Feature',
+            title1: 'New Feature',
+            description: 'Feature description...',
+            order: blocks.length + 1
+        };
+        onChange([...blocks, newBlock]);
+        setExpandedId(newBlock.id);
+    };
+
+    const updateBlock = (id: string, updates: Partial<ServiceContentBlock>) => {
+        onChange(blocks.map(b => b.id === id ? { ...b, ...updates } : b));
+    };
+
+    const removeBlock = (id: string) => {
+        onChange(blocks.filter(b => b.id !== id));
+    };
+
+    const moveBlock = (index: number, direction: 'up' | 'down') => {
+        if (direction === 'up' && index === 0) return;
+        if (direction === 'down' && index === blocks.length - 1) return;
+
+        const newBlocks = [...blocks];
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        [newBlocks[index], newBlocks[targetIndex]] = [newBlocks[targetIndex], newBlocks[index]];
+        // Update order field if needed or just rely on array order
+        onChange(newBlocks);
+    };
+
+    return (
+        <div className="space-y-4">
+            <div className="flex justify-between items-center">
+                <label className="text-xs font-bold text-slate-700 uppercase">Content Blocks</label>
+                <button onClick={addBlock} className="text-xs flex items-center gap-1 text-brand-600 font-bold hover:underline">
+                    <Plus size={14} /> Add Block
+                </button>
+            </div>
+
+            <div className="space-y-3">
+                {blocks.map((block, idx) => (
+                    <div key={block.id} className="border rounded-md bg-white overflow-hidden">
+                        <div
+                            className="p-3 bg-slate-50 flex items-center justify-between cursor-pointer hover:bg-slate-100"
+                            onClick={() => setExpandedId(expandedId === block.id ? null : block.id)}
+                        >
+                            <div className="flex items-center gap-3">
+                                <span className="bg-slate-200 text-slate-500 text-[10px] font-mono px-1.5 py-0.5 rounded">#{idx + 1}</span>
+                                <span className="text-sm font-bold text-slate-700">{block.title1 || 'Untitled Block'}</span>
+                                <span className="text-xs text-slate-400">({block.type})</span>
+                            </div>
+                            <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                <div className="flex bg-slate-100 rounded-lg p-1 gap-1">
+                                    <button
+                                        onClick={() => moveBlock(idx, 'up')}
+                                        disabled={idx === 0}
+                                        className="p-1 hover:bg-white rounded disabled:opacity-30 transition-colors"
+                                        title="Move Up"
+                                    >
+                                        <ChevronUp size={14} />
+                                    </button>
+                                    <button
+                                        onClick={() => moveBlock(idx, 'down')}
+                                        disabled={idx === blocks.length - 1}
+                                        className="p-1 hover:bg-white rounded disabled:opacity-30 transition-colors"
+                                        title="Move Down"
+                                    >
+                                        <ChevronDown size={14} />
+                                    </button>
+                                    <div className="w-px bg-slate-200 mx-1" />
+                                    <button
+                                        onClick={() => removeBlock(block.id)}
+                                        className="p-1 hover:bg-red-50 text-slate-500 hover:text-red-500 rounded transition-colors"
+                                        title="Delete Block"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {expandedId === block.id && (
+                            <div className="p-4 border-t border-slate-100 space-y-4 animate-in slide-in-from-top-2">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Type</label>
+                                        <select
+                                            className="w-full px-2 py-1.5 border rounded text-sm bg-white"
+                                            value={block.type}
+                                            onChange={e => updateBlock(block.id, { type: e.target.value as any })}
+                                            title="Block Type"
+                                        >
+                                            <option value="Feature">Feature</option>
+                                            <option value="Benefit">Benefit</option>
+                                            <option value="Process">Process</option>
+                                            <option value="Standard">Standard</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Badge / Number</label>
+                                        <input
+                                            className="w-full px-2 py-1.5 border rounded text-sm"
+                                            value={block.title2 || ''}
+                                            placeholder="e.g. 01"
+                                            onChange={e => updateBlock(block.id, { title2: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Title</label>
+                                    <input
+                                        className="w-full px-2 py-1.5 border rounded text-sm font-bold"
+                                        value={block.title1}
+                                        onChange={e => updateBlock(block.id, { title1: e.target.value })}
+                                    />
+                                </div>
+
+                                <RichTextEditor
+                                    label="Description"
+                                    value={block.description}
+                                    onChange={val => updateBlock(block.id, { description: val })}
+                                    minHeight="80px"
+                                />
+
+                                <ImageUploader
+                                    label="Block Image"
+                                    imageUrl={block.imageUrl || ''}
+                                    altText={block.imageAlt || ''}
+                                    onImageChange={val => updateBlock(block.id, { imageUrl: val })}
+                                    onAltTextChange={val => updateBlock(block.id, { imageAlt: val })}
+                                    recommendedSize="600 x 400px"
+                                />
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const ServicesCollectionEditor: React.FC = () => {
+    const { servicesCollection, addService, updateService, deleteService } = useAdmin();
+    const [editingId, setEditingId] = useState<string | null>(null);
+
+    const activeService = servicesCollection.find(s => s.id === editingId);
+
+    if (activeService) {
+        return (
+            <div className="space-y-6">
+                <button onClick={() => setEditingId(null)} className="text-sm text-slate-500 hover:text-brand-600 flex items-center gap-1 mb-4">
+                    <ChevronRight className="rotate-180" size={14} /> Back to List
+                </button>
+                <div className="border-b pb-4 mb-4">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Service Name</label>
+                    <input
+                        className="w-full text-xl font-bold px-3 py-2 border rounded-md"
+                        value={activeService.title}
+                        onChange={(e) => updateService(activeService.id, { title: e.target.value })}
+                    />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Slug (URL)</label>
+                        <input
+                            className="w-full px-3 py-2 border rounded-md font-mono text-sm"
+                            value={activeService.slug}
+                            onChange={(e) => updateService(activeService.id, { slug: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Icon (Lucide Name)</label>
+                        <input
+                            className="w-full px-3 py-2 border rounded-md font-mono text-sm"
+                            value={activeService.icon}
+                            onChange={(e) => updateService(activeService.id, { icon: e.target.value })}
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Short Description</label>
+                    <textarea
+                        className="w-full px-3 py-2 border rounded-md h-20"
+                        value={activeService.shortDescription}
+                        onChange={(e) => updateService(activeService.id, { shortDescription: e.target.value })}
+                    />
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-lg border">
+                    <ServiceContentBlockListEditor
+                        blocks={activeService.contentBlocks || []}
+                        onChange={(newBlocks) => updateService(activeService.id, { contentBlocks: newBlocks })}
+                    />
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-4">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg text-slate-800">Services</h3>
+                <button
+                    onClick={() => {
+                        const newSvc = {
+                            id: `svc-${Date.now()}`,
+                            slug: 'new-service',
+                            title: 'New Service',
+                            shortDescription: 'Description...',
+                            icon: 'Box',
+                            bannerImage: '',
+                            bannerAlt: '',
+                            contentBlocks: [],
+                            status: 'Draft' as const,
+                            lastUpdated: new Date().toISOString()
+                        };
+                        addService(newSvc);
+                    }}
+                    className="px-4 py-2 bg-brand-600 text-white rounded-md text-sm font-bold flex items-center gap-2"
+                >
+                    <Plus size={16} /> Add Service
+                </button>
+            </div>
+
+            <div className="grid gap-3">
+                {servicesCollection.map(svc => (
+                    <div key={svc.id} className="p-4 border rounded-lg bg-white hover:border-brand-300 transition-colors flex justify-between items-center group">
+                        <div>
+                            <h4 className="font-bold text-slate-800">{svc.title}</h4>
+                            <p className="text-xs text-slate-500">/{svc.slug}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setEditingId(svc.id)}
+                                className="px-3 py-1.5 text-sm border rounded hover:bg-slate-50 text-slate-600"
+                            >
+                                Edit
+                            </button>
+                            <button
+                                onClick={() => deleteService(svc.id)}
+                                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 // --- Main CMS Page ---
 
 export const CMSPage: React.FC = () => {
-    const { cmsContent, updatePMSContent, publishPMSContent, addCMSContent, deleteCMSContent, footerContent, updateFooterContent } = useAdmin();
+    const { cmsContent, globalContent, servicesCollection, footerContent, updatePMSContent, publishPMSContent, updateFooterContent } = useAdmin();
+    const { showSuccess, showConfirm } = useFeedback();
     const [searchParams] = useSearchParams();
 
     // Derived Active Page from URL, default to Home
     const rawPage = searchParams.get('page');
-    // Sanitize to valid type
-    const activePage: 'Home' | 'About' | 'Services' | 'IndustrialSolutions' | 'InformationTechnology' | 'ResearchAndDevelopment' | 'ElectronicsManufacturing' | 'SpecificITServices' | 'Careers' | 'Contact' | 'Footer' =
-        (rawPage as any) || 'Home';
+    // Allow any string to support new Global/Collection pages without strict enum config yet
+    const activePage = rawPage || 'Home';
 
     // Filter sections by active page
     // Note: Careers page content handling might need specific check if it's not standard CMSSection
@@ -607,10 +967,11 @@ export const CMSPage: React.FC = () => {
 
     // Manage selection state per page or globally? Globally is fine, just reset on page switch if needed.
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [activeView, setActiveView] = useState<'editor' | 'preview' | 'json'>('editor');
 
     // Auto-select first item if selection is invalid for current page
     React.useEffect(() => {
-        if (activePage === 'Footer') {
+        if (activePage === 'FooterLayout') {
             if (!selectedId) setSelectedId('footer-nav');
         } else if (!selectedId || !pageSections.find(s => s.id === selectedId)) {
             if (pageSections.length > 0) {
@@ -651,7 +1012,7 @@ export const CMSPage: React.FC = () => {
     };
 
     const handleFooterUpdate = (updates: Partial<FooterSection>) => {
-        if (activePage === 'Footer' && selectedId) {
+        if (activePage === 'FooterLayout' && selectedId) {
             // Map selectedId to keys
             const keyMap: Record<string, keyof FooterContent> = {
                 'footer-nav': 'navigation',
@@ -668,7 +1029,7 @@ export const CMSPage: React.FC = () => {
     };
 
     const renderEditor = () => {
-        if (activePage === 'Footer') {
+        if (activePage === 'FooterLayout') {
             switch (selectedId) {
                 case 'footer-nav': return <FooterNavEditor section={footerContent.navigation} onChange={handleFooterUpdate} />;
                 case 'footer-utility': return <FooterUtilityEditor section={footerContent.utility} onChange={handleFooterUpdate} />;
@@ -678,6 +1039,10 @@ export const CMSPage: React.FC = () => {
                 default: return <div>Select a footer section</div>;
             }
         }
+
+        if (activePage === 'GlobalNav') return <GlobalNavEditor />;
+        if (activePage === 'GlobalSEO') return <GlobalSEOEditor />;
+        if (activePage === 'ServicesCollection') return <ServicesCollectionEditor />;
 
         if (!activeSection) return null;
         switch (activeSection.type) {
@@ -716,9 +1081,7 @@ export const CMSPage: React.FC = () => {
         let current = activePage.replace(/([A-Z])/g, ' $1').trim();
 
         if (['IndustrialSolutions', 'InformationTechnology', 'ResearchAndDevelopment', 'ElectronicsManufacturing', 'SpecificITServices'].includes(activePage)) {
-            parent = 'Services';
-        } else if (['Careers'].includes(activePage)) {
-            parent = 'Eleastar & You';
+            parent = 'Services Collection';
         }
 
         // Clean up title display
@@ -768,8 +1131,13 @@ export const CMSPage: React.FC = () => {
                         {activeSection?.status === 'Draft' && (
                             <button
                                 onClick={() => {
-                                    if (selectedId && confirm('Are you sure you want to publish these changes? This will make them visible on the live site.')) {
-                                        publishPMSContent(selectedId);
+                                    if (selectedId) {
+                                        showConfirm({
+                                            title: 'Publish Changes',
+                                            message: 'Are you sure you want to publish these changes? This will make them visible on the live site.',
+                                            confirmLabel: 'Publish',
+                                            onConfirm: () => publishPMSContent(selectedId)
+                                        });
                                     }
                                 }}
                                 className="flex items-center gap-2 px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors shadow-sm font-bold animate-pulse"
@@ -778,225 +1146,128 @@ export const CMSPage: React.FC = () => {
                             </button>
                         )}
                     </div>
-                </div >
+                </div>
 
                 <div className="flex flex-grow gap-8 overflow-hidden">
-                    {/* Section List (Sidebar) */}
-                    <div className="w-1/3 overflow-y-auto pr-2 space-y-3">
-                        {pageSections.map((section) => (
-                            <div
-                                key={section.id}
-                                onClick={() => setSelectedId(section.id)}
-                                className={`p-4 rounded-xl cursor-pointer border transition-all duration-200 group ${selectedId === section.id
-                                    ? 'bg-brand-50 border-brand-200 shadow-sm'
-                                    : 'bg-white border-slate-200 hover:border-brand-200 hover:shadow-sm'
-                                    }`}
-                            >
-                                <div className="flex justify-between items-start mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`w-2 h-2 rounded-full ${section.isVisible ? 'bg-green-500' : 'bg-slate-300'}`} />
-                                        <h3 className={`font-bold ${selectedId === section.id ? 'text-brand-900' : 'text-slate-700'}`}>
-                                            {section.type.replace(/([A-Z])/g, ' $1').trim()}
-                                        </h3>
-                                    </div>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                updatePMSContent(section.id, { isVisible: !section.isVisible });
-                                            }}
-                                            className={`p-1 rounded hover:bg-slate-100 ${section.isVisible ? 'text-green-600' : 'text-slate-400'}`}
-                                            title={section.isVisible ? "Hide Section" : "Show Section"}
-                                        >
-                                            <Eye size={14} />
-                                        </button>
-                                        {section.type === 'ServiceDetailOffering' && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (confirm('Are you sure you want to delete this offering?')) {
-                                                        deleteCMSContent(section.id);
-                                                        if (selectedId === section.id) setSelectedId(null);
-                                                    }
-                                                }}
-                                                className="p-1 rounded hover:bg-red-100 text-slate-400 hover:text-red-600"
-                                                title="Delete Offering"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className={`text-xs ${selectedId === section.id ? 'text-brand-600' : 'text-slate-500'}`}>
-                                    Status: {section.status}
-                                </div>
-                            </div>
-                        ))}
-
-                        {activePage === 'Footer' && (
-                            <>
-                                {Object.values(footerContent).filter(s => s.id !== 'footer-brand').map((section) => (
+                    {/* Section Structure Sidebar */}
+                    {pageSections.length > 0 && (
+                        <div className="w-64 overflow-y-auto pr-2 flex-shrink-0 py-2">
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2">Page Structure</h3>
+                            <div className="space-y-2">
+                                {pageSections.map((section) => (
                                     <div
                                         key={section.id}
                                         onClick={() => setSelectedId(section.id)}
-                                        className={`p-4 rounded-xl cursor-pointer border transition-all duration-200 ${selectedId === section.id
+                                        className={`p-3 rounded-lg cursor-pointer border transition-all duration-200 group ${selectedId === section.id
                                             ? 'bg-brand-50 border-brand-200 shadow-sm'
                                             : 'bg-white border-slate-200 hover:border-brand-200 hover:shadow-sm'
                                             }`}
                                     >
-                                        <div className="flex justify-between items-start mb-2">
+                                        <div className="flex justify-between items-start mb-1">
                                             <div className="flex items-center gap-2">
-                                                <h3 className={`font-bold ${selectedId === section.id ? 'text-brand-900' : 'text-slate-700'}`}>
-                                                    {section.title || section.id}
+                                                <span className={`w-1.5 h-1.5 rounded-full ${section.isVisible ? 'bg-green-500' : 'bg-slate-300'}`} />
+                                                <h3 className={`font-bold text-sm ${selectedId === section.id ? 'text-brand-900' : 'text-slate-700'}`}>
+                                                    {section.type.replace(/([A-Z])/g, ' $1').trim()}
                                                 </h3>
                                             </div>
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        updatePMSContent(section.id, { isVisible: !section.isVisible });
+                                                    }}
+                                                    className={`p-1 rounded hover:bg-slate-100 ${section.isVisible ? 'text-green-600' : 'text-slate-400'}`}
+                                                    title={section.isVisible ? "Hide Section" : "Show Section"}
+                                                >
+                                                    <Eye size={12} />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className={`text-xs ${selectedId === section.id ? 'text-brand-600' : 'text-slate-500'}`}>
-                                            Last Updated: {new Date(section.lastUpdated).toLocaleDateString()}
+                                        <div className="text-xs text-slate-500 line-clamp-1">
+                                            {(section as any).title || (section as any).headline || (section as any).serviceTitle || (section as any).missionTitle || 'Untitled'}
                                         </div>
                                     </div>
                                 ))}
-                            </>
-                        )}
-
-                        {activePage === 'IndustrialSolutions' && (
-                            <button
-                                onClick={() => {
-                                    const newContent: ServiceDetailOfferingSection = {
-                                        id: `ind-offering-${Date.now()}`,
-                                        type: 'ServiceDetailOffering',
-                                        page: 'IndustrialSolutions',
-                                        isVisible: true,
-                                        order: pageSections.length + 1,
-                                        status: 'Draft',
-                                        lastUpdated: new Date().toISOString(),
-                                        number: '00',
-                                        title: 'New Offering',
-                                        description: 'New Description',
-                                        imageUrl: 'https://images.unsplash.com/photo-1581093450065-0a6b42b12975?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-                                    };
-                                    addCMSContent(newContent);
-                                }}
-                                className="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-brand-500 hover:text-brand-600 font-medium flex items-center justify-center gap-2"
-                            >
-                                <Plus size={16} /> Add Offering
-                            </button>
-                        )}
-
-                        {activePage === 'InformationTechnology' && (
-                            <button
-                                onClick={() => {
-                                    const newContent: ServiceDetailOfferingSection = {
-                                        id: `it-offering-${Date.now()}`,
-                                        type: 'ServiceDetailOffering',
-                                        page: 'InformationTechnology',
-                                        isVisible: true,
-                                        order: pageSections.length + 1,
-                                        status: 'Draft',
-                                        lastUpdated: new Date().toISOString(),
-                                        number: '00',
-                                        title: 'New Offering',
-                                        description: 'New Description',
-                                        imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-                                    };
-                                    addCMSContent(newContent);
-                                }}
-                                className="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-brand-500 hover:text-brand-600 font-medium flex items-center justify-center gap-2"
-                            >
-                                <Plus size={16} /> Add Offering
-                            </button>
-                        )}
-
-                        {activePage === 'ResearchAndDevelopment' && (
-                            <button
-                                onClick={() => {
-                                    const newContent: ServiceDetailOfferingSection = {
-                                        id: `rnd-offering-${Date.now()}`,
-                                        type: 'ServiceDetailOffering',
-                                        page: 'ResearchAndDevelopment',
-                                        isVisible: true,
-                                        order: pageSections.length + 1,
-                                        status: 'Draft',
-                                        lastUpdated: new Date().toISOString(),
-                                        number: '00',
-                                        title: 'New R&D Offering',
-                                        description: 'New Description',
-                                        imageUrl: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-                                    };
-                                    addCMSContent(newContent);
-                                }}
-                                className="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-brand-500 hover:text-brand-600 font-medium flex items-center justify-center gap-2"
-                            >
-                                <Plus size={16} /> Add Offering
-                            </button>
-                        )}
-
-                        {activePage === 'ElectronicsManufacturing' && (
-                            <button
-                                onClick={() => {
-                                    const newContent: ServiceDetailOfferingSection = {
-                                        id: `elec-offering-${Date.now()}`,
-                                        type: 'ServiceDetailOffering',
-                                        page: 'ElectronicsManufacturing',
-                                        isVisible: true,
-                                        order: pageSections.length + 1,
-                                        status: 'Draft',
-                                        lastUpdated: new Date().toISOString(),
-                                        number: '00',
-                                        title: 'New Electronics Offering',
-                                        description: 'New Description',
-                                        imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-                                    };
-                                    addCMSContent(newContent);
-                                }}
-                                className="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-brand-500 hover:text-brand-600 font-medium flex items-center justify-center gap-2"
-                            >
-                                <Plus size={16} /> Add Offering
-                            </button>
-                        )}
-
-                        {activePage === 'SpecificITServices' && (
-                            <button
-                                onClick={() => {
-                                    const newContent: ServiceDetailOfferingSection = {
-                                        id: `spec-offering-${Date.now()}`,
-                                        type: 'ServiceDetailOffering',
-                                        page: 'SpecificITServices',
-                                        isVisible: true,
-                                        order: pageSections.length + 1,
-                                        status: 'Draft',
-                                        lastUpdated: new Date().toISOString(),
-                                        number: '00',
-                                        title: 'New Service Offering',
-                                        description: 'New Description',
-                                        imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-                                    };
-                                    addCMSContent(newContent);
-                                }}
-                                className="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-brand-500 hover:text-brand-600 font-medium flex items-center justify-center gap-2"
-                            >
-                                <Plus size={16} /> Add Offering
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Editor Area */}
-                    <div className="w-2/3 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                            <h2 className="font-bold text-slate-800 flex items-center gap-2">
-                                <Layout size={18} className="text-brand-500" />
-                                Edit {activeSection?.type}
-                            </h2>
-                            <div className="text-xs text-slate-400">
-                                ID: {activeSection?.id}
                             </div>
                         </div>
-                        <div className="p-6 overflow-y-auto flex-grow">
-                            {renderEditor()}
+                    )}
+
+                    {/* Main Editor Area */}
+                    <div className="w-2/3 flex flex-col bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        {/* Editor Tabs */}
+                        <div className="flex border-b border-slate-200 bg-slate-50">
+                            <button
+                                onClick={() => setActiveView('editor')}
+                                className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeView === 'editor' ? 'bg-white text-brand-600 border-t-2 border-t-brand-600' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+                            >
+                                <Layout size={16} /> Edit Content
+                            </button>
+                            <button
+                                onClick={() => {
+                                    showSuccess({ title: 'Preview Ready', message: 'Content synced to local preview environment.' });
+                                    setActiveView('preview');
+                                }}
+                                className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeView === 'preview' ? 'bg-white text-brand-600 border-t-2 border-t-brand-600' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+                            >
+                                <Eye size={16} /> Visual Preview
+                            </button>
+                            <button
+                                onClick={() => setActiveView('json')}
+                                className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeView === 'json' ? 'bg-white text-brand-600 border-t-2 border-t-brand-600' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+                            >
+                                <FileCode size={16} /> JSON Data
+                            </button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto flex-grow bg-white">
+                            {activeView === 'editor' && (
+                                <div className="max-w-3xl mx-auto animate-in fade-in duration-300">
+                                    <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center mb-6 rounded-lg">
+                                        <h2 className="font-bold text-slate-800 flex items-center gap-2">
+                                            <Layout size={18} className="text-brand-500" />
+                                            Edit {activeSection?.type}
+                                        </h2>
+                                        <div className="text-xs text-slate-400">
+                                            ID: {activeSection?.id}
+                                        </div>
+                                    </div>
+                                    {(selectedId || ['GlobalNav', 'GlobalSEO', 'ServicesCollection'].includes(activePage)) ? renderEditor() : (
+                                        <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+                                            <Layout size={48} className="mb-4 opacity-20" />
+                                            <p>Select a section to start editing</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {activeView === 'preview' && (
+                                <div className="h-full animate-in fade-in duration-300">
+                                    <CMSPreviewPane
+                                        url={currentPagePreviewLink}
+                                        cmsContent={cmsContent}
+                                        pageName={activePage}
+                                    />
+                                </div>
+                            )}
+
+                            {activeView === 'json' && (
+                                <div className="h-full animate-in fade-in duration-300">
+                                    <CMSJsonPreview
+                                        data={
+                                            activePage === 'GlobalNav' ? globalContent.navigation :
+                                                activePage === 'GlobalSEO' ? globalContent.seoDefaults :
+                                                    activePage === 'ServicesCollection' ? servicesCollection :
+                                                        activePage === 'Footer' ? footerContent :
+                                                            (activeSection || cmsContent.filter(s => s.page === activePage))
+                                        }
+                                        pageName={activePage}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-            </div >
-        </PageContainer >
+            </div>
+        </PageContainer>
     );
 };

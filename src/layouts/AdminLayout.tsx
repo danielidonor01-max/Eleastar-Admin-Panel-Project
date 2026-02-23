@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Globe, Briefcase, ChevronDown, ChevronRight, LogOut, Calendar, Share2, BarChart2, Layout, QrCode, Wallet, FileText, Search, Check } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Globe, ChevronDown, ChevronRight, LogOut, Calendar, Share2, BarChart2, QrCode, Wallet, FileText, Search, Check, Shield, TrendingUp, Gift, Activity } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { NotificationMenu } from '../components/NotificationMenu';
-import type { AdminRole, ModuleType } from '../context/AdminContext';
+import { useFeedback } from '../context/FeedbackContext';
+import type { AdminRole } from '../data/mockData';
+import type { ModuleType } from '../context/AdminContext';
 import { PUBLIC_LINK } from '../config';
 
 export const AdminLayout: React.FC = () => {
@@ -13,6 +15,8 @@ export const AdminLayout: React.FC = () => {
         rolePermissions,
         isAuthenticated
     } = useAdmin();
+
+    const { showSuccess } = useFeedback();
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -26,8 +30,18 @@ export const AdminLayout: React.FC = () => {
 
     // Sidebar State
     const [expandedCMS, setExpandedCMS] = useState(true); // Default open for visibility
-    const [expandedServices, setExpandedServices] = useState(false);
-    const [expandedCareers, setExpandedCareers] = useState(false);
+
+    // CMS Sections State (Collapsible)
+    const [cmsSectionState, setCmsSectionState] = useState({
+        global: true,
+        collections: false,
+        pages: true,
+        footer: false
+    });
+
+    const toggleCmsSection = (section: keyof typeof cmsSectionState) => {
+        setCmsSectionState(prev => ({ ...prev, [section]: !prev[section] }));
+    };
 
     // Auto-expand sidebar sections based on active route
     React.useEffect(() => {
@@ -35,25 +49,15 @@ export const AdminLayout: React.FC = () => {
 
         if (isCMS) {
             setExpandedCMS(true);
-            const search = location.search;
-            const isServices = search.includes('page=IndustrialSolutions') ||
-                search.includes('page=InformationTechnology') ||
-                search.includes('page=ResearchAndDevelopment') ||
-                search.includes('page=ElectronicsManufacturing') ||
-                search.includes('page=SpecificITServices') ||
-                search.includes('page=Services');
-
-            setExpandedServices(isServices);
-
-            const isCareers = search.includes('page=Careers');
-            setExpandedCareers(isCareers);
         } else {
             // "Global Navigation Consistency": Clicking a non-CMS module should deactivate/collapse Website CMS.
             setExpandedCMS(false);
-            setExpandedServices(false);
-            setExpandedCareers(false);
         }
     }, [location.pathname, location.search]);
+
+    // Sidebar width based on CMS expansion
+    // If CMS is expanded, wide sidebar (280px), else standard (256px)
+    const sidebarWidthClass = expandedCMS ? 'w-[280px]' : 'w-64';
 
     // Click outside to close (simplified)
     // In production, use click-outside hooks.
@@ -62,13 +66,12 @@ export const AdminLayout: React.FC = () => {
         return rolePermissions[currentUserRole].includes(module);
     };
 
-    const roles: AdminRole[] = ['Super Admin', 'Management Admin', 'HR Admin', 'Finance Admin', 'Web Admin'];
+    const roles: AdminRole[] = ['SUPER_ADMIN', 'COO', 'HR_ADMIN', 'FINANCE_ADMIN', 'PAYROLL_ADMIN', 'CHIEF_RISK_OFFICER', 'USER'];
 
     return (
         <div className="flex h-screen bg-slate-50 font-sans text-slate-900">
 
-            {/* Sidebar */}
-            <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col h-full flex-shrink-0 transition-all duration-300">
+            <aside className={`${sidebarWidthClass} bg-slate-900 text-slate-300 flex flex-col h-full flex-shrink-0 transition-all duration-300 ease-in-out`}>
                 <div className="h-20 flex flex-col justify-center px-6 border-b border-slate-800">
                     <div className="font-bold text-white tracking-wider flex items-center gap-2">
                         <img src="/assets/logo-horizontal-white.png" alt="Eleastar Admin" className="h-8 object-contain" />
@@ -87,6 +90,13 @@ export const AdminLayout: React.FC = () => {
                                 <LayoutDashboard size={20} />
                                 Dashboard
                             </NavLink>
+                            {/* Analytics Link - CEO/COO/Finance only */}
+                            {['SUPER_ADMIN', 'COO', 'FINANCE_ADMIN'].includes(currentUserRole) && (
+                                <NavLink to="/admin/analytics" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                    <BarChart2 size={20} />
+                                    Analytics
+                                </NavLink>
+                            )}
                         </>
                     )}
 
@@ -95,18 +105,19 @@ export const AdminLayout: React.FC = () => {
                             {/* Only show header if we haven't shown it for dashboard or if we want to group distinctively */}
                             {/* In this simple list, we can just render the links if permitted */}
 
-                            {hasAccess('Employees') && (
-                                <NavLink to="/admin/employees" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
-                                    <Users size={20} />
-                                    Employees
-                                </NavLink>
-                            )}
                             {hasAccess('QR & ID') && (
                                 <NavLink to="/admin/qr" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
                                     <QrCode size={20} />
                                     QR & ID
                                 </NavLink>
                             )}
+                            {hasAccess('Employees') && (
+                                <NavLink to="/admin/employees" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                    <Users size={20} />
+                                    Employees
+                                </NavLink>
+                            )}
+
                         </>
                     )}
 
@@ -119,6 +130,7 @@ export const AdminLayout: React.FC = () => {
                                     Payroll
                                 </NavLink>
                             )}
+
                             {hasAccess('Recruitment') && (
                                 <NavLink to="/admin/recruitment" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
                                     <FileText size={20} />
@@ -140,6 +152,41 @@ export const AdminLayout: React.FC = () => {
                         </>
                     )}
 
+                    {hasAccess('Employees') && (
+                        <NavLink to="/admin/promotions" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                            <TrendingUp size={20} />
+                            Promotions
+                        </NavLink>
+                    )}
+
+                    {hasAccess('Payroll') && (
+                        <NavLink to="/admin/bonuses" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                            <Gift size={20} />
+                            Bonuses
+                        </NavLink>
+                    )}
+
+
+                    {hasAccess('Compliance') && (
+                        <>
+                            <div className="text-xs font-bold text-slate-500 uppercase px-3 mb-2 mt-6">Risk & Compliance</div>
+                            <NavLink to="/admin/compliance" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                <Shield size={20} />
+                                Compliance
+                            </NavLink>
+                            {['SUPER_ADMIN', 'COO', 'CHIEF_RISK_OFFICER', 'FINANCE_ADMIN', 'HR_ADMIN'].includes(currentUserRole) && (
+                                <NavLink to="/admin/compliance-reports" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                    <FileText size={20} />
+                                    Reports
+                                </NavLink>
+                            )}
+                            <NavLink to="/admin/activity" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                <Activity size={20} />
+                                Activity Log
+                            </NavLink>
+                        </>
+                    )}
+
                     {(hasAccess('Website CMS') || hasAccess('Settings')) && (
                         <>
                             <div className="text-xs font-bold text-slate-500 uppercase px-3 mb-2 mt-6">System</div>
@@ -158,107 +205,144 @@ export const AdminLayout: React.FC = () => {
                                     </button>
 
                                     {expandedCMS && (
-                                        <div className="ml-9 mt-1 space-y-1 border-l border-slate-700 pl-3">
-                                            {/* Home */}
-                                            <NavLink to="/admin/cms?page=Home" className={() => {
-                                                const search = useLocation().search;
-                                                const isCurrent = location.pathname === '/admin/cms' && (!search || search.includes('page=Home'));
-                                                return `block px-3 py-1.5 text-sm rounded-md transition-colors ${isCurrent ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
-                                            }}>
-                                                Home Page
-                                            </NavLink>
+                                        <div className="ml-5 mt-2 transition-all duration-300 ease-in-out">
 
-                                            {/* About */}
-                                            <NavLink to="/admin/cms?page=About" className={() => {
-                                                const search = useLocation().search;
-                                                const isCurrent = location.pathname === '/admin/cms' && search.includes('page=About');
-                                                return `block px-3 py-1.5 text-sm rounded-md transition-colors ${isCurrent ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
-                                            }}>
-                                                About Page
-                                            </NavLink>
-
-                                            {/* Services Parent */}
-                                            <div>
+                                            {/* Global Settings */}
+                                            <div className="mb-1">
                                                 <button
-                                                    onClick={() => setExpandedServices(!expandedServices)}
-                                                    className="w-full text-left flex items-center justify-between px-3 py-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+                                                    onClick={() => toggleCmsSection('global')}
+                                                    className="w-full flex items-center justify-between group px-1 mb-1 mt-3"
                                                 >
-                                                    <span className="flex items-center gap-2">
-                                                        <Layout size={14} /> Services
-                                                    </span>
-                                                    {expandedServices ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest group-hover:text-slate-400 transition-colors">Global Settings</div>
+                                                    <ChevronDown size={10} className={`text-slate-600 transition-transform duration-200 ${cmsSectionState.global ? '' : '-rotate-90'}`} />
                                                 </button>
 
-                                                {expandedServices && (
-                                                    <div className="ml-2 pl-2 border-l border-slate-700 mt-1 space-y-1">
+                                                {cmsSectionState.global && (
+                                                    <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
+                                                        <NavLink to="/admin/cms?page=GlobalNav" className={() => {
+                                                            const search = location.search;
+                                                            const active = search.includes('page=GlobalNav');
+                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            Navigation Menu
+                                                        </NavLink>
+                                                        <NavLink to="/admin/cms?page=GlobalSEO" className={() => {
+                                                            const search = location.search;
+                                                            const active = search.includes('page=GlobalSEO');
+                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            SEO Defaults
+                                                        </NavLink>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Collections */}
+                                            <div className="mb-1">
+                                                <button
+                                                    onClick={() => toggleCmsSection('collections')}
+                                                    className="w-full flex items-center justify-between group px-1 mb-1 mt-3"
+                                                >
+                                                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest group-hover:text-slate-400 transition-colors">Collections</div>
+                                                    <ChevronDown size={10} className={`text-slate-600 transition-transform duration-200 ${cmsSectionState.collections ? '' : '-rotate-90'}`} />
+                                                </button>
+
+                                                {cmsSectionState.collections && (
+                                                    <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
+                                                        <NavLink to="/admin/cms?page=ServicesCollection" className={() => {
+                                                            const search = location.search;
+                                                            const active = search.includes('page=ServicesCollection');
+                                                            return `flex items-center gap-2 px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            <FileText size={14} className="opacity-70" />
+                                                            Services
+                                                        </NavLink>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Pages */}
+                                            <div className="mb-1">
+                                                <button
+                                                    onClick={() => toggleCmsSection('pages')}
+                                                    className="w-full flex items-center justify-between group px-1 mb-1 mt-3"
+                                                >
+                                                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest group-hover:text-slate-400 transition-colors">Pages</div>
+                                                    <ChevronDown size={10} className={`text-slate-600 transition-transform duration-200 ${cmsSectionState.pages ? '' : '-rotate-90'}`} />
+                                                </button>
+
+                                                {cmsSectionState.pages && (
+                                                    <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
+                                                        <NavLink to="/admin/cms?page=Home" className={() => {
+                                                            const search = location.search;
+                                                            const active = (!search || search.includes('page=Home'));
+                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            Home
+                                                        </NavLink>
+                                                        <NavLink to="/admin/cms?page=About" className={() => {
+                                                            const search = location.search;
+                                                            const active = search.includes('page=About');
+                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            About
+                                                        </NavLink>
                                                         <NavLink to="/admin/cms?page=Services" className={() => {
-                                                            const search = useLocation().search;
-                                                            return `block px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === '/admin/cms' && search.includes('page=Services') ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
-                                                        }}>Main Page</NavLink>
-                                                        <NavLink to="/admin/cms?page=IndustrialSolutions" className={() => {
-                                                            const search = useLocation().search;
-                                                            return `block px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === '/admin/cms' && search.includes('page=IndustrialSolutions') ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
-                                                        }}>Industrial</NavLink>
-                                                        <NavLink to="/admin/cms?page=InformationTechnology" className={() => {
-                                                            const search = useLocation().search;
-                                                            return `block px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === '/admin/cms' && search.includes('page=InformationTechnology') ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
-                                                        }}>IT Services</NavLink>
-                                                        <NavLink to="/admin/cms?page=ResearchAndDevelopment" className={() => {
-                                                            const search = useLocation().search;
-                                                            return `block px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === '/admin/cms' && search.includes('page=ResearchAndDevelopment') ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
-                                                        }}>R&D</NavLink>
-                                                        <NavLink to="/admin/cms?page=ElectronicsManufacturing" className={() => {
-                                                            const search = useLocation().search;
-                                                            return `block px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === '/admin/cms' && search.includes('page=ElectronicsManufacturing') ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
-                                                        }}>Electronics</NavLink>
-                                                        <NavLink to="/admin/cms?page=SpecificITServices" className={() => {
-                                                            const search = useLocation().search;
-                                                            return `block px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === '/admin/cms' && search.includes('page=SpecificITServices') ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
-                                                        }}>Specific IT</NavLink>
+                                                            const search = location.search;
+                                                            const active = search.includes('page=Services');
+                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            Services (Main)
+                                                        </NavLink>
+                                                        <NavLink to="/admin/cms?page=Contact" className={() => {
+                                                            const search = location.search;
+                                                            const active = search.includes('page=Contact');
+                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            Contact
+                                                        </NavLink>
                                                     </div>
                                                 )}
                                             </div>
-
-                                            {/* Eleastar & You Parent */}
-                                            <div>
-                                                <button
-                                                    onClick={() => setExpandedCareers(!expandedCareers)}
-                                                    className="w-full text-left flex items-center justify-between px-3 py-1.5 text-sm text-slate-400 hover:text-white transition-colors"
-                                                >
-                                                    <span className="flex items-center gap-2">
-                                                        <Briefcase size={14} /> Eleastar & You
-                                                    </span>
-                                                    {expandedCareers ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                                                </button>
-
-                                                {expandedCareers && (
-                                                    <div className="ml-2 pl-2 border-l border-slate-700 mt-1 space-y-1">
-                                                        <NavLink to="/admin/cms?page=Careers" className={() => {
-                                                            const search = useLocation().search;
-                                                            return `block px-3 py-1.5 text-xs rounded-md transition-colors ${location.pathname === '/admin/cms' && search.includes('page=Careers') ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
-                                                        }}>Careers</NavLink>
-                                                        {/* Future: Tech Hub */}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Contact */}
-                                            <NavLink to="/admin/cms?page=Contact" className={() => {
-                                                const search = useLocation().search;
-                                                const isCurrent = location.pathname === '/admin/cms' && search.includes('page=Contact');
-                                                return `block px-3 py-1.5 text-sm rounded-md transition-colors ${isCurrent ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
-                                            }}>
-                                                Contact Us
-                                            </NavLink>
 
                                             {/* Footer */}
-                                            <NavLink to="/admin/cms?page=Footer" className={() => {
-                                                const search = useLocation().search;
-                                                const isCurrent = location.pathname === '/admin/cms' && search.includes('page=Footer');
-                                                return `block px-3 py-1.5 text-sm rounded-md transition-colors ${isCurrent ? 'text-brand-400 font-medium' : 'text-slate-400 hover:text-white'}`;
-                                            }}>
-                                                Footer
-                                            </NavLink>
+                                            <div className="mb-1">
+                                                <button
+                                                    onClick={() => toggleCmsSection('footer')}
+                                                    className="w-full flex items-center justify-between group px-1 mb-1 mt-3"
+                                                >
+                                                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest group-hover:text-slate-400 transition-colors">Footer</div>
+                                                    <ChevronDown size={10} className={`text-slate-600 transition-transform duration-200 ${cmsSectionState.footer ? '' : '-rotate-90'}`} />
+                                                </button>
+
+                                                {cmsSectionState.footer && (
+                                                    <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
+                                                        <NavLink to="/admin/cms?page=FooterLayout" className={() => {
+                                                            const search = location.search;
+                                                            const active = search.includes('page=FooterLayout');
+                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            Footer Layout
+                                                        </NavLink>
+
+                                                        <div className="mt-2 mb-1 pl-2 text-[10px] text-slate-600 font-medium tracking-wide">LEGAL PAGES</div>
+                                                        <NavLink to="/admin/cms?page=PrivacyPolicy" className={() => {
+                                                            const search = location.search;
+                                                            const active = search.includes('page=PrivacyPolicy');
+                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            Privacy Policy
+                                                        </NavLink>
+                                                        <NavLink to="/admin/cms?page=TermsOfService" className={() => {
+                                                            const search = location.search;
+                                                            const active = search.includes('page=TermsOfService');
+                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            Terms of Service
+                                                        </NavLink>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -296,7 +380,7 @@ export const AdminLayout: React.FC = () => {
                                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
                             />
                         </div>
-                        {currentUserRole !== 'Super Admin' && (
+                        {currentUserRole !== 'SUPER_ADMIN' && (
                             <div className="px-3 py-1 bg-amber-50 border border-amber-200 rounded-md text-amber-700 text-xs font-medium animate-pulse">
                                 View Mode: {currentUserRole}
                             </div>
@@ -305,12 +389,12 @@ export const AdminLayout: React.FC = () => {
 
                     <div className="flex items-center gap-6">
                         {/* Share Preview Button */}
-                        {currentUserRole === 'Super Admin' && (
+                        {currentUserRole === 'SUPER_ADMIN' && (
                             <button
                                 onClick={() => {
                                     const previewUrl = PUBLIC_LINK || window.location.origin;
                                     navigator.clipboard.writeText(previewUrl);
-                                    alert(`Link copied: ${previewUrl}`);
+                                    showSuccess({ title: 'Copied', message: `Link copied: ${previewUrl}` });
                                 }}
                                 className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors text-sm font-medium border border-indigo-200"
                                 title="Share this link for review"
@@ -381,6 +465,6 @@ export const AdminLayout: React.FC = () => {
                     </div>
                 </main>
             </div>
-        </div>
+        </div >
     );
 };

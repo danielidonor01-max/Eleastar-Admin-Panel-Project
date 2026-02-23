@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Home } from './pages/Home';
 import { About } from './pages/About';
 import { Services } from './pages/Services';
+import { Technologies } from './pages/Technologies';
+import { EleastarAndYou } from './pages/EleastarAndYou';
 import { ServiceDetail } from './pages/ServiceDetail';
 import { VerificationPage } from './pages/VerificationPage';
 import { CareersPage } from './pages/CareersPage';
@@ -10,7 +12,7 @@ import { LoginPage } from './pages/LoginPage';
 
 // Admin Imports
 import { AdminLayout } from './layouts/AdminLayout';
-import { Dashboard } from './pages/admin/Dashboard';
+import { AdminDashboard } from './modules/admin-dashboard/pages/AdminDashboard';
 import { Employees } from './pages/admin/Employees';
 import { QRPage } from './pages/admin/QRPage';
 import { PayrollPage } from './pages/admin/PayrollPage';
@@ -20,6 +22,14 @@ import { LeaveManagement } from './pages/admin/LeaveManagement';
 import { PerformancePage } from './pages/admin/PerformancePage';
 import { SettingsPage } from './pages/admin/SettingsPage';
 import { NotificationsPage } from './pages/admin/NotificationsPage';
+import CompliancePage from './pages/admin/CompliancePage';
+import { ActivityLogPage } from './pages/admin/ActivityLogPage';
+import { PromotionsPage } from './pages/admin/PromotionsPage';
+import { SalarySettings } from './pages/admin/SalarySettings';
+import { BonusPage } from './pages/admin/BonusPage';
+import { AnalyticsDashboard } from './pages/admin/AnalyticsDashboard';
+
+import { ComplianceReportsPage } from './pages/admin/ComplianceReportsPage';
 
 import { AdminProvider } from './context/AdminContext';
 import { ProfilePage } from './pages/admin/ProfilePage';
@@ -39,6 +49,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/services" element={<Services />} />
+          <Route path="/technologies" element={<Technologies />} />
+          <Route path="/eleastar-and-you" element={<EleastarAndYou />} />
           <Route path="/services/industrial-solutions" element={<ServiceDetail pageName="IndustrialSolutions" />} />
           <Route path="/services/information-technology" element={<ServiceDetail pageName="InformationTechnology" />} />
           <Route path="/services/research-and-development" element={<ServiceDetail pageName="ResearchAndDevelopment" />} />
@@ -52,7 +64,7 @@ function App() {
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="employees" element={<Employees />} />
             <Route path="qr" element={<QRPage />} />
@@ -63,9 +75,16 @@ function App() {
             <Route path="cms" element={<CMSPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="profile" element={<ProfilePage />} />
-            <Route path="system/activity" element={<SettingsPage />} />
+            <Route path="compliance" element={<CompliancePage />} />
+            <Route path="activity" element={<ActivityLogPage />} />
+            <Route path="promotions" element={<PromotionsPage />} />
+            <Route path="salary-structures" element={<SalarySettings />} />
+            <Route path="bonuses" element={<BonusPage />} />
+            <Route path="analytics" element={<AnalyticsDashboard />} />
+
+            <Route path="compliance-reports" element={<ComplianceReportsPage />} />
             {/* Fallback for unimplemented admin routes */}
-            <Route path="*" element={<Dashboard />} />
+            <Route path="*" element={<AdminDashboard />} />
           </Route>
 
           {/* User Routes */}

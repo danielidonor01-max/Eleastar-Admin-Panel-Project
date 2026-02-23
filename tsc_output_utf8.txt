@@ -1,0 +1,61 @@
+﻿src/components/NotificationDetailsModal.tsx(4,15): error TS2724: '"../context/AdminContext"' has no exported member named 'Notification'. Did you mean 'NotificationType'?
+src/components/NotificationDetailsModal.tsx(48,32): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"User"' have no overlap.
+src/components/NotificationDetailsModal.tsx(54,28): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"User"' have no overlap.
+src/components/NotificationMenu.tsx(5,15): error TS2724: '"../context/AdminContext"' has no exported member named 'Notification'. Did you mean 'NotificationType'?
+src/components/NotificationMenu.tsx(254,46): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"User"' have no overlap.
+src/layouts/UserLayout.tsx(24,9): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"User"' have no overlap.
+src/modules/SystemUsers/SystemUsersPage.tsx(24,9): error TS2820: Type '"User"' is not assignable to type 'AdminRole'. Did you mean '"USER"'?
+src/modules/SystemUsers/SystemUsersPage.tsx(41,37): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"Super Admin"' have no overlap.
+src/modules/SystemUsers/SystemUsersPage.tsx(47,13): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"Super Admin"' have no overlap.
+src/modules/SystemUsers/SystemUsersPage.tsx(47,42): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"Super Admin"' have no overlap.
+src/modules/SystemUsers/SystemUsersPage.tsx(231,145): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"Super Admin"' have no overlap.
+src/modules/SystemUsers/SystemUsersPage.tsx(232,45): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"User"' have no overlap.
+src/pages/admin/CMSPage.tsx(916,36): error TS2345: Argument of type '{ id: string; slug: string; title: string; shortDescription: string; icon: string; bannerImage: string; bannerAlt: string; contentBlocks: never[]; status: "Draft"; lastUpdated: string; }' is not assignable to parameter of type 'ServiceItem'.
+  Property 'tenantId' is missing in type '{ id: string; slug: string; title: string; shortDescription: string; icon: string; bannerImage: string; bannerAlt: string; contentBlocks: never[]; status: "Draft"; lastUpdated: string; }' but required in type 'ServiceItem'.
+src/pages/admin/CMSPage.tsx(955,13): error TS6133: 'currentUserRole' is declared but its value is never read.
+src/pages/admin/CMSPage.tsx(955,129): error TS6133: 'updateGlobal' is declared but its value is never read.
+src/pages/admin/CMSPage.tsx(955,164): error TS6133: 'addService' is declared but its value is never read.
+src/pages/admin/CMSPage.tsx(955,176): error TS6133: 'updateService' is declared but its value is never read.
+src/pages/admin/CMSPage.tsx(955,191): error TS6133: 'deleteService' is declared but its value is never read.
+src/pages/admin/CMSPage.tsx(957,11): error TS6133: 'navigate' is declared but its value is never read.
+src/pages/admin/CompliancePage.tsx(7,27): error TS2339: Property 'currentTenantId' does not exist on type 'AdminContextType'.
+src/pages/admin/CompliancePage.tsx(14,93): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/pages/admin/CompliancePage.tsx(18,102): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/pages/admin/CompliancePage.tsx(30,60): error TS18048: 'l.details' is possibly 'undefined'.
+src/pages/admin/CompliancePage.tsx(30,108): error TS18048: 'l.details' is possibly 'undefined'.
+src/pages/admin/Dashboard.tsx(117,86): error TS2339: Property 'actorName' does not exist on type 'ActivityLog'.
+src/pages/admin/Employees.tsx(9,69): error TS2339: Property 'updateEmployeeContract' does not exist on type 'AdminContextType'.
+src/pages/admin/Employees.tsx(9,93): error TS2339: Property 'uploadContractDocument' does not exist on type 'AdminContextType'.
+src/pages/admin/Employees.tsx(38,13): error TS2820: Type '"User"' is not assignable to type 'AdminRole'. Did you mean '"USER"'?
+src/pages/admin/Employees.tsx(41,21): error TS2345: Argument of type 'Omit<Employee, "tenantId">' is not assignable to parameter of type 'Employee'.
+  Property 'tenantId' is missing in type 'Omit<Employee, "tenantId">' but required in type 'Employee'.
+src/pages/admin/Employees.tsx(66,53): error TS2554: Expected 1-2 arguments, but got 5.
+src/pages/admin/Employees.tsx(68,49): error TS2554: Expected 1-2 arguments, but got 5.
+src/pages/admin/LeaveManagement.tsx(35,21): error TS2339: Property 'success' does not exist on type 'Promise<{ success: boolean; error?: string | undefined; }>'.
+src/pages/admin/LeaveManagement.tsx(35,39): error TS2339: Property 'error' does not exist on type 'Promise<{ success: boolean; error?: string | undefined; }>'.
+src/pages/admin/LeaveManagement.tsx(36,35): error TS2339: Property 'error' does not exist on type 'Promise<{ success: boolean; error?: string | undefined; }>'.
+src/pages/admin/NotificationsPage.tsx(4,15): error TS2724: '"../../context/AdminContext"' has no exported member named 'Notification'. Did you mean 'NotificationType'?
+src/pages/admin/PayrollPage.tsx(48,80): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"Super Admin"' have no overlap.
+src/pages/admin/PayrollPage.tsx(254,30): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"Finance Admin"' have no overlap.
+src/pages/admin/PayrollPage.tsx(268,39): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"Super Admin"' have no overlap.
+src/pages/admin/PayrollPage.tsx(283,39): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"Super Admin"' have no overlap.
+src/pages/admin/PayrollPage.tsx(283,76): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"Finance Admin"' have no overlap.
+src/pages/admin/PayrollPage.tsx(298,39): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"Super Admin"' have no overlap.
+src/pages/admin/PayrollPage.tsx(298,76): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"Finance Admin"' have no overlap.
+src/pages/admin/PayrollPage.tsx(459,59): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"Super Admin"' have no overlap.
+src/pages/admin/PayrollPage.tsx(459,96): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"HR Admin"' have no overlap.
+src/pages/admin/PayrollPage.tsx(459,130): error TS2367: This comparison appears to be unintentional because the types 'AdminRole' and '"Management Admin"' have no overlap.
+src/pages/admin/PerformancePage.tsx(112,44): error TS2554: Expected 1 arguments, but got 3.
+src/pages/admin/ProfilePage.tsx(36,39): error TS2554: Expected 1-2 arguments, but got 4.
+src/pages/admin/ProfilePage.tsx(42,41): error TS2554: Expected 1-2 arguments, but got 4.
+src/pages/admin/PromotionsPage.tsx(35,9): error TS2820: Type '"User"' is not assignable to type 'AdminRole'. Did you mean '"USER"'?
+src/pages/admin/PromotionsPage.tsx(51,53): error TS2367: This comparison appears to be unintentional because the types '"SUPER_ADMIN" | "HR_ADMIN" | "FINANCE_ADMIN" | "PAYROLL_ADMIN" | "USER" | "CHIEF_RISK_OFFICER"' and '"Super Admin"' have no overlap.
+src/pages/admin/PromotionsPage.tsx(95,39): error TS2820: Type '"User"' is not assignable to type 'AdminRole'. Did you mean '"USER"'?
+src/pages/admin/QRPage.tsx(39,41): error TS2554: Expected 1-2 arguments, but got 4.
+src/pages/admin/QRPage.tsx(96,43): error TS2554: Expected 1-2 arguments, but got 5.
+src/pages/admin/RecruitmentPage.tsx(56,16): error TS2345: Argument of type 'Omit<Job, "tenantId">' is not assignable to parameter of type 'Job'.
+  Property 'tenantId' is missing in type 'Omit<Job, "tenantId">' but required in type 'Job'.
+src/pages/LoginPage.tsx(24,21): error TS2367: This comparison appears to be unintentional because the types 'Promise<false | AdminRole>' and 'string' have no overlap.
+src/services/employeeService.ts(67,57): error TS6133: 'reason' is declared but its value is never read.

@@ -1,72 +1,76 @@
 import React, { createContext, useContext, useState } from 'react';
-import { employees as initialEmployees, jobs as initialJobs, initialLeaveRequests, initialReviewCycles, initialPerformanceReviews, initialCMSContent, initialAboutContent, initialServicesContent, initialIndustrialSolutionsContent, initialInformationTechnologyContent, initialResearchAndDevelopmentContent, initialElectronicsManufacturingContent, initialSpecificITServicesContent, initialFooterContent } from '../data/mockData';
-import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, CMSSection, FooterContent, FooterSection } from '../data/mockData';
+import { jobs as initialJobs, initialLeaveRequests, initialReviewCycles, initialPerformanceReviews, initialCMSContent, initialAboutContent, initialServicesContent, initialIndustrialSolutionsContent, initialInformationTechnologyContent, initialResearchAndDevelopmentContent, initialElectronicsManufacturingContent, initialSpecificITServicesContent, initialFooterContent, initialGlobalContent, initialServicesCollection, initialLedgerEntries, initialSalaryStructures, initialPromotionRequests, initialEligibilityRules } from '../data/mockData';
+import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, CMSSection, FooterContent, FooterSection, GlobalContent, ServiceItem, ServiceCollection, BonusType, BonusRequest, LedgerEntry, SalaryStructure, PromotionRequest, PromotionEligibilityRule, PayrollCycle, AdminRole } from '../data/mockData';
+
+import * as reportService from '../services/reportService';
+import { authService } from '../services/authService';
+import { employeeService } from '../services/employeeService';
+import { notificationService } from '../services/notificationService';
+import { payrollService } from '../services/payrollService';
+import { jobService } from '../services/jobService';
+import { leaveService } from '../services/leaveService';
+import { performanceService } from '../services/performanceService';
+import { cmsService } from '../services/cmsService';
+import { settingsService } from '../services/settingsService';
+import { financeService } from '../services/financeService';
+import { salaryService } from '../services/salaryService';
+import { promotionService } from '../services/promotionService';
+import { bonusService } from '../services/bonusService';
 
 // Extended Types
+// Extended Types
+export type PayrollCycleType = PayrollCycle; // Export for reportUtils
+export type { AdminRole }; // Re-export for compatibility
+
 export interface ActivityLog {
     id: string;
     user: string;
+    actorName?: string; // Dashboard compatibility
+    actorRole?: string; // Dashboard compatibility
+    userId?: string; // For reportUtils compatibility
     action: string;
+    actionType?: string; // Dashboard compatibility
     timestamp: string;
     details?: string;
     role: string; // Added role tracking
+    // For reportUtils compatibility
+    entityId?: string;
+    entityType?: string;
+    metadata?: any;
+    status?: string;
 }
 
-export interface PayrollCycle {
-    id: string;
-    month: string;
-    year: number;
-    status: 'Draft' | 'Reviewed' | 'Approved' | 'Paid';
-    adjustments: { empId: string; type: 'Bonus' | 'Fine' | 'Deduction'; amount: number; reason: string }[];
-}
 
-// Notification Types
-export type NotificationType = 'System' | 'HR' | 'Payroll' | 'Recruitment' | 'Leave' | 'Performance' | 'QR';
-export type NotificationChannel = 'in-app' | 'email' | 'both';
 
-export interface Notification {
-    id: string;
-    title: string;          // New: For bolder headers
-    message: string;
-    type: NotificationType;
-    timestamp: string;
-    isRead: boolean;
-    link: string;
+import type { AdminNotification, NotificationType, NotificationChannel, EmailLog } from '../services/notificationTypes';
+export type { AdminNotification, NotificationType, NotificationChannel, EmailLog };
 
-    // Targeting
-    targetUserId?: string;  // Specific user
-    targetRole?: AdminRole[]; // One or more roles
-}
-
-export interface EmailLog {
-    id: string;
-    recipientEmail: string;
-    recipientName: string;
-    subject: string;
-    body: string;
-    timestamp: string;
-    triggerEvent: string;
-}
 
 // Role & Permissions Types
-export type AdminRole = 'Super Admin' | 'Management Admin' | 'HR Admin' | 'Finance Admin' | 'Web Admin' | 'User' | 'Viewer';
-export type ModuleType = 'Dashboard' | 'Employees' | 'QR & ID' | 'Payroll' | 'Recruitment' | 'Website CMS' | 'Settings' | 'Leave' | 'Performance';
+
+export type ModuleType = 'Dashboard' | 'Employees' | 'QR & ID' | 'Payroll' | 'Recruitment' | 'Website CMS' | 'Settings' | 'Leave' | 'Performance' | 'Compliance' | 'System Users';
 
 export interface AdminContextType {
+    isLoading: boolean; // Global loading state
     employees: Employee[];
     jobs: Job[];
     activityLogs: ActivityLog[];
     payrollStatus: PayrollCycle;
     ceoSignature: string | null;
+    currentTenantId: string;
 
     // Auth
     requestAuth: (level: 'CMS' | 'SENSITIVE', description: string, onConfirm: () => void) => void;
 
     cmsContent: CMSSection[]; // New CMS data
     footerContent: FooterContent; // Global Footer Data
+    globalContent: GlobalContent;
+    servicesCollection: ServiceCollection; // or ServiceItem[]
 
-    // Notification State
-    notifications: Notification[];
+
+
+    // AdminNotification State
+    notifications: AdminNotification[];
     markNotificationAsRead: (id: string) => void;
     markAllNotificationsAsRead: () => void;
 
@@ -74,20 +78,21 @@ export interface AdminContextType {
 
     // Leave Management
     leaveRequests: LeaveRequest[];
-    requestLeave: (userId: string, request: Omit<LeaveRequest, 'id' | 'employeeId' | 'status' | 'requestedAt'>) => void;
-    approveLeave: (requestId: string) => { success: boolean; error?: string };
-    rejectLeave: (requestId: string, reason: string) => void;
+    requestLeave: (userId: string, request: Omit<LeaveRequest, 'id' | 'tenantId' | 'employeeId' | 'status' | 'requestedAt'>) => Promise<void>;
+    approveLeave: (requestId: string) => Promise<{ success: boolean; error?: string }>;
+    rejectLeave: (requestId: string, reason: string) => Promise<void>;
 
     // Performance Management
     reviewCycles: ReviewCycle[];
     performanceReviews: PerformanceReview[];
-    createReviewCycle: (cycle: Omit<ReviewCycle, 'id'>) => void;
-    submitSelfReview: (review: Omit<PerformanceReview, 'id' | 'status' | 'submittedAt'>) => void;
-    updatePerformanceReview: (id: string, updates: Partial<PerformanceReview>) => void;
-    approvePerformanceReview: (id: string, finalData: Partial<PerformanceReview>) => void;
-    requestRevision: (id: string, feedback: string) => void;
+    createReviewCycle: (cycle: Omit<ReviewCycle, 'id' | 'tenantId' | 'status'>) => Promise<void>;
+    submitSelfReview: (id: string, selfReview: string, rating: number) => Promise<void>;
+    updatePerformanceReview: (id: string, updates: Partial<PerformanceReview>) => Promise<void>;
+    approvePerformanceReview: (id: string, finalData: Partial<PerformanceReview>) => Promise<void>;
+    startReviewCycle: (id: string) => Promise<void>;
+    requestRevision: (id: string, feedback: string) => Promise<void>;
 
-    // Notification Engine
+    // AdminNotification Engine
     emailLogs: EmailLog[]; // Expose logs
     dispatchNotification: (
         payload: { title: string; message: string; type: NotificationType; link: string },
@@ -103,51 +108,112 @@ export interface AdminContextType {
     // Actions
     updateEmployee: (id: string, updates: Partial<Employee>) => void;
     updateUserProfile: (updates: Partial<Employee>) => void; // Safe update for self
-    addEmployee: (employee: Employee) => void;
+    addEmployee: (employee: Omit<Employee, 'tenantId'>) => void;
+    updateEmployeeContract: (id: string, contract: any) => void;
+    uploadContractDocument: (id: string, doc: any) => void;
     regenerateQR: (ids: string[]) => void;
     toggleQRStatus: (id: string, status: 'active' | 'suspended') => void;
     updatePayrollStatus: (status: PayrollCycle['status']) => void;
     addPayrollAdjustment: (empId: string, type: 'Bonus' | 'Fine' | 'Deduction', amount: number, reason: string) => void;
     bulkPayrollAdjustment: (empIds: string[], type: 'Bonus' | 'Fine' | 'Deduction', amount: number, reason: string) => void;
-    logAction: (action: string, details?: string) => void;
-    updateCeoSignature: (url: string) => void;
-    addJob: (job: Job) => void;
+    logAction: (action: string, details?: string, ...args: any[]) => void;
+    updateCeoSignature: (url: string) => Promise<void>;
+    addJob: (job: Omit<Job, 'tenantId'>) => void;
     updateJob: (id: string, updates: Partial<Job>) => void;
     deleteJob: (id: string) => void;
 
     // CMS Actions
-    updatePMSContent: (id: string, content: any) => void; // Using any for flexible updates across union types
-    publishPMSContent: (id: string) => void;
-    addCMSContent: (section: CMSSection) => void;
-    deleteCMSContent: (id: string) => void;
-    updateFooterContent: (section: keyof FooterContent, data: Partial<FooterSection>) => void;
+    updatePMSContent: (id: string, content: any) => Promise<void>; // Using any for flexible updates across union types
+    publishPMSContent: (id: string) => Promise<void>;
+    addCMSContent: (section: CMSSection) => Promise<void>;
+    deleteCMSContent: (id: string) => Promise<void>;
+    updateFooterContent: (section: keyof FooterContent, data: Partial<FooterSection>) => Promise<void>;
+
+    // Global Settings
+    updateGlobal: (section: keyof GlobalContent, data: any) => Promise<void>;
+
+    // Services Collection
+    addService: (service: Omit<ServiceItem, 'tenantId'>) => Promise<void>;
+    updateService: (id: string, updates: Partial<ServiceItem>) => Promise<void>;
+    deleteService: (id: string) => Promise<void>;
 
     // New Actions
-
     switchRole: (role: AdminRole) => void;
     updateRolePermissions: (role: AdminRole, modules: ModuleType[]) => void;
 
+    // Bonus Management
+    bonusTypes: BonusType[];
+    bonusRequests: BonusRequest[];
+    createBonusType: (bonus: Omit<BonusType, 'id' | 'tenantId'>) => Promise<void>;
+    updateBonusType: (id: string, updates: Partial<BonusType>) => Promise<void>;
+
+    requestBonus: (employeeId: string, bonusTypeId: string, amount: number, reason: string) => Promise<void>;
+    approveBonus: (requestId: string, approvedBy: string) => Promise<void>;
+    rejectBonus: (requestId: string, reason: string) => Promise<void>;
+
     // Authentication
     isAuthenticated: boolean;
-    login: (password: string) => AdminRole | false;
-    logout: () => void;
+    login: (email: string, password: string) => Promise<AdminRole | false>;
+    logout: () => Promise<void>;
+    // Password Management
+    generateSystemPassword: () => string;
+    sendEmail: (to: string, subject: string, body: string) => void;
+
+    // Compliance Reports
+    generatePayrollSummaryReport: (cycleId?: string) => any[];
+    generateApprovalTrailReport: (cycleId: string) => any[];
+    generateBonusAdjustmentReport: (cycleId: string) => any[];
+    generatePayrollVarianceReport: (currentCycleId: string, previousCycleId: string) => any[];
+    generateSalaryHistoryReport: (employeeId?: string, startDate?: string, endDate?: string) => any[];
+    generatePromotionHistoryReport: (startDate?: string, endDate?: string) => any[];
+    generateUserAccessReport: () => any[];
+    generateCriticalActionReport: (startDate?: string, endDate?: string) => any[];
+    generateAttestationPack: (period: { start: string; end: string }, reportTypes: string[]) => any;
+    logReportAccess: (reportType: string, filters: any) => void;
+
+    // Finance & Ledger
+    ledgerEntries: LedgerEntry[];
+    approveLedgerFunding: (cycleId: string, pin: string) => Promise<{ success: boolean; error?: string }>;
+    executeLedgerBatch: (cycleId: string) => Promise<{ success: boolean; error?: string }>;
+
+    // Salary Structures
+    salaryStructures: SalaryStructure[];
+    saveSalaryStructure: (structure: SalaryStructure) => Promise<void>;
+
+    // Promotions
+    promotionRequests: PromotionRequest[];
+    eligibilityRules: PromotionEligibilityRule[];
+    requestPromotion: (req: Omit<PromotionRequest, 'id' | 'tenantId' | 'status' | 'requestedAt'>) => Promise<void>;
+    approvePromotion: (requestId: string) => Promise<void>;
+    rejectPromotion: (requestId: string, reason: string) => Promise<void>;
+    saveEligibilityRule: (rule: PromotionEligibilityRule) => Promise<void>;
+    evaluateEligibility: (employeeId: string, newRole: string) => { isEligible: boolean; reasons: string[]; scores: any };
+
+    // Payroll Actions
+    cooReviewPayroll: () => void;
+    cfoApprovePayroll: () => void;
+    updateEmployeeSalary: (empId: string, newSalary: number, reason: string, effectiveDate: string) => void;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 // Initial Permissions Configuration
 const INITIAL_PERMISSIONS: Record<AdminRole, ModuleType[]> = {
-    'Super Admin': ['Dashboard', 'Employees', 'QR & ID', 'Payroll', 'Recruitment', 'Website CMS', 'Settings', 'Leave', 'Performance'],
-    'Management Admin': ['Dashboard', 'Employees', 'QR & ID', 'Payroll', 'Recruitment', 'Website CMS', 'Leave', 'Performance'],
-    'HR Admin': ['Dashboard', 'Employees', 'Recruitment', 'QR & ID', 'Leave', 'Performance'],
-    'Finance Admin': ['Dashboard', 'Payroll'],
-    'Web Admin': ['Dashboard', 'Website CMS'],
-    'User': [], // Users have no admin module access
-    'Viewer': [] // Viewers have read-only access (to be implemented)
+    'SUPER_ADMIN': ['Dashboard', 'Employees', 'QR & ID', 'Payroll', 'Recruitment', 'Website CMS', 'Settings', 'Leave', 'Performance', 'Compliance', 'System Users'],
+    'COO': ['Dashboard', 'Employees', 'QR & ID', 'Payroll', 'Recruitment', 'Website CMS', 'Leave', 'Performance', 'Compliance'],
+    'HR_ADMIN': ['Dashboard', 'Employees', 'Recruitment', 'QR & ID', 'Leave', 'Performance'],
+    'MANAGEMENT_ADMIN': ['Dashboard', 'Employees', 'Leave', 'Performance', 'Compliance'],
+    'FINANCE_ADMIN': ['Dashboard', 'Payroll'],
+    'PAYROLL_ADMIN': ['Dashboard', 'Payroll'],
+    'TECHNICIAN': ['Dashboard', 'QR & ID', 'System Users'],
+    'WEB_ADMIN': ['Dashboard', 'Website CMS', 'Settings'],
+    'VIEWER': ['Dashboard'],
+    'CHIEF_RISK_OFFICER': ['Dashboard', 'Compliance'],
+    'USER': [] // Standard users have no admin module access
 };
 
 // Mock Notifications
-const INITIAL_NOTIFICATIONS: Notification[] = [
+const INITIAL_NOTIFICATIONS: AdminNotification[] = [
     { id: '1', title: 'System Alert', type: 'System', message: 'New admin session started', timestamp: new Date().toISOString(), isRead: false, link: '/admin/dashboard' },
     { id: '2', title: 'Onboarding', type: 'HR', message: 'New employee onboarded: Sarah Jenkins', timestamp: new Date(Date.now() - 3600000).toISOString(), isRead: false, link: '/admin/employees' },
     { id: '3', title: 'Payroll Update', type: 'Payroll', message: 'January Payroll cycle opened', timestamp: new Date(Date.now() - 86400000).toISOString(), isRead: true, link: '/admin/payroll' },
@@ -157,10 +223,19 @@ const INITIAL_NOTIFICATIONS: Notification[] = [
 
 import type { AuthLevel } from '../components/PinAuthorizationModal';
 import { PinAuthorizationModal } from '../components/PinAuthorizationModal';
+import { useFeedback } from './FeedbackContext';
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // ...
+    const { showSuccess, showError, showInfo } = useFeedback();
+
+    // Global Loading State
+    const [isLoading, setIsLoading] = useState(true); // Start true to fetch initial data
+
     const [authRequest, setAuthRequest] = useState<{ level: AuthLevel; description: string; onConfirm: () => void } | null>(null);
+
+    // Bonus State
+    const [bonusTypes, setBonusTypes] = useState<BonusType[]>([]);
+    const [bonusRequests, setBonusRequests] = useState<BonusRequest[]>([]);
 
     const requestAuth = (level: AuthLevel, description: string, onConfirm: () => void) => {
         setAuthRequest({ level, description, onConfirm });
@@ -171,28 +246,128 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             authRequest.onConfirm();
             setAuthRequest(null);
             // Log the clean auth event
-            logAction('Authorization', `PIN Verified for: ${authRequest.description} by ${authRequest.level === 'SENSITIVE' ? 'Super Admin' : 'User'}`);
+            logAction('Authorization', `PIN Verified for: ${authRequest.description} by ${authRequest.level === 'SENSITIVE' ? 'SUPER_ADMIN' : 'USER'}`);
         }
     };
 
     // State
-    const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+    const [employees, setEmployees] = useState<Employee[]>([]); // Start empty, fetch on mount
     const [jobs, setJobs] = useState<Job[]>(initialJobs);
     const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(initialLeaveRequests);
     const [cmsContent, setCmsContent] = useState<CMSSection[]>([...initialCMSContent, ...initialAboutContent, ...initialServicesContent, ...initialIndustrialSolutionsContent, ...initialInformationTechnologyContent, ...initialResearchAndDevelopmentContent, ...initialElectronicsManufacturingContent, ...initialSpecificITServicesContent]);
     const [footerContent, setFooterContent] = useState<FooterContent>(initialFooterContent);
+    const [globalContent, setGlobalContent] = useState<GlobalContent>(initialGlobalContent);
+    const [servicesCollection, setServicesCollection] = useState<ServiceCollection>(initialServicesCollection);
     const [ceoSignature, setCeoSignature] = useState<string | null>(null);
-    const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
-    const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]); // New Email Logs
-    const [currentUserRole, setCurrentUserRole] = useState<AdminRole>('Super Admin');
-    const [currentUserId, setCurrentUserId] = useState<string | null>('EMP-001'); // Default to Super Admin ID
+    const [notifications, setNotifications] = useState<AdminNotification[]>(INITIAL_NOTIFICATIONS);
+    const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
+    const [currentTenantId] = useState('tenant-default');
+
+    // Define helper functions before they are used in other functions
+    const sendEmail = (to: string, subject: string, body: string) => {
+        const newLog: EmailLog = {
+            id: `EMAIL-${Date.now()}`,
+            recipientEmail: to,
+            recipientName: employees.find(e => e.email === to)?.name || 'Unknown',
+            subject,
+            body,
+            timestamp: new Date().toISOString(),
+            triggerEvent: 'System Action'
+        };
+        setEmailLogs(prev => [newLog, ...prev]);
+        logAction('System', `Email sent to ${to}: ${subject}`);
+    };
+
+    const generateSystemPassword = () => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+        return Array.from({ length: 12 }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+    };
+
+    // New Email Logs
+    // New Email Logs
+    const [currentUserRole, setCurrentUserRole] = useState<AdminRole>('USER'); // Default safe, update on auth
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const getEmployeeName = (id: string) => employees.find(e => e.id === id)?.name || id;
     const [rolePermissions, setRolePermissions] = useState<Record<AdminRole, ModuleType[]>>(INITIAL_PERMISSIONS);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [reviewCycles, setReviewCycles] = useState<ReviewCycle[]>(initialReviewCycles);
 
     const [performanceReviews, setPerformanceReviews] = useState<PerformanceReview[]>(initialPerformanceReviews);
 
-    // Notification Deduplication Ref
+    // New State for Modules
+    const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>(initialLedgerEntries);
+    const [salaryStructures, setSalaryStructures] = useState<SalaryStructure[]>(initialSalaryStructures);
+    const [promotionRequests, setPromotionRequests] = useState<PromotionRequest[]>(initialPromotionRequests);
+    const [eligibilityRules, setEligibilityRules] = useState<PromotionEligibilityRule[]>(initialEligibilityRules);
+
+    // AdminNotification Deduplication Ref
     const lastNotificationRef = React.useRef<{ sig: string; time: number } | null>(null);
+
+    // --- AUTH & INITIALIZATION LOGIC ---
+    React.useEffect(() => {
+        const init = async () => {
+            setIsLoading(true);
+            try {
+                // 1. Check Auth
+                const authResponse = await authService.getCurrentUser();
+                if (authResponse.success && authResponse.data) {
+                    const user = authResponse.data;
+                    setIsAuthenticated(true);
+                    setCurrentUserRole(user.role);
+                    setCurrentUserId(user.id);
+                    // Load permissions based on role
+                    // In a real app, permissions might come from the user object directly
+                }
+
+                // 2. Load Employees (Required for everyone to see names etc)
+                const empResponse = await employeeService.getAllEmployees();
+                if (empResponse.success) {
+                    setEmployees(empResponse.data);
+                }
+
+                // 3. Load Notifications (if auth)
+                if (authResponse.success && authResponse.data) {
+                    const [notifResponse, leaveResponse, cycleResponse, cmsResponse, settingsResponse, servicesResponse, ledgerResponse, salaryResponse, promotionResponse, bonusTypeResponse, bonusRequestResponse] = await Promise.all([
+                        notificationService.getNotifications(authResponse.data.id, authResponse.data.role),
+                        leaveService.getAllLeaveRequests(),
+                        performanceService.getReviewCycles(),
+                        cmsService.getCMSContent(),
+                        settingsService.getGlobalSettings(),
+                        cmsService.getServices(),
+                        financeService.getLedgerEntries(),
+                        salaryService.getSalaryStructures(),
+                        promotionService.getPromotionRequests(),
+                        bonusService.getBonusTypes(),
+                        bonusService.getBonusRequests()
+                    ]);
+
+                    if (notifResponse.success) setNotifications(notifResponse.data);
+                    if (leaveResponse.success) setLeaveRequests(leaveResponse.data);
+                    if (cycleResponse.success) setReviewCycles(cycleResponse.data);
+                    if (cmsResponse.success) setCmsContent(cmsResponse.data);
+                    if (settingsResponse.success) setGlobalContent(settingsResponse.data);
+                    if (servicesResponse.success) setServicesCollection(servicesResponse.data);
+                    if (ledgerResponse.success) setLedgerEntries(ledgerResponse.data);
+                    if (salaryResponse.success) setSalaryStructures(salaryResponse.data);
+                    if (promotionResponse.success) setPromotionRequests(promotionResponse.data);
+                    if (bonusTypeResponse.success) setBonusTypes(bonusTypeResponse.data);
+                    if (bonusRequestResponse.success) setBonusRequests(bonusRequestResponse.data);
+
+                    // Also fetch eligibility rules
+                    const eligibilityResponse = await promotionService.getEligibilityRules();
+                    if (eligibilityResponse.success) setEligibilityRules(eligibilityResponse.data);
+                }
+
+            } catch (error) {
+                console.error("Initialization Failed:", error);
+                showError({ title: 'System Error', message: 'Failed to load application data.' });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        init();
+    }, []);
 
     // --- REMINDER ENGINE LOGIC ---
     React.useEffect(() => {
@@ -247,10 +422,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                                 type: 'Leave',
                                 link: '/admin/leave'
                             },
-                            { roles: ['Super Admin'] }, // Escalate to Super Admin
+                            { roles: ['SUPER_ADMIN'] }, // Escalate to SUPER_ADMIN
                             ['in-app', 'email']
                         );
-                        logAction('System Escalation', `Escalated Leave Request ${req.id} for ${employeeName} to Super Admin`);
+                        logAction('System Escalation', `Escalated Leave Request ${req.id} for ${employeeName} to SUPER_ADMIN`);
                     } else {
                         dispatchNotification(
                             {
@@ -259,7 +434,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                                 type: 'Leave',
                                 link: '/admin/leave'
                             },
-                            { roles: ['Management Admin', 'HR Admin'] }, // Remind Approvers
+                            { roles: ['COO', 'HR_ADMIN'] }, // Remind Approvers
                             newLevel === 2 ? ['in-app', 'email'] : ['in-app']
                         );
                         logAction('System Reminder', `Sent Level ${newLevel} reminder for Leave Request ${req.id}`);
@@ -285,15 +460,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     // --- END REMINDER ENGINE ---
-
     // Auth State - Default to false for preview environment security
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    // (Removed duplicate isAuthenticated state)
 
     const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([
-        { id: '1', user: 'Admin User', role: 'Super Admin', action: 'System Login', timestamp: new Date().toISOString() }
+        { id: '1', user: 'Admin User', role: 'SUPER_ADMIN', action: 'System Login', timestamp: new Date().toISOString() }
     ]);
     const [payrollStatus, setPayrollStatus] = useState<PayrollCycle>({
         id: 'JAN-2026',
+        tenantId: 'tenant-default',
         month: 'January',
         year: 2026,
         status: 'Draft',
@@ -303,12 +478,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
     // Actions
-    const logAction = (action: string, details?: string) => {
+    const logAction = (action: string, details?: string, ..._args: any[]) => {
         const newLog: ActivityLog = {
             id: Math.random().toString(36).substr(2, 9),
             user: 'Admin User',
+            actorName: 'Admin User', // Set default or current user name
+            actorRole: currentUserRole,
             role: currentUserRole,
             action,
+            actionType: action, // Mirror for compatibility
             details,
             timestamp: new Date().toISOString()
         };
@@ -319,6 +497,36 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setEmployees(prev => prev.map(emp => {
             if (emp.id === id) {
                 const oldEmp = emp;
+                // Salary Band Logic: Enforce structure on role change
+                if (updates.systemRole && updates.systemRole !== emp.systemRole) {
+                    // Exclusions: Compliance & Audit Officers (per requirements)
+                    const isExcluded = ['CHIEF_RISK_OFFICER'].includes(updates.systemRole) ||
+                        (updates.title && /Compliance|Audit/i.test(updates.title)) ||
+                        (emp.title && /Compliance|Audit/i.test(emp.title));
+
+                    if (!isExcluded) {
+                        const band = initialSalaryStructures.find(s => s.role === updates.systemRole);
+                        if (band) {
+                            // Ensure salary respects the band of the NEW role
+                            let newSalary = updates.salary !== undefined ? updates.salary : emp.salary;
+                            let adjusted = false;
+
+                            if (newSalary < band.minSalary) {
+                                newSalary = band.minSalary;
+                                adjusted = true;
+                            } else if (newSalary > band.maxSalary) {
+                                newSalary = band.maxSalary;
+                                adjusted = true;
+                            }
+
+                            if (adjusted) {
+                                updates.salary = newSalary;
+                                logAction('Salary Auto-Adjustment', `Salary adjusted to ₦${newSalary.toLocaleString()} to match ${updates.systemRole} band.`);
+                            }
+                        }
+                    }
+                }
+
                 const newEmp = { ...emp, ...updates };
 
                 // Detect Financial/Role Changes and Notify
@@ -377,30 +585,74 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     };
 
-    const updateUserProfile = (updates: Partial<Employee>) => {
+    const updateUserProfile = async (updates: Partial<Employee>) => {
         if (!currentUserId) return;
 
-        // Security: Filter allowed fields. This prevents users from editing their Salary or Role explicitly via this action.
-        const allowedUpdates: Partial<Employee> = {
-            photoUrl: updates.photoUrl,
-            phoneNumber: updates.phoneNumber,
-            socialLinks: updates.socialLinks
-        };
+        setIsLoading(true);
+        try {
+            // Safe subset of updates for self-service
+            const safeUpdates: Partial<Employee> = {
+                phoneNumber: updates.phoneNumber,
+                address: updates.address,
+                emergencyContact: updates.emergencyContact,
+                bankDetails: updates.bankDetails,
+                taxDetails: updates.taxDetails
+            };
 
-        // If no allowed updates, do nothing
-        if (Object.keys(allowedUpdates).length === 0) return;
-
-        setEmployees(prev => prev.map(emp => emp.id === currentUserId ? { ...emp, ...allowedUpdates } : emp));
-        logAction('Profile Update', `User ${currentUserId} updated their profile`);
-
-        addNotification('System', `User ${currentUserId} updated their profile details`, '/admin/employees');
+            const response = await employeeService.updateEmployee(currentUserId, safeUpdates);
+            if (response.success) {
+                setEmployees(prev => prev.map(e => e.id === currentUserId ? { ...e, ...safeUpdates } : e));
+                logAction('Profile Update', `User updated their own profile`);
+                showSuccess({ title: 'Profile Updated', message: 'Your changes have been saved.' });
+            }
+        } catch (err) {
+            showError({ title: 'Update Error', message: 'Failed to update profile.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const addEmployee = (employee: Employee) => {
-        setEmployees(prev => [...prev, employee]);
-        logAction('Added Employee', `Onboarded ${employee.name}`);
-        // Trigger Notification
-        addNotification('HR', `New employee added: ${employee.name}`, '/admin/employees');
+    const addEmployee = async (newEmployee: Omit<Employee, 'tenantId'>) => {
+        setIsLoading(true);
+        try {
+            const fullEmployee: Employee = { ...newEmployee, tenantId: currentTenantId || 'tenant-default' };
+            const response = await employeeService.createEmployee(fullEmployee);
+            if (response.success) {
+                setEmployees(prev => [fullEmployee, ...prev]);
+                logAction('Onboarding', `Added new employee: ${fullEmployee.name}`);
+                showSuccess({ title: 'Employee Added', message: `${fullEmployee.name} has been successfully onboarded.` });
+            } else {
+                showError({ title: 'Onboarding Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Onboarding Error', message: 'Failed to create employee.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const updateEmployeeContract = async (id: string, contract: any) => {
+        setIsLoading(true);
+        try {
+            // Mock implementation for now
+            setEmployees(prev => prev.map(emp => emp.id === id ? { ...emp, ...contract } : emp));
+            logAction('Contract Update', `Updated contract for ${id}`);
+            showSuccess({ title: 'Contract Updated', message: 'Contract details have been saved.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const uploadContractDocument = async (id: string, doc: any) => {
+        setIsLoading(true);
+        try {
+            // Mock implementation for now
+            console.log(`Uploaded document for ${id}`, doc);
+            logAction('Document Upload', `Uploaded contract document for ${id}`);
+            showSuccess({ title: 'Document Uploaded', message: 'Contract document has been recorded.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const regenerateQR = (ids: string[]) => {
@@ -412,150 +664,411 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     const toggleQRStatus = (id: string, status: 'active' | 'suspended') => {
-        setEmployees(prev => prev.map(emp => emp.id === id ? { ...emp, status: status === 'suspended' ? 'inactive' : 'active' } : emp));
+        setEmployees(prev => prev.map(emp => emp.id === id ? { ...emp, status: status === 'suspended' ? 'suspended' : 'active' } : emp));
         logAction('Updated QR Status', `Set QR status to ${status} for ${id}`);
     };
 
-    const updatePayrollStatus = (status: PayrollCycle['status']) => {
+    const updatePayrollStatus = async (status: PayrollCycle['status']) => {
         // 0. Security Guard
-        const authorizedRoles: AdminRole[] = ['Super Admin', 'Finance Admin'];
+        const authorizedRoles: AdminRole[] = ['SUPER_ADMIN', 'FINANCE_ADMIN'];
         if (!authorizedRoles.includes(currentUserRole)) {
-            alert('Unauthorized: Only Finance or Super Admins can update payroll status.');
+            showError({ title: 'Unauthorized', message: 'Only Finance or SUPER_ADMINs can update payroll status.' });
             return;
         }
 
         // 1. State Locking Logic
         if (payrollStatus.status === 'Paid' && status !== 'Paid') {
-            alert('Cannot revert a generic Paid payroll cycle. Action denied.');
-            return;
-        }
-        if (payrollStatus.status === 'Approved' && status === 'Draft' && currentUserRole !== 'Super Admin') {
-            alert('Only Super Admin can revert Approved payroll to Draft.');
+            showError({ title: 'Action Denied', message: 'Cannot revert a completed Paid payroll cycle.' });
             return;
         }
 
-        setPayrollStatus(prev => ({ ...prev, status }));
-        logAction('Updated Payroll Status', `Changed status to ${status}`);
+        setIsLoading(true);
+        try {
+            const response = await payrollService.updateStatus(payrollStatus.id, status);
+            if (response.success) {
+                setPayrollStatus(prev => ({ ...prev, status }));
+                logAction('Updated Payroll Status', `Changed status to ${status}`);
 
-        if (status === 'Approved' || status === 'Paid') {
-            dispatchNotification(
-                {
-                    title: 'Payslip Available',
-                    message: `Payroll status updated to ${status}. Please check your Payslip.`,
-                    type: 'Payroll',
-                    link: '/user/payroll'
-                },
-                { roles: ['User'] }, // Broadcast to Users matches roles
-                ['in-app', 'email']
-            );
-        } else {
-            addNotification('Payroll', `Payroll status updated to ${status}`, '/admin/payroll');
+                if (status === 'Approved' || status === 'Paid') {
+                    dispatchNotification(
+                        {
+                            title: 'Payslip Available',
+                            message: `Payroll status updated to ${status}. Please check your Payslip.`,
+                            type: 'Payroll',
+                            link: '/user/payroll'
+                        },
+                        { userId: currentUserId || undefined, roles: ['USER'] },
+                        ['in-app', 'email']
+                    );
+                } else {
+                    addNotification('Payroll', `Payroll status updated to ${status}`, '/admin/payroll');
+                }
+                showSuccess({ title: 'Status Updated', message: `Payroll status updated to ${status}.` });
+            } else {
+                showError({ title: 'Update Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Update Error', message: 'Failed to update payroll status.' });
+        } finally {
+            setIsLoading(false);
         }
-        alert(`Payroll status updated to ${status}.`);
     };
 
-    const addPayrollAdjustment = (empId: string, type: 'Bonus' | 'Fine' | 'Deduction', amount: number, reason: string) => {
+    const addPayrollAdjustment = async (empId: string, type: 'Bonus' | 'Fine' | 'Deduction', amount: number, reason: string) => {
         // 0. Security & State Guard
-        const authorizedRoles: AdminRole[] = ['Super Admin', 'Finance Admin'];
+        const authorizedRoles: AdminRole[] = ['SUPER_ADMIN', 'FINANCE_ADMIN'];
         if (!authorizedRoles.includes(currentUserRole)) {
-            alert('Unauthorized action.');
+            showError({ title: 'Unauthorized', message: 'You do not have permission to add adjustments.' });
             return;
         }
         if (payrollStatus.status === 'Approved' || payrollStatus.status === 'Paid') {
-            alert(`Cannot add adjustments when Payroll is ${payrollStatus.status}.`);
+            showError({ title: 'Action Locked', message: `Cannot add adjustments when Payroll is ${payrollStatus.status}.` });
             return;
         }
 
-        setPayrollStatus(prev => ({
-            ...prev,
-            adjustments: [...prev.adjustments, { empId, type, amount, reason }]
-        }));
-        logAction('Payroll Adjustment', `Added ${type} of ₦${amount} for ${empId}: ${reason}`);
-        alert('Adjustment added.');
+        setIsLoading(true);
+        try {
+            const response = await payrollService.addAdjustment(empId, type, amount, reason);
+            if (response.success) {
+                setPayrollStatus(prev => ({
+                    ...prev,
+                    adjustments: [...prev.adjustments, { empId, type, amount, reason }]
+                }));
+                logAction('Payroll Adjustment', `Added ${type} of ₦${amount} for ${empId}: ${reason}`);
+                showSuccess({ title: 'Adjustment Added', message: 'Payroll adjustment recorded successfully.' });
+            } else {
+                showError({ title: 'Adjustment Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Adjustment Error', message: 'Failed to record payroll adjustment.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const bulkPayrollAdjustment = (empIds: string[], type: 'Bonus' | 'Fine' | 'Deduction', amount: number, reason: string) => {
+    const bulkPayrollAdjustment = async (empIds: string[], type: 'Bonus' | 'Fine' | 'Deduction', amount: number, reason: string) => {
         // 0. Security & State Guard
-        const authorizedRoles: AdminRole[] = ['Super Admin', 'Finance Admin'];
+        const authorizedRoles: AdminRole[] = ['SUPER_ADMIN', 'FINANCE_ADMIN'];
         if (!authorizedRoles.includes(currentUserRole)) {
-            alert('Unauthorized action.');
+            showError({ title: 'Unauthorized', message: 'You do not have permission to create bulk adjustments.' });
             return;
         }
         if (payrollStatus.status === 'Approved' || payrollStatus.status === 'Paid') {
-            alert(`Cannot add adjustments when Payroll is ${payrollStatus.status}.`);
+            showError({ title: 'Action Locked', message: `Cannot add adjustments when Payroll is ${payrollStatus.status}.` });
             return;
         }
 
-        const newAdjustments = empIds.map(empId => ({ empId, type, amount, reason }));
-        setPayrollStatus(prev => ({
-            ...prev,
-            adjustments: [...prev.adjustments, ...newAdjustments]
-        }));
+        setIsLoading(true);
+        try {
+            // Note: In a real system, there would be a bulk API. For now, simulate multiple calls or a single bulk call if the service supported it.
+            // We'll simulate a single bulk call logic in the service (conceptually).
+            const responses = await Promise.all(empIds.map(id => payrollService.addAdjustment(id, type, amount, reason)));
+            const allSuccess = responses.every(r => r.success);
 
-        // Detailed Logging
-        empIds.forEach(id => {
-            logAction('Payroll Adjustment', `Added ${type} of ₦${amount} for ${id}: ${reason}`);
-        });
+            if (allSuccess) {
+                const newAdjustments = empIds.map(empId => ({ empId, type, amount, reason }));
+                setPayrollStatus(prev => ({
+                    ...prev,
+                    adjustments: [...prev.adjustments, ...newAdjustments]
+                }));
 
-        // Also keep a summary log if desired, or rely on the individual ones. The user requested "For every adjustment... Log affected employees". Individual logs are safer for "affected employees".
-        logAction('Bulk Adjustment Batch', `Processed ${type} for ${empIds.length} employees. Total: ₦${amount * empIds.length}`);
-        alert(`Bulk adjustment applied to ${empIds.length} employees.`);
+                // Detailed Logging
+                empIds.forEach(id => {
+                    logAction('Payroll Adjustment', `Added ${type} of ₦${amount} for ${id}: ${reason}`);
+                });
+
+                logAction('Bulk Adjustment Batch', `Processed ${type} for ${empIds.length} employees. Total: ₦${amount * empIds.length}`);
+                showSuccess({ title: 'Bulk Adjustment', message: `Applied adjustment to ${empIds.length} employees.` });
+            } else {
+                showError({ title: 'Bulk Adjustment Failed', message: 'Some adjustments failed to record.' });
+            }
+        } catch (err) {
+            showError({ title: 'Bulk Adjustment Error', message: 'Failed to process bulk adjustments.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const updateCeoSignature = (url: string) => {
-        setCeoSignature(url);
-        logAction('Updated CEO Signature', 'Updated global CEO signature for ID cards.');
-        addNotification('System', 'Global CEO Signature updated', '/admin/settings');
+    const cooReviewPayroll = () => {
+        updatePayrollStatus('Reviewed');
+        logAction('Payroll Review', 'COO reviewed payroll for ' + payrollStatus.month);
+        showSuccess({ title: 'Payroll Reviewed', message: 'Payroll has been marked as reviewed.' });
     };
+
+    const cfoApprovePayroll = () => {
+        updatePayrollStatus('Approved');
+        logAction('Payroll Approval', 'CFO approved payroll for ' + payrollStatus.month);
+        showSuccess({ title: 'Payroll Approved', message: 'Payroll approved. Funds are now ready for disbursement.' });
+    };
+
+    const updateEmployeeSalary = async (empId: string, newSalary: number, reason: string, _effectiveDate: string) => {
+        setIsLoading(true);
+        try {
+            // In a real app, effectiveDate would be used for scheduling.
+            const response = await employeeService.updateSalary(empId, newSalary, reason);
+            if (response.success) {
+                setEmployees(prev => prev.map(e => e.id === empId ? { ...e, salary: newSalary } : e));
+                logAction('Salary Update', `Updated salary for ${empId} to ${newSalary}. Reason: ${reason}`);
+                showSuccess({ title: 'Salary Updated', message: 'Employee salary has been modified.' });
+            } else {
+                showError({ title: 'Update Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Update Error', message: 'Failed to update salary.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
 
     // Job Actions
-    const addJob = (job: Job) => {
-        setJobs(prev => [...prev, job]);
-        logAction('Posted Job', `Created new job listing: ${job.title}`);
-        addNotification('Recruitment', `New Job Posted: ${job.title}`, `/admin/recruitment?jobId=${job.id}`);
+    const addJob = async (job: Omit<Job, 'tenantId'>) => {
+        setIsLoading(true);
+        try {
+            const fullJob: Job = { ...job, tenantId: currentTenantId || 'tenant-default' };
+            const response = await jobService.createJob(fullJob);
+            if (response.success) {
+                setJobs(prev => [...prev, response.data]);
+                logAction('Posted Job', `Created new job listing: ${fullJob.title}`);
+                addNotification('Recruitment', `New Job Posted: ${fullJob.title}`, `/admin/recruitment?jobId=${fullJob.id}`);
+                showSuccess({ title: 'Job Posted', message: `${fullJob.title} is now live.` });
+            } else {
+                showError({ title: 'Post Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Post Error', message: 'Failed to post job listing.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const updateJob = (id: string, updates: Partial<Job>) => {
-        setJobs(prev => prev.map(job => job.id === id ? { ...job, ...updates } : job));
-        logAction('Updated Job', `Updated job listing ${id}`);
+    const updateJob = async (id: string, updates: Partial<Job>) => {
+        setIsLoading(true);
+        try {
+            const response = await jobService.updateJob(id, updates);
+            if (response.success) {
+                setJobs(prev => prev.map(job => job.id === id ? { ...job, ...updates } : job));
+                logAction('Updated Job', `Updated job listing ${id}`);
+                showSuccess({ title: 'Job Updated', message: 'Job details have been saved.' });
+            } else {
+                showError({ title: 'Update Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Update Error', message: 'Failed to update job.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const deleteJob = (id: string) => {
-        setJobs(prev => prev.filter(job => job.id !== id));
-        logAction('Deleted Job', `Deleted job listing ${id}`);
+    const deleteJob = async (id: string) => {
+        setIsLoading(true);
+        try {
+            const response = await jobService.deleteJob(id);
+            if (response.success) {
+                setJobs(prev => prev.filter(job => job.id !== id));
+                logAction('Deleted Job', `Deleted job listing ${id}`);
+                showSuccess({ title: 'Job Deleted', message: 'Job listing has been removed.' });
+            } else {
+                showError({ title: 'Delete Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Delete Error', message: 'Failed to delete job.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    // CMS Actions
-    const updatePMSContent = (id: string, updates: any) => {
-        setCmsContent(prev => prev.map(c => c.id === id ? { ...c, ...updates, status: 'Draft', lastUpdated: new Date().toISOString() } : c));
-        logAction('Updated CMS Content', `Updated content for ${id}`);
+    // CMS & Content Actions
+    const updatePMSContent = async (id: string, content: any) => {
+        setIsLoading(true);
+        try {
+            const response = await cmsService.updateCMSContent(id, content);
+            if (response.success) {
+                setCmsContent(prev => prev.map(s => s.id === id ? { ...s, ...content, status: 'Draft', lastUpdated: new Date().toISOString() } : s));
+                logAction('CMS Edit', `Updated content for section ${id}`);
+                showSuccess({ title: 'Draft Saved', message: 'Changes have been saved as draft.' });
+            } else {
+                showError({ title: 'Update Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Update Error', message: 'Failed to save CMS changes.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const publishPMSContent = (id: string) => {
-        setCmsContent(prev => prev.map(c => c.id === id ? { ...c, status: 'Published' } : c));
-        logAction('Published CMS Content', `Published updates for ${id}`);
-        addNotification('System', `New content published for ${id}`, '/admin/cms');
+    const publishPMSContent = async (id: string) => {
+        setIsLoading(true);
+        try {
+            const response = await cmsService.publishCMSContent(id);
+            if (response.success) {
+                setCmsContent(prev => prev.map(s => s.id === id ? { ...s, status: 'Published', lastUpdated: new Date().toISOString() } : s));
+                logAction('CMS Publish', `Published section ${id}`);
+
+                dispatchNotification(
+                    { title: 'Website Updated', message: `Section ${id} has been published successfully.`, type: 'System', link: '/' },
+                    { roles: ['SUPER_ADMIN', 'COO'] }
+                );
+                showSuccess({ title: 'Published', message: 'Content is now live on the website.' });
+            } else {
+                showError({ title: 'Publish Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Publish Error', message: 'Failed to publish content.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const addCMSContent = (section: CMSSection) => {
-        setCmsContent(prev => [...prev, section]);
-        logAction('Added CMS Content', `Created new section ${section.id}`);
+    const addCMSContent = async (section: CMSSection) => {
+        setIsLoading(true);
+        try {
+            const response = await cmsService.addCMSContent(section);
+            if (response.success) {
+                setCmsContent(prev => [...prev, section]);
+                logAction('CMS Section Added', `Added new ${section.type} to ${section.page}`);
+                showSuccess({ title: 'Section Added', message: 'New content section has been created.' });
+            } else {
+                showError({ title: 'Addition Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Addition Error', message: 'Failed to add content section.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const deleteCMSContent = (id: string) => {
-        setCmsContent(prev => prev.filter(c => c.id !== id));
-        logAction('Deleted CMS Content', `Deleted section ${id}`);
+    const deleteCMSContent = async (id: string) => {
+        setIsLoading(true);
+        try {
+            const response = await cmsService.deleteCMSContent(id);
+            if (response.success) {
+                setCmsContent(prev => prev.filter(s => s.id !== id));
+                logAction('CMS Section Deleted', `Removed section ${id}`);
+                showSuccess({ title: 'Deleted', message: 'Section has been removed.' });
+            } else {
+                showError({ title: 'Deletion Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Deletion Error', message: 'Failed to delete section.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const updateFooterContent = (section: keyof FooterContent, data: Partial<FooterSection>) => {
-        setFooterContent(prev => ({
-            ...prev,
-            [section]: { ...prev[section], ...data, lastUpdated: new Date().toISOString() }
-        }));
-        logAction('Updated Footer', `Updated ${section} section`);
+    const updateFooterContent = async (section: keyof FooterContent, data: Partial<FooterSection>) => {
+        setIsLoading(true);
+        try {
+            const response = await cmsService.updateFooter(section, data);
+            if (response.success) {
+                // @ts-ignore
+                setFooterContent(prev => ({ ...prev, [section]: { ...prev[section], ...data } }));
+                logAction('Footer Edit', `Updated footer section: ${section}`);
+                showSuccess({ title: 'Footer Updated', message: 'Footer changes saved successfully.' });
+            } else {
+                showError({ title: 'Update Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Update Error', message: 'Failed to update footer.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    // Notification Engine Logic
+    // Global Settings & Services
+    const updateGlobal = async (section: keyof GlobalContent, data: any) => {
+        setIsLoading(true);
+        try {
+            const response = await settingsService.updateGlobal(section, data);
+            if (response.success) {
+                setGlobalContent(prev => ({ ...prev, [section]: data }));
+                logAction('Settings Update', `Updated global setting: ${section}`);
+                showSuccess({ title: 'Settings Saved', message: 'Global configuration updated.' });
+            } else {
+                showError({ title: 'Update Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Update Error', message: 'Failed to save settings.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const addService = async (service: Omit<ServiceItem, 'tenantId'>) => {
+        setIsLoading(true);
+        try {
+            const fullService: ServiceItem = { ...service, tenantId: currentTenantId || 'tenant-default' };
+            const response = await cmsService.addService(fullService);
+            if (response.success) {
+                setServicesCollection(prev => [...prev, fullService]);
+                logAction('Service Added', `Added new service: ${fullService.title}`);
+                showSuccess({ title: 'Service Added', message: 'New service has been cataloged.' });
+            } else {
+                showError({ title: 'Addition Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Addition Error', message: 'Failed to add service.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const updateService = async (id: string, updates: Partial<ServiceItem>) => {
+        setIsLoading(true);
+        try {
+            const response = await cmsService.updateService(id, updates);
+            if (response.success) {
+                setServicesCollection(prev => prev.map(s => s.id === id ? { ...s, ...updates, lastUpdated: new Date().toISOString() } : s));
+                logAction('Service Edit', `Updated service details for ${id}`);
+                showSuccess({ title: 'Service Updated', message: 'Service changes have been saved.' });
+            } else {
+                showError({ title: 'Update Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Update Error', message: 'Failed to save service changes.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const deleteService = async (id: string) => {
+        setIsLoading(true);
+        try {
+            const response = await cmsService.deleteService(id);
+            if (response.success) {
+                setServicesCollection(prev => prev.filter(s => s.id !== id));
+                logAction('Service Deleted', `Removed service ${id}`);
+                showSuccess({ title: 'Service Deleted', message: 'Service has been removed from catalog.' });
+            } else {
+                showError({ title: 'Deletion Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Deletion Error', message: 'Failed to delete service.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const updateCeoSignature = async (url: string) => {
+        setIsLoading(true);
+        try {
+            const response = await settingsService.updateCeoSignature(url);
+            if (response.success) {
+                setCeoSignature(url);
+                logAction('Settings', 'Updated CEO digital signature');
+                showSuccess({ title: 'Signature Updated', message: 'CEO signature has been recorded.' });
+            } else {
+                showError({ title: 'Update Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Update Error', message: 'Failed to update CEO signature.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // AdminNotification Engine Logic
     const sendEmailNotification = (recipientEmail: string, recipientName: string, title: string, message: string, link: string, triggerEvent: string) => {
         const newLog: EmailLog = {
             id: Math.random().toString(36).substr(2, 9),
@@ -567,7 +1080,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             triggerEvent
         };
         setEmailLogs(prev => [newLog, ...prev]);
-        console.log(`[EMAIL SENT] To: ${recipientEmail} | Subject: ${title} | Body: ${message}`);
+        // console.log(`[EMAIL SENT] To: ${recipientEmail} | Subject: ${title} | Body: ${message}`);
     };
 
     const dispatchNotification = (
@@ -581,14 +1094,14 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (lastNotificationRef.current &&
             lastNotificationRef.current.sig === currentSig &&
             now - lastNotificationRef.current.time < 5000) {
-            console.log('[Notification] Duplicate suppressed:', payload.title);
+            // console.log('[AdminNotification] Duplicate suppressed:', payload.title);
             return;
         }
         lastNotificationRef.current = { sig: currentSig, time: now };
 
         // 1. In-App Channel
         if (channels.includes('in-app') || channels.includes('both')) {
-            const newNotif: Notification = {
+            const newNotif: AdminNotification = {
                 id: Math.random().toString(36).substr(2, 9),
                 title: payload.title,
                 type: payload.type,
@@ -607,7 +1120,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             // Determine recipients
             let recipients: Employee[] = [];
 
-            // A. Specific User Target
+            // A. Specific USER Target
             if (target.userId) {
                 const user = employees.find(e => e.id === target.userId);
                 if (user) recipients.push(user);
@@ -641,7 +1154,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const addNotification = (type: NotificationType, message: string, link: string, targetUserId?: string) => {
         // Infer a title based on type
         const titleMap: Record<string, string> = {
-            'System': 'System Notification',
+            'System': 'System AdminNotification',
             'HR': 'HR Update',
             'Payroll': 'Payroll Alert',
             'Recruitment': 'Hiring Update',
@@ -651,7 +1164,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         };
 
         dispatchNotification(
-            { title: titleMap[type] || 'Notification', message, type, link },
+            { title: titleMap[type] || 'AdminNotification', message, type, link },
             { userId: targetUserId }
         );
     };
@@ -666,58 +1179,50 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     // Leave Actions
-    const requestLeave = (userId: string, requestData: Omit<LeaveRequest, 'id' | 'employeeId' | 'status' | 'requestedAt'>) => {
+    const requestLeave = async (userId: string, requestData: Omit<LeaveRequest, 'id' | 'tenantId' | 'employeeId' | 'status' | 'requestedAt'>) => {
         // 1. Validation
         if (new Date(requestData.startDate) > new Date(requestData.endDate)) {
             logAction('Leave Request Failed', `Invalid dates from user ${userId}: Start after End`);
-            alert('Start date must be before end date.');
+            showError({ title: 'Invalid Dates', message: 'Start date must be before end date.' });
             return;
         }
 
-        const isDuplicate = leaveRequests.some(r =>
-            r.employeeId === userId &&
-            r.status === 'Pending' &&
-            r.startDate === requestData.startDate &&
-            r.endDate === requestData.endDate
-        );
+        setIsLoading(true);
+        try {
+            const response = await leaveService.requestLeave(userId, requestData);
+            if (response.success) {
+                const newRequest = response.data;
+                setLeaveRequests(prev => [newRequest, ...prev]);
+                logAction('Leave Request', `New ${requestData.type} leave request from user ${userId}`);
+                addNotification('HR', `New leave request received from ${userId}`, `/admin/leave?requestId=${newRequest.id}`);
 
-        if (isDuplicate) {
-            alert('You already have a pending request for these dates.');
-            return;
+                // Notify Admins
+                dispatchNotification(
+                    {
+                        title: 'New Leave Request',
+                        message: `${requestData.type} Leave Request from ${userId}`,
+                        type: 'Leave',
+                        link: `/admin/leave?requestId=${newRequest.id}`
+                    },
+                    { roles: ['HR_ADMIN', 'SUPER_ADMIN', 'COO'] },
+                    ['in-app', 'email']
+                );
+                showSuccess({ title: 'Request Submitted', message: 'Leave request submitted successfully.' });
+            } else {
+                showError({ title: 'Request Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Request Error', message: 'Failed to submit leave request.' });
+        } finally {
+            setIsLoading(false);
         }
-
-        const newId = `LR-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-
-        const newRequest: LeaveRequest = {
-            id: newId,
-            employeeId: userId,
-            status: 'Pending',
-            requestedAt: new Date().toISOString(),
-            ...requestData
-        };
-        setLeaveRequests(prev => [newRequest, ...prev]);
-        logAction('Leave Request', `New ${requestData.type} leave request from user ${userId}`);
-        addNotification('HR', `New leave request received from ${userId}`, `/admin/leave?requestId=${newId}`);
-
-        // Notify Admins
-        dispatchNotification(
-            {
-                title: 'New Leave Request',
-                message: `${requestData.type} Leave Request from ${userId}`,
-                type: 'Leave',
-                link: `/admin/leave?requestId=${newId}`
-            },
-            { roles: ['HR Admin', 'Super Admin', 'Management Admin'] },
-            ['in-app', 'email']
-        );
-        alert('Leave request submitted successfully.');
     };
 
-    const approveLeave = (requestId: string): { success: boolean; error?: string } => {
+    const approveLeave = async (requestId: string): Promise<{ success: boolean; error?: string }> => {
         // 0. Security & State Guard
-        const authorizedRoles: AdminRole[] = ['Super Admin', 'HR Admin', 'Management Admin'];
+        const authorizedRoles: AdminRole[] = ['SUPER_ADMIN', 'HR_ADMIN', 'COO'];
         if (!authorizedRoles.includes(currentUserRole)) {
-            logAction('Unauthorized Action', `User role ${currentUserRole} attempted to approve leave ${requestId}`);
+            logAction('Unauthorized Action', `USER role ${currentUserRole} attempted to approve leave ${requestId}`);
             return { success: false, error: 'Unauthorized: Insufficient permissions' };
         }
 
@@ -728,86 +1233,69 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             return { success: false, error: `Request is already ${request.status}. Action denied.` };
         }
 
-        // 1. Check Overlaps
-        const hasOverlap = leaveRequests.some(r =>
-            r.employeeId === request.employeeId &&
-            r.status === 'Approved' &&
-            r.id !== requestId &&
-            new Date(r.startDate) <= new Date(request.endDate) &&
-            new Date(r.endDate) >= new Date(request.startDate)
-        );
+        setIsLoading(true);
+        try {
+            const response = await leaveService.approveLeave(requestId);
+            if (response.success) {
+                // Success Update
+                setLeaveRequests(prev => prev.map(r => r.id === requestId ? {
+                    ...r,
+                    status: 'Approved',
+                    actionBy: currentUserId || 'System',
+                    actionAt: new Date().toISOString()
+                } : r));
 
-        if (hasOverlap) {
-            const error = 'This request overlaps with an existing approved leave.';
-            alert(error);
-            return { success: false, error };
-        }
-
-        // 2. Check Balance & Deduct
-        let balanceError = '';
-        setEmployees(prev => prev.map(emp => {
-            if (emp.id === request.employeeId && emp.leaveBalance) {
-                const isAnnual = request.type === 'Annual';
-                const isSick = request.type === 'Sick';
-
-                if (isAnnual && emp.leaveBalance.annual < request.days) {
-                    balanceError = 'Insufficient Annual Leave balance.';
-                    return emp;
-                }
-                if (isSick && emp.leaveBalance.sick < request.days) {
-                    balanceError = 'Insufficient Sick Leave balance.';
-                    return emp;
-                }
-
-                return {
-                    ...emp,
-                    leaveBalance: {
-                        ...emp.leaveBalance,
-                        annual: isAnnual ? emp.leaveBalance.annual - request.days : emp.leaveBalance.annual,
-                        sick: isSick ? emp.leaveBalance.sick - request.days : emp.leaveBalance.sick,
-                        used: emp.leaveBalance.used + request.days
+                // Deduct balance locally (Optimistic update or handled after real API sync)
+                setEmployees(prev => prev.map(emp => {
+                    if (emp.id === request.employeeId && emp.leaveBalance) {
+                        const isAnnual = request.type === 'Annual';
+                        const isSick = request.type === 'Sick';
+                        return {
+                            ...emp,
+                            leaveBalance: {
+                                ...emp.leaveBalance,
+                                annual: isAnnual ? emp.leaveBalance.annual - request.days : emp.leaveBalance.annual,
+                                sick: isSick ? emp.leaveBalance.sick - request.days : emp.leaveBalance.sick,
+                                used: emp.leaveBalance.used + request.days
+                            }
+                        };
                     }
-                };
+                    return emp;
+                }));
+
+                // Notify USER
+                dispatchNotification(
+                    {
+                        title: 'Leave Approved',
+                        message: 'Your leave request has been approved!',
+                        type: 'Leave',
+                        link: '/user/leave'
+                    },
+                    { userId: request.employeeId },
+                    ['in-app', 'email']
+                );
+
+                logAction('Leave Approval', `Approved leave request ${requestId} for user ${request.employeeId}. Action by: ${currentUserId}`);
+                showSuccess({ title: 'Leave Approved', message: 'Leave request approved successfully.' });
+                return { success: true };
+            } else {
+                showError({ title: 'Approval Failed', message: response.error });
+                return { success: false, error: response.error };
             }
-            return emp;
-        }));
-
-        if (balanceError) {
-            alert(balanceError);
-            return { success: false, error: balanceError };
+        } catch (err) {
+            showError({ title: 'Approval Error', message: 'Failed to approve leave request.' });
+            return { success: false, error: 'Network error' };
+        } finally {
+            setIsLoading(false);
         }
-
-        // 3. Success Update
-        setLeaveRequests(prev => prev.map(r => r.id === requestId ? {
-            ...r,
-            status: 'Approved',
-            actionBy: currentUserId || 'System',
-            actionAt: new Date().toISOString()
-        } : r));
-
-        // Notify User
-        dispatchNotification(
-            {
-                title: 'Leave Approved',
-                message: 'Your leave request has been approved!',
-                type: 'Leave',
-                link: '/user/leave' // User side flow, sticking to generic as user page updates are out of scope
-            },
-            { userId: request.employeeId },
-            ['in-app', 'email']
-        );
-
-        logAction('Leave Approval', `Approved leave request ${requestId} for user ${request.employeeId}. Action by: ${currentUserId}`);
-        alert('Leave request approved successfully.');
-        return { success: true };
     };
 
-    const rejectLeave = (requestId: string, reason: string) => {
+    const rejectLeave = async (requestId: string, reason: string) => {
         // 0. Security Guard
-        const authorizedRoles: AdminRole[] = ['Super Admin', 'HR Admin', 'Management Admin'];
+        const authorizedRoles: AdminRole[] = ['SUPER_ADMIN', 'HR_ADMIN', 'COO'];
         if (!authorizedRoles.includes(currentUserRole)) {
-            logAction('Unauthorized Action', `User role ${currentUserRole} attempted to reject leave ${requestId}`);
-            alert('Unauthorized action.');
+            logAction('Unauthorized Action', `USER role ${currentUserRole} attempted to reject leave ${requestId}`);
+            showError({ title: 'Unauthorized', message: 'You do not have permission to reject leave requests.' });
             return;
         }
 
@@ -815,112 +1303,200 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (!request) return;
 
         if (request.status !== 'Pending') {
-            alert(`Request is already ${request.status}. Cannot reject.`);
+            showError({ title: 'Action Failed', message: `Request is already ${request.status}. Cannot reject.` });
             return;
         }
 
-        setLeaveRequests(prev => prev.map(r => r.id === requestId ? {
-            ...r,
-            status: 'Rejected',
-            rejectionReason: reason,
-            actionBy: currentUserId || 'System',
-            rejectedAt: new Date().toISOString()
-        } : r));
+        setIsLoading(true);
+        try {
+            const response = await leaveService.rejectLeave(requestId, reason);
+            if (response.success) {
+                setLeaveRequests(prev => prev.map(r => r.id === requestId ? {
+                    ...r,
+                    status: 'Rejected',
+                    rejectionReason: reason,
+                    actionBy: currentUserId || 'System',
+                    rejectedAt: new Date().toISOString()
+                } : r));
 
-        logAction('Leave Rejection', `Rejected leave request ${requestId} for user ${request.employeeId} with reason: ${reason}`);
+                logAction('Leave Rejection', `Rejected leave request ${requestId} for user ${request.employeeId} with reason: ${reason}`);
 
-        dispatchNotification(
-            {
-                title: 'Leave Rejected',
-                message: `Your leave request was rejected. Reason: ${reason}`,
-                type: 'Leave',
-                link: '/user/leave'
-            },
-            { userId: request.employeeId },
-            ['in-app', 'email']
-        );
-        alert('Leave request rejected.');
+                dispatchNotification(
+                    {
+                        title: 'Leave Rejected',
+                        message: `Your leave request was rejected. Reason: ${reason}`,
+                        type: 'Leave',
+                        link: '/user/leave'
+                    },
+                    { userId: request.employeeId },
+                    ['in-app', 'email']
+                );
+                showSuccess({ title: 'Request Rejected', message: 'Leave request rejected.' });
+            } else {
+                showError({ title: 'Rejection Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Rejection Error', message: 'Failed to reject leave request.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // Performance Actions
-    const createReviewCycle = (cycle: Omit<ReviewCycle, 'id'>) => {
-        const newCycle: ReviewCycle = {
-            id: `CYC-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-            ...cycle
-        };
-        setReviewCycles(prev => [newCycle, ...prev]);
-        logAction('Review Cycle', `Created new review cycle: ${cycle.title}`);
+    const createReviewCycle = async (cycle: Omit<ReviewCycle, 'id' | 'tenantId' | 'status'>) => {
+        setIsLoading(true);
+        try {
+            const response = await performanceService.createReviewCycle(cycle);
+            if (response.success) {
+                setReviewCycles(prev => [response.data, ...prev]);
+                logAction('Review Cycle', `Created new review cycle: ${cycle.title}`);
 
-        dispatchNotification(
-            {
-                title: 'New Performance Review Cycle',
-                message: `A new performance review cycle "${cycle.title}" has started.`,
-                type: 'Performance',
-                link: '/user/performance'
-            },
-            {}, // Target all users (or specific roles if needed)
-            ['in-app']
-        );
-    };
-
-    const submitSelfReview = (review: Omit<PerformanceReview, 'id' | 'status' | 'submittedAt'>) => {
-        // 1. Duplicate Check
-        const existing = performanceReviews.find(r =>
-            r.employeeId === review.employeeId &&
-            r.cycleId === review.cycleId
-        );
-        if (existing) {
-            alert('You have already submitted a review for this cycle.');
-            return;
+                dispatchNotification(
+                    {
+                        title: 'New Performance Review Cycle',
+                        message: `A new performance review cycle "${cycle.title}" has started.`,
+                        type: 'Performance',
+                        link: '/user/performance'
+                    },
+                    {}, // Target all users (or specific roles if needed)
+                    ['in-app']
+                );
+                showSuccess({ title: 'Cycle Created', message: 'Performance review cycle has been created.' });
+            } else {
+                showError({ title: 'Creation Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Creation Error', message: 'Failed to create review cycle.' });
+        } finally {
+            setIsLoading(false);
         }
-
-        const newReview: PerformanceReview = {
-            id: `PR-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-            status: 'Submitted',
-            submittedAt: new Date().toISOString(),
-            ...review
-        };
-        setPerformanceReviews(prev => [newReview, ...prev]);
-        logAction('Self Review Submitted', `User ${review.employeeId} submitted self review`);
-
-        dispatchNotification(
-            {
-                title: 'New Self-Evaluation',
-                message: `User ${review.employeeId} submitted their self-evaluation.`,
-                type: 'Performance',
-                link: '/admin/performance'
-            },
-            { roles: ['Management Admin', 'Super Admin', 'HR Admin'] },
-            ['in-app']
-        );
-        alert('Self-evaluation submitted successfully.');
     };
 
-    const updatePerformanceReview = (id: string, updates: Partial<PerformanceReview>) => {
+    const startReviewCycle = async (id: string) => {
+        setIsLoading(true);
+        try {
+            // In a real app, this would be an API call that also generates reviews server-side.
+            // For now, we'll update state and simulate generation.
+            setReviewCycles(prev => prev.map(c => c.id === id ? { ...c, status: 'Active' } : c));
+
+            // Generate Reviews for all eligible employees
+            const cycle = reviewCycles.find(c => c.id === id);
+            if (cycle) {
+                const newReviews: PerformanceReview[] = employees.map(emp => ({
+                    id: `PR-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+                    tenantId: 'tenant-1',
+                    employeeId: emp.id,
+                    cycleId: id,
+                    status: 'Pending',
+                    rating: 0,
+                    selfReview: '',
+                    managerFeedback: '',
+                    managerRating: 0,
+                    submittedAt: '',
+                    reviewedAt: '',
+                    reviewedBy: '',
+                    internalNotes: '',
+                    recommendation: 'None'
+                }));
+                setPerformanceReviews(prev => [...prev, ...newReviews]);
+                logAction('Review Cycle Started', `Generated ${newReviews.length} reviews for cycle ${cycle.title}`);
+                showSuccess({ title: 'Cycle Started', message: `Generated ${newReviews.length} reviews.` });
+            }
+        } catch (err) {
+            showError({ title: 'Error', message: 'Failed to start review cycle.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const submitSelfReview = async (id: string, selfReview: string, rating: number) => {
+        setIsLoading(true);
+        try {
+            // Find existing review to get cycleId and employeeId
+            const existing = performanceReviews.find(r => r.id === id);
+            if (!existing) {
+                showError({ title: 'Submission Error', message: 'Original review record not found.' });
+                return;
+            }
+
+            const reviewUpdate: Omit<PerformanceReview, 'id' | 'tenantId' | 'status' | 'submittedAt'> = {
+                cycleId: existing.cycleId,
+                employeeId: existing.employeeId,
+                selfReview,
+                rating
+            };
+
+            const response = await performanceService.submitReview(reviewUpdate);
+            if (response.success) {
+                // Update local state: replace or add
+                setPerformanceReviews(prev => prev.map(r => r.id === id ? {
+                    ...r,
+                    selfReview,
+                    rating,
+                    status: 'Submitted',
+                    submittedAt: new Date().toISOString()
+                } : r));
+
+                logAction('Self Review Submitted', `User ${existing.employeeId} submitted self review for cycle ${existing.cycleId}`);
+
+                dispatchNotification(
+                    {
+                        title: 'New Self-Evaluation',
+                        message: `Employee ${getEmployeeName(existing.employeeId)} submitted their self-evaluation.`,
+                        type: 'Performance',
+                        link: '/admin/performance'
+                    },
+                    { roles: ['COO', 'SUPER_ADMIN', 'HR_ADMIN'] },
+                    ['in-app']
+                );
+                showSuccess({ title: 'Review Submitted', message: 'Self-evaluation submitted successfully.' });
+            } else {
+                showError({ title: 'Submission Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Submission Error', message: 'Failed to submit review.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const updatePerformanceReview = async (id: string, updates: Partial<PerformanceReview>) => {
         // 0. Security Guard
-        const authorizedRoles: AdminRole[] = ['Super Admin', 'HR Admin', 'Management Admin'];
+        const authorizedRoles: AdminRole[] = ['SUPER_ADMIN', 'HR_ADMIN', 'COO'];
         if (!authorizedRoles.includes(currentUserRole)) {
-            alert('Unauthorized action.');
+            showError({ title: 'Unauthorized', message: 'You do not have permission to update reviews.' });
             return;
         }
 
         const review = performanceReviews.find(r => r.id === id);
         if (review && review.status === 'Approved') {
-            alert('Cannot update a finalized review.');
+            showError({ title: 'Action Locked', message: 'Cannot update a finalized review.' });
             return;
         }
 
-        setPerformanceReviews(prev => prev.map(r => r.id === id ? { ...r, ...updates, status: 'Under Review' } : r));
-        logAction('Review Update', `Updated draft review for ${id}`);
-        // alert('Review updated.'); // Optional: might be too noisy for auto-save
+        setIsLoading(true);
+        try {
+            const response = await performanceService.updateReview(id, updates);
+            if (response.success) {
+                setPerformanceReviews(prev => prev.map(r => r.id === id ? { ...r, status: 'Under Review', ...updates } : r));
+                logAction('Review Update', `Updated draft review for ${id}`);
+                showSuccess({ title: 'Draft Saved', message: 'Review changes have been recorded.' });
+            } else {
+                showError({ title: 'Update Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Update Error', message: 'Failed to update review.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const approvePerformanceReview = (id: string, finalData: Partial<PerformanceReview>) => {
+    const approvePerformanceReview = async (id: string, finalData: Partial<PerformanceReview>) => {
         // 0. Security Guard
-        const authorizedRoles: AdminRole[] = ['Super Admin', 'HR Admin', 'Management Admin'];
+        const authorizedRoles: AdminRole[] = ['SUPER_ADMIN', 'HR_ADMIN', 'COO'];
         if (!authorizedRoles.includes(currentUserRole)) {
-            logAction('Unauthorized Action', `User role ${currentUserRole} attempted to approve performance review ${id}`);
-            alert('Unauthorized action.');
+            logAction('Unauthorized Action', `USER role ${currentUserRole} attempted to approve performance review ${id}`);
+            showError({ title: 'Unauthorized', message: 'You do not have permission to approve reviews.' });
             return;
         }
 
@@ -928,57 +1504,83 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (!review) return;
 
         if (review.status === 'Approved') {
-            alert('Review is already finalized.');
+            showInfo({ title: 'Already Finalized', message: 'Review is already finalized.' });
             return;
         }
 
-        setPerformanceReviews(prev => prev.map(r => r.id === id ? {
-            ...r,
-            ...finalData,
-            status: 'Approved',
-            reviewedBy: currentUserId || 'System',
-            reviewedAt: new Date().toISOString()
-        } : r));
+        setIsLoading(true);
+        try {
+            const response = await performanceService.approveReview(id, finalData);
+            if (response.success) {
+                setPerformanceReviews(prev => prev.map(r => r.id === id ? {
+                    ...r,
+                    ...finalData,
+                    status: 'Approved',
+                    reviewedBy: currentUserId || 'System',
+                    reviewedAt: new Date().toISOString()
+                } : r));
 
-        logAction('Review Approved', `Finalized performance review for ${review.employeeId}`);
+                logAction('Review Approved', `Finalized performance review for ${review.employeeId}`);
 
-        dispatchNotification(
-            {
-                title: 'Performance Review Completed',
-                message: 'Your performance review has been approved and finalized.',
-                type: 'Performance',
-                link: '/user/performance'
-            },
-            { userId: review.employeeId },
-            ['in-app', 'email']
-        );
-        alert('Performance review finalized successfully.');
+                dispatchNotification(
+                    {
+                        title: 'Performance Review Completed',
+                        message: 'Your performance review has been approved and finalized.',
+                        type: 'Performance',
+                        link: '/user/performance'
+                    },
+                    { userId: review.employeeId },
+                    ['in-app', 'email']
+                );
+                showSuccess({ title: 'Review Approved', message: 'Performance review finalized successfully.' });
+            } else {
+                showError({ title: 'Approval Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Approval Error', message: 'Failed to finalize review.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const requestRevision = (id: string, feedback: string) => {
+    const requestRevision = async (id: string, feedback: string) => {
         const review = performanceReviews.find(r => r.id === id);
         if (!review) return;
 
-        setPerformanceReviews(prev => prev.map(r => r.id === id ? {
-            ...r,
-            status: 'Revision Requested',
-            managerFeedback: feedback,
-            reviewedBy: currentUserId || 'System',
-            reviewedAt: new Date().toISOString()
-        } : r));
+        setIsLoading(true);
+        try {
+            // Re-using updateReview or a specific revision call if added to service
+            const response = await performanceService.updateReview(id, { managerFeedback: feedback, status: 'Revision Requested' });
+            if (response.success) {
+                setPerformanceReviews(prev => prev.map(r => r.id === id ? {
+                    ...r,
+                    status: 'Revision Requested',
+                    managerFeedback: feedback,
+                    reviewedBy: currentUserId || 'System',
+                    reviewedAt: new Date().toISOString()
+                } : r));
 
-        logAction('Revision Requested', `Requested revision for review ${id}`);
+                logAction('Revision Requested', `Requested revision for review ${id}`);
 
-        dispatchNotification(
-            {
-                title: 'Action Required: Revision Requested',
-                message: 'Manager requested changes to your self-evaluation.',
-                type: 'Performance',
-                link: '/user/performance'
-            },
-            { userId: review.employeeId },
-            ['in-app', 'email']
-        );
+                dispatchNotification(
+                    {
+                        title: 'Action Required: Revision Requested',
+                        message: 'Manager requested changes to your self-evaluation.',
+                        type: 'Performance',
+                        link: '/user/performance'
+                    },
+                    { userId: review.employeeId },
+                    ['in-app', 'email']
+                );
+                showSuccess({ title: 'Revision Requested', message: 'User has been notified.' });
+            } else {
+                showError({ title: 'Request Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Request Error', message: 'Failed to request revision.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
 
@@ -993,37 +1595,170 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         logAction('Permission Update', `Updated access rights for ${role}`);
     };
 
+    // Bonus Actions
+    const createBonusType = async (bonus: Omit<BonusType, 'id' | 'tenantId'>) => {
+        setIsLoading(true);
+        try {
+            const response = await bonusService.createBonusType(bonus);
+            if (response.success && response.data) {
+                setBonusTypes(prev => [...prev, response.data!]);
+                logAction('Bonus Type Created', `Created bonus type: ${bonus.name}`);
+                showSuccess({ title: 'Bonus Created', message: `Type "${bonus.name}" is now available.` });
+            } else {
+                showError({ title: 'Creation Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Creation Error', message: 'Failed to create bonus type.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const updateBonusType = async (id: string, updates: Partial<BonusType>) => {
+        setIsLoading(true);
+        try {
+            const response = await bonusService.updateBonusType(id, updates);
+            if (response.success) {
+                setBonusTypes(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+                logAction('Bonus Type Updated', `Updated bonus type: ${id}`);
+                showSuccess({ title: 'Bonus Updated', message: 'Bonus type details saved.' });
+            } else {
+                showError({ title: 'Update Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Update Error', message: 'Failed to update bonus type.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const requestBonus = async (employeeId: string, bonusTypeId: string, amount: number, reason: string) => {
+        setIsLoading(true);
+        try {
+            const response = await bonusService.requestBonus({
+                employeeId,
+                bonusTypeId,
+                amount,
+                reason,
+                requestedBy: currentUserId || 'System',
+                cycleId: payrollStatus.id
+            });
+            if (response.success && response.data) {
+                setBonusRequests(prev => [...prev, response.data!]);
+                logAction('Bonus Requested', `Bonus requested for ${employeeId}: ${amount}`);
+
+                dispatchNotification(
+                    { title: 'New Bonus Request', message: `Bonus request for employee ${employeeId}`, type: 'Payroll', link: '/admin/bonus' },
+                    { roles: ['SUPER_ADMIN', 'COO', 'FINANCE_ADMIN'] }
+                );
+                showSuccess({ title: 'Request Sent', message: 'Bonus award request has been submitted for approval.' });
+            } else {
+                showError({ title: 'Request Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Request Error', message: 'Failed to submit bonus request.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const approveBonus = async (requestId: string, approvedBy: string) => {
+        setIsLoading(true);
+        try {
+            const response = await bonusService.approveBonus(requestId, approvedBy);
+            if (response.success) {
+                setBonusRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'Approved', approvedBy, approvedAt: new Date().toISOString() } : r));
+                const req = bonusRequests.find(r => r.id === requestId);
+                if (req) {
+                    await addPayrollAdjustment(req.employeeId, 'Bonus', req.amount, `Bonus: ${req.reason}`);
+                    logAction('Bonus Approved', `Bonus ${requestId} approved by ${approvedBy}`);
+                    dispatchNotification(
+                        { title: 'Bonus Approved', message: 'Your bonus request has been approved!', type: 'Payroll', link: '/user/payroll' },
+                        { userId: req.employeeId }
+                    );
+                }
+                showSuccess({ title: 'Bonus Approved', message: 'The bonus has been added to payroll.' });
+            } else {
+                showError({ title: 'Approval Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Approval Error', message: 'Failed to approve bonus.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const rejectBonus = async (requestId: string, reason: string) => {
+        setIsLoading(true);
+        try {
+            const response = await bonusService.rejectBonus(requestId, reason);
+            if (response.success) {
+                setBonusRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'Rejected', rejectionReason: reason } : r));
+                const req = bonusRequests.find(r => r.id === requestId);
+                if (req) {
+                    logAction('Bonus Rejected', `Bonus ${requestId} rejected: ${reason}`);
+                    dispatchNotification(
+                        { title: 'Bonus Rejected', message: `Your bonus request was rejected: ${reason}`, type: 'Payroll', link: '/user/payroll' },
+                        { userId: req.employeeId }
+                    );
+                }
+                showSuccess({ title: 'Bonus Rejected', message: 'The request has been declined.' });
+            } else {
+                showError({ title: 'Rejection Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Rejection Error', message: 'Failed to reject bonus.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     // Auth Actions
 
-    const login = (password: string): AdminRole | false => {
-        // Super Admin Login
-        if (password === 'admin123') {
-            setCurrentUserRole('Super Admin');
-            setIsAuthenticated(true);
-            logAction('Login', 'Admin logged in successfully');
-            return 'Super Admin';
-        }
+    // Auth Actions
 
-        // Basic User Login
-        if (password === 'user123') {
-            setCurrentUserRole('User');
-            setCurrentUserId('EMP-003'); // Linked to Odirin Success
-            setIsAuthenticated(true);
-            logAction('Login', 'User logged in successfully');
-            return 'User';
-        }
+    const login = async (email: string, password: string): Promise<AdminRole | false> => {
+        setIsLoading(true);
+        try {
+            const response = await authService.login(email, password);
 
-        return false;
+            if (response.success && response.data) {
+                const user = response.data.user;
+                setIsAuthenticated(true);
+                setCurrentUserRole(user.role);
+                setCurrentUserId(user.id);
+
+                // Fetch user specific data
+                const notifResponse = await notificationService.getNotifications(user.id, user.role);
+                if (notifResponse.success) {
+                    setNotifications(notifResponse.data);
+                }
+
+                logAction('Login', `User ${user.email} logged in successfully`);
+                return user.role;
+            } else {
+                showError({ title: 'Login Failed', message: response.error || 'Invalid credentials' });
+                return false;
+            }
+        } catch (err) {
+            console.error(err);
+            showError({ title: 'Login Error', message: 'An unexpected error occurred.' });
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const logout = () => {
+    const logout = async () => {
+        setIsLoading(true);
+        await authService.logout();
         setIsAuthenticated(false);
-        logAction('Logout', 'Admin logged out');
+        setCurrentUserRole('USER'); // Default fallback
+        setCurrentUserId(null);
+        setIsLoading(false);
     };
-
-    // Data Masking for Security
     const visibleEmployees = React.useMemo(() => {
-        const sensitiveRoles: AdminRole[] = ['Super Admin', 'Finance Admin'];
+        const sensitiveRoles: AdminRole[] = ['SUPER_ADMIN', 'FINANCE_ADMIN', 'PAYROLL_ADMIN', 'COO'];
         const canViewSalary = sensitiveRoles.includes(currentUserRole);
 
         if (canViewSalary) return employees;
@@ -1035,6 +1770,264 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }));
     }, [employees, currentUserRole, currentUserId]);
 
+    // ===== COMPLIANCE REPORTS =====
+
+    // @ts-ignore
+    const generatePayrollSummaryReport = (cycleId?: string) => {
+        logReportAccess('Payroll Summary', { cycleId });
+        return reportService.generatePayrollSummaryReport(employees, payrollStatus, cycleId);
+    };
+
+    // @ts-ignore
+    const generateApprovalTrailReport = (cycleId: string) => {
+        logReportAccess('Approval Trail', { cycleId });
+        return reportService.generateApprovalTrailReport(activityLogs, cycleId);
+    };
+
+    // @ts-ignore
+    const generateBonusAdjustmentReport = (cycleId: string) => {
+        logReportAccess('Bonus Adjustment', { cycleId });
+        // @ts-ignore
+        return reportService.generateBonusAdjustmentReport(employees, payrollStatus, bonusRequests || [], cycleId);
+    };
+
+    // @ts-ignore
+    const generatePayrollVarianceReport = (currentCycleId: string, previousCycleId: string) => {
+        logReportAccess('Payroll Variance', { currentCycleId, previousCycleId });
+        const previousCycleData = { id: previousCycleId, adjustments: [] }; // Mock previous cycle
+        return reportService.generatePayrollVarianceReport(employees, payrollStatus, previousCycleData, currentCycleId, previousCycleId);
+    };
+
+    // @ts-ignore
+    const generateSalaryHistoryReport = (employeeId?: string, startDate?: string, endDate?: string) => {
+        logReportAccess('Salary History', { employeeId, startDate, endDate });
+        return reportService.generateSalaryHistoryReport(employees, activityLogs, employeeId, startDate, endDate);
+    };
+
+    // @ts-ignore
+    const generatePromotionHistoryReport = (startDate?: string, endDate?: string) => {
+        logReportAccess('Promotion History', { startDate, endDate });
+        // @ts-ignore
+        return reportService.generatePromotionHistoryReport(employees, promotionRequests || [], startDate, endDate);
+    };
+
+    // @ts-ignore
+    const generateUserAccessReport = () => {
+        logReportAccess('USER Access', {});
+        return reportService.generateUserAccessReport(employees, activityLogs);
+    };
+
+    // @ts-ignore
+    const generateCriticalActionReport = (startDate?: string, endDate?: string) => {
+        logReportAccess('Critical Action', { startDate, endDate });
+        return reportService.generateCriticalActionReport(activityLogs, startDate, endDate);
+    };
+
+    // @ts-ignore
+    const generateAttestationPack = (period: { start: string; end: string }, reportTypes: string[]) => {
+        logReportAccess('Attestation Pack', { period, reportTypes });
+        return {
+            period,
+            reportTypes,
+            generatedAt: new Date().toISOString(),
+            generatedBy: currentUserId || 'System'
+        };
+    };
+
+    const logReportAccess = (reportType: string, filters: any) => {
+        logAction('CREATE', `System Accessed ${reportType} report. Status: SUCCESS. Ref: report-${reportType}. Filters: ${JSON.stringify(filters)}`);
+    };
+    // ===== END COMPLIANCE REPORTS =====
+
+    // --- Finance Actions ---
+    // Finance & Ledger
+    const approveLedgerFunding = async (cycleId: string, pin: string) => {
+        setIsLoading(true);
+        try {
+            const response = await financeService.approveFunding(cycleId, pin);
+            if (response.success) {
+                setLedgerEntries(prev => prev.map(entry => entry.payrollCycleId === cycleId ? { ...entry, status: 'Funded' } : entry));
+                logAction('Finance Approval', `Ledger cycle ${cycleId} funded.`);
+                showSuccess({ title: 'Funding Approved', message: 'Funds have been allocated to the payroll batch.' });
+                return { success: true };
+            } else {
+                showError({ title: 'Approval Failed', message: response.error });
+                return { success: false, error: response.error };
+            }
+        } catch (err) {
+            showError({ title: 'Approval Error', message: 'Failed to approve funding.' });
+            return { success: false, error: 'Internal Error' };
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const executeLedgerBatch = async (cycleId: string) => {
+        setIsLoading(true);
+        try {
+            const response = await financeService.executeBatch(cycleId);
+            if (response.success) {
+                setLedgerEntries(prev => prev.map(entry => entry.payrollCycleId === cycleId ? { ...entry, status: 'Executed', transactionReference: `TRX-${Math.random().toString(36).substr(2, 8).toUpperCase()}` } : entry));
+                logAction('Finance Execution', `Ledger cycle ${cycleId} batch executed.`);
+                showSuccess({ title: 'Batch Executed', message: 'Payments have been dispatched.' });
+                return { success: true };
+            } else {
+                showError({ title: 'Execution Failed', message: response.error });
+                return { success: false, error: response.error };
+            }
+        } catch (err) {
+            showError({ title: 'Execution Error', message: 'Failed to execute payment batch.' });
+            return { success: false, error: 'Internal Error' };
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Salary Structures
+    const saveSalaryStructure = async (structure: SalaryStructure) => {
+        setIsLoading(true);
+        try {
+            const response = await salaryService.saveSalaryStructure(structure);
+            if (response.success) {
+                setSalaryStructures(prev => {
+                    const exists = prev.find(s => s.role === structure.role);
+                    if (exists) return prev.map(s => s.role === structure.role ? structure : s);
+                    return [...prev, structure];
+                });
+                logAction('Salary Structure Update', `Updated structure for ${structure.role}`);
+                showSuccess({ title: 'Structure Saved', message: `Salary structure for ${structure.role} updated successfully.` });
+            } else {
+                showError({ title: 'Save Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Save Error', message: 'Failed to save salary structure.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // --- Promotion Actions ---
+    const requestPromotion = async (req: Omit<PromotionRequest, 'id' | 'tenantId' | 'status' | 'requestedAt'>) => {
+        setIsLoading(true);
+        try {
+            const response = await promotionService.requestPromotion(req);
+            if (response.success && response.data) {
+                setPromotionRequests(prev => [...prev, response.data!]);
+                logAction('Promotion Request', `Requested promotion for ${req.employeeId}`);
+                dispatchNotification(
+                    { title: 'Promotion Request', message: `New promotion request for ${req.employeeId}`, type: 'HR', link: '/admin/promotions' },
+                    { roles: ['SUPER_ADMIN', 'COO'] }
+                );
+                showSuccess({ title: 'Request Sent', message: 'Promotion request has been submitted.' });
+            } else {
+                showError({ title: 'Request Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Request Error', message: 'Failed to submit promotion request.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const approvePromotion = async (requestId: string) => {
+        setIsLoading(true);
+        try {
+            const response = await promotionService.approvePromotion(requestId);
+            if (response.success) {
+                setPromotionRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'Approved', approvedBy: currentUserId || 'System', approvedAt: new Date().toISOString() } : r));
+                const req = promotionRequests.find(r => r.id === requestId);
+                if (req) {
+                    await updateEmployee(req.employeeId, {
+                        systemRole: req.newRole,
+                        salary: req.proposedSalary,
+                        title: req.newRole
+                    });
+                    logAction('Promotion Approved', `Approved promotion for ${req.employeeId}`);
+                    dispatchNotification(
+                        { title: 'Promotion Approved', message: `Congratulations! You have been promoted to ${req.newRole}`, type: 'HR', link: '/user/profile' },
+                        { userId: req.employeeId }
+                    );
+                }
+                showSuccess({ title: 'Promotion Approved', message: 'Employee has been promoted.' });
+            } else {
+                showError({ title: 'Approval Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Approval Error', message: 'Failed to approve promotion.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const rejectPromotion = async (requestId: string, reason: string) => {
+        setIsLoading(true);
+        try {
+            const response = await promotionService.rejectPromotion(requestId, reason);
+            if (response.success) {
+                setPromotionRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'Rejected', rejectionReason: reason } : r));
+                const req = promotionRequests.find(r => r.id === requestId);
+                if (req) {
+                    logAction('Promotion Rejected', `Rejected promotion ${requestId}`);
+                    dispatchNotification(
+                        { title: 'Promotion Rejected', message: `Promotion request was rejected: ${reason}`, type: 'HR', link: '/user/profile' },
+                        { userId: req.employeeId }
+                    );
+                }
+                showSuccess({ title: 'Promotion Rejected', message: 'The request has been declined.' });
+            } else {
+                showError({ title: 'Rejection Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Rejection Error', message: 'Failed to reject promotion.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const saveEligibilityRule = async (rule: PromotionEligibilityRule) => {
+        setIsLoading(true);
+        try {
+            const response = await promotionService.saveEligibilityRule(rule);
+            if (response.success) {
+                setEligibilityRules(prev => {
+                    const exists = prev.find(r => r.id === rule.id);
+                    if (exists) return prev.map(r => r.id === rule.id ? rule : r);
+                    return [...prev, rule];
+                });
+                logAction('Eligibility Rule Save', `Eligibility rule ${rule.id} saved.`);
+                showSuccess({ title: 'Rule Saved', message: 'Promotion eligibility criteria updated.' });
+            } else {
+                showError({ title: 'Save Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Save Error', message: 'Failed to save eligibility rule.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const evaluateEligibility = (employeeId: string, _newRole: string) => {
+        const employee = employees.find(e => e.id === employeeId);
+        if (!employee) return { isEligible: false, reasons: ['Employee not found'], scores: { performance: 0, tenureMonths: 0 } };
+
+        // Mock evaluation logic
+        const tenureMonths = 12; // Mock
+        const performance = 4.0; // Mock
+
+        // Use _newRole to avoid lint error or implement logic
+        // For now, just logging it or using it in return
+        console.log(`Evaluating ${employee.name} for ${_newRole}`);
+
+        const warnings: string[] = [];
+        // Check rules? For now just mock passing
+
+        return {
+            isEligible: warnings.length === 0,
+            reasons: warnings,
+            scores: { performance, tenureMonths }
+        };
+    };
+
     return (
         <AdminContext.Provider value={{
             employees: visibleEmployees,
@@ -1044,8 +2037,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             payrollStatus,
             requestAuth,
             ceoSignature,
-            // Notification Engine
+            // AdminNotification Engine
             emailLogs,
+            currentTenantId,
             dispatchNotification,
             // ...Existing
             notifications,
@@ -1063,6 +2057,14 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             bulkPayrollAdjustment,
             logAction,
             updateCeoSignature,
+            // Bonus Management
+            bonusTypes,
+            bonusRequests,
+            createBonusType,
+            updateBonusType,
+            requestBonus,
+            approveBonus,
+            rejectBonus,
             addJob,
             updateJob,
             deleteJob,
@@ -1072,6 +2074,14 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             deleteCMSContent,
             footerContent,
             updateFooterContent,
+            globalContent,
+            servicesCollection,
+            updateGlobal,
+            addService,
+            updateService,
+            deleteService,
+            updateEmployeeContract,
+            uploadContractDocument,
             markNotificationAsRead,
             markAllNotificationsAsRead,
             switchRole,
@@ -1086,10 +2096,44 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             submitSelfReview,
             updatePerformanceReview,
             approvePerformanceReview,
+            startReviewCycle,
             requestRevision,
             isAuthenticated,
             login,
-            logout
+            logout,
+            generateSystemPassword,
+            sendEmail,
+            // Compliance Reports
+            generatePayrollSummaryReport,
+            generateApprovalTrailReport,
+            generateBonusAdjustmentReport,
+            generatePayrollVarianceReport,
+            generateSalaryHistoryReport,
+            generatePromotionHistoryReport,
+            generateUserAccessReport,
+            generateCriticalActionReport,
+            generateAttestationPack,
+            logReportAccess,
+            // Finance
+            ledgerEntries,
+            approveLedgerFunding,
+            executeLedgerBatch,
+            // Salary
+            salaryStructures,
+            saveSalaryStructure,
+            // Promotions
+            promotionRequests,
+            eligibilityRules,
+            requestPromotion,
+            approvePromotion,
+            rejectPromotion,
+            saveEligibilityRule,
+            evaluateEligibility,
+            // Payroll Actions
+            cooReviewPayroll,
+            cfoApprovePayroll,
+            updateEmployeeSalary,
+            isLoading,
         }}>
             {/* Global PIN Modal */}
             <PinAuthorizationModal

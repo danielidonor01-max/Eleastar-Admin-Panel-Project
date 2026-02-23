@@ -29,9 +29,9 @@ export const LeaveManagement: React.FC = () => {
         }
     }, [location.search, leaveRequests]);
 
-    const handleApprove = (id: string) => {
+    const handleApprove = async (id: string) => {
         setActionError(null);
-        const result = approveLeave(id);
+        const result = await approveLeave(id);
         if (!result.success && result.error) {
             setActionError(result.error);
             setTimeout(() => setActionError(null), 5000);
@@ -44,9 +44,9 @@ export const LeaveManagement: React.FC = () => {
         setActionError(null);
     };
 
-    const confirmReject = () => {
+    const confirmReject = async () => {
         if (!selectedRequestId || !rejectionReason.trim()) return;
-        rejectLeave(selectedRequestId, rejectionReason);
+        await rejectLeave(selectedRequestId, rejectionReason);
         setRejectModalOpen(false);
         setRejectionReason('');
         setSelectedRequestId(null);
@@ -155,8 +155,8 @@ export const LeaveManagement: React.FC = () => {
                                     <tr
                                         key={req.id}
                                         className={`transition-all duration-500 ${highlightedId === req.id
-                                                ? 'bg-brand-50 hover:bg-brand-100 border-l-4 border-l-brand-500 shadow-inner'
-                                                : 'hover:bg-slate-50'
+                                            ? 'bg-brand-50 hover:bg-brand-100 border-l-4 border-l-brand-500 shadow-inner'
+                                            : 'hover:bg-slate-50'
                                             }`}
                                     >
                                         <td className="p-4">
@@ -225,7 +225,7 @@ export const LeaveManagement: React.FC = () => {
                             <h3 className="font-bold text-slate-900">Reject Leave Request</h3>
                             <p className="text-xs text-slate-500 mt-1">Please provide a reason for this rejection.</p>
                         </div>
-                        <div className="p-6 space-y-4">
+                        <div className="p-6 space-y-6">
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1">Reason</label>
                                 <textarea

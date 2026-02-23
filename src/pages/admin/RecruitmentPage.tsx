@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Users, Briefcase, MapPin, Clock, School, Calendar, ChevronRight, FileText } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
+import { useFeedback } from '../../context/FeedbackContext';
 import { useLocation } from 'react-router-dom';
 import type { Job } from '../../data/mockData';
 
 export const RecruitmentPage: React.FC = () => {
     const { jobs, addJob, updateJob } = useAdmin();
+    const { showConfirm, showInfo } = useFeedback();
     const [activeTab, setActiveTab] = useState<'jobs' | 'techhub'>('jobs');
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export const RecruitmentPage: React.FC = () => {
         e.preventDefault();
         if (!newJob.title || !newJob.department || !newJob.description) return;
 
-        const job: Job = {
+        const job: Omit<Job, 'tenantId'> = {
             id: `JOB-${Math.floor(Math.random() * 1000)}`,
             title: newJob.title!,
             department: newJob.department!,
@@ -57,9 +59,13 @@ export const RecruitmentPage: React.FC = () => {
     };
 
     const handleCloseRole = (id: string) => {
-        if (confirm('Are you sure you want to close this role? It will no longer be visible to applicants.')) {
-            updateJob(id, { status: 'Closed' });
-        }
+        showConfirm({
+            title: 'Close Role',
+            message: 'Are you sure you want to close this role? It will no longer be visible to applicants.',
+            confirmLabel: 'Close Role',
+            isDestructive: true,
+            onConfirm: () => updateJob(id, { status: 'Closed' })
+        });
     };
 
     const totalApplications = jobs.reduce((sum, job) => sum + job.applicants, 0);
@@ -77,7 +83,7 @@ export const RecruitmentPage: React.FC = () => {
                     {activeTab === 'jobs' && (
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-medium transition-colors shadow-sm"
+                            className="btn-primary"
                         >
                             <Plus size={18} /> Post New Role
                         </button>
@@ -168,7 +174,7 @@ export const RecruitmentPage: React.FC = () => {
 
                                     <button
                                         onClick={() => setSelectedJobId(role.id)}
-                                        className="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+                                        className="btn-secondary"
                                     >
                                         View Applicants
                                     </button>
@@ -176,7 +182,7 @@ export const RecruitmentPage: React.FC = () => {
                                     {role.status === 'Published' && (
                                         <button
                                             onClick={() => handleCloseRole(role.id)}
-                                            className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
+                                            className="btn-secondary text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50"
                                         >
                                             Close
                                         </button>
@@ -192,7 +198,7 @@ export const RecruitmentPage: React.FC = () => {
                                 <p className="text-slate-500 mb-6">Create a new job posting to start recruiting.</p>
                                 <button
                                     onClick={() => setShowAddModal(true)}
-                                    className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-medium"
+                                    className="btn-primary"
                                 >
                                     Post First Role
                                 </button>
@@ -259,7 +265,7 @@ export const RecruitmentPage: React.FC = () => {
                                 </div>
                                 <h2 className="text-xl font-bold text-slate-900">Post New Role</h2>
                             </div>
-                            <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+                            <button onClick={() => setShowAddModal(false)} className="btn-ghost btn-icon text-slate-400 hover:text-slate-600">✕</button>
                         </div>
 
                         <form onSubmit={handleAddSubmit} className="p-6 space-y-6">
@@ -351,8 +357,8 @@ export const RecruitmentPage: React.FC = () => {
                             </div>
 
                             <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                                <button type="button" onClick={() => setShowAddModal(false)} className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancel</button>
-                                <button type="submit" className="px-5 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-bold shadow-sm">Post Role</button>
+                                <button type="button" onClick={() => setShowAddModal(false)} className="btn-ghost">Cancel</button>
+                                <button type="submit" className="btn-primary">Post Role</button>
                             </div>
                         </form>
                     </div>
@@ -368,7 +374,7 @@ export const RecruitmentPage: React.FC = () => {
                                 <h2 className="text-xl font-bold text-slate-900">Applicants</h2>
                                 <p className="text-slate-500 text-sm">For {selectedJob.title}</p>
                             </div>
-                            <button onClick={() => setSelectedJobId(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                            <button onClick={() => setSelectedJobId(null)} className="btn-ghost btn-icon rounded-full">
                                 <span className="sr-only">Close</span>
                                 ✕
                             </button>
@@ -398,12 +404,12 @@ export const RecruitmentPage: React.FC = () => {
                                                 </span>
                                                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
-                                                        onClick={() => alert(`Opening profile for ${app.candidateName}... (Mock Action)`)}
+                                                        onClick={() => showInfo({ title: 'View Profile', message: `Opening profile for ${app.candidateName}... (Mock Action)` })}
                                                         className="text-xs font-medium text-brand-600 hover:text-brand-700 px-3 py-1.5 bg-brand-50 rounded-lg">
                                                         View Profile
                                                     </button>
                                                     <button
-                                                        onClick={() => alert(`Downloading resume for ${app.candidateName}... (Mock Action)`)}
+                                                        onClick={() => showInfo({ title: 'Download Resume', message: `Downloading resume for ${app.candidateName}... (Mock Action)` })}
                                                         className="text-xs font-medium text-slate-600 hover:text-slate-700 px-3 py-1.5 border border-slate-200 rounded-lg">
                                                         Resume
                                                     </button>
@@ -424,7 +430,7 @@ export const RecruitmentPage: React.FC = () => {
                         </div>
 
                         <div className="p-4 border-t border-slate-100 bg-slate-50 rounded-b-xl flex justify-end">
-                            <button onClick={() => setSelectedJobId(null)} className="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-50">
+                            <button onClick={() => setSelectedJobId(null)} className="btn-secondary">
                                 Close
                             </button>
                         </div>

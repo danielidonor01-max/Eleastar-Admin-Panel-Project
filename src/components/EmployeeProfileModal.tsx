@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, User, QrCode, DollarSign, Clock, FileText, Mail, Phone, Briefcase, MapPin, Globe, Edit2, Save } from 'lucide-react';
+import { X, User, QrCode, DollarSign, Clock, FileText, Mail, Phone, Briefcase, MapPin, Globe, Edit2, Save, TrendingUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import type { Employee } from '../data/mockData';
 import { useAdmin } from '../context/AdminContext';
 import { PUBLIC_LINK } from '../config';
@@ -13,6 +14,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
     const { payrollStatus, activityLogs, toggleQRStatus, regenerateQR, updateEmployee } = useAdmin();
     const [activeTab, setActiveTab] = useState<'overview' | 'qr' | 'payroll' | 'activity'>('overview');
     const [isEditing, setIsEditing] = useState(false);
+    const navigate = useNavigate();
 
     // Edit Form State
     const [formData, setFormData] = useState({
@@ -146,7 +148,11 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                             )}
 
                             <span className={`px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide
-                                ${employee.status === 'active' ? 'bg-[#00D66E] text-[#0B1229]' : 'bg-red-500 text-white'}
+                                ${employee.status === 'active' ? 'bg-[#00D66E] text-[#0B1229]' :
+                                    employee.status === 'suspended' ? 'bg-amber-500 text-white' :
+                                        employee.status === 'probation' ? 'bg-blue-500 text-white' :
+                                            employee.status === 'onboarding' ? 'bg-slate-500 text-white' :
+                                                'bg-red-500 text-white'}
                             `}>
                                 {employee.status}
                             </span>
@@ -309,9 +315,9 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                                 <div className="p-4 bg-white border-2 border-slate-100 rounded-xl shadow-sm mb-4">
                                     <QrCode size={160} className={employee.status === 'active' ? 'text-slate-900' : 'text-slate-300'} />
                                 </div>
-                                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold ${employee.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-                                    <div className={`w-2 h-2 rounded-full ${employee.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                                    {employee.status === 'active' ? 'Active & Valid' : 'Suspended'}
+                                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold ${employee.status === 'active' || employee.status === 'probation' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                                    <div className={`w-2 h-2 rounded-full ${employee.status === 'active' || employee.status === 'probation' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                    {employee.status === 'active' || employee.status === 'probation' ? 'Active & Valid' : 'Suspended / Invalid'}
                                 </div>
                             </div>
 
@@ -328,13 +334,13 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                                         </button>
 
                                         <button
-                                            onClick={() => toggleQRStatus(employee.id, employee.status === 'active' ? 'suspended' : 'active')}
-                                            className={`w-full py-2.5 px-4 rounded-lg font-medium border transition-colors ${employee.status === 'active'
+                                            onClick={() => toggleQRStatus(employee.id, (employee.status === 'active' || employee.status === 'probation') ? 'suspended' : 'active')}
+                                            className={`w-full py-2.5 px-4 rounded-lg font-medium border transition-colors ${(employee.status === 'active' || employee.status === 'probation')
                                                 ? 'border-red-200 text-red-700 hover:bg-red-50'
                                                 : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
                                                 }`}
                                         >
-                                            {employee.status === 'active' ? 'Revoke QR Access' : 'Re-enable QR Access'}
+                                            {(employee.status === 'active' || employee.status === 'probation') ? 'Revoke QR Access' : 'Re-enable QR Access'}
                                         </button>
                                         <button
                                             onClick={() => regenerateQR([employee.id])}
@@ -355,14 +361,27 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                         <div className="space-y-6">
                             <div className="grid md:grid-cols-3 gap-6">
                                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                                    <div className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Base Salary</div>
                                     <div className="text-2xl font-bold text-slate-900">₦{employee.salary?.toLocaleString()}</div>
                                     <div className="text-xs text-slate-400 mt-1">/ month</div>
+                                    <button
+                                        onClick={() => { onClose(); navigate('/admin/promotions'); }}
+                                        className="mt-4 text-xs font-bold text-brand-600 flex items-center gap-1 hover:underline"
+                                    >
+                                        <TrendingUp size={12} />
+                                        Request Change
+                                    </button>
                                 </div>
                                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                                     <div className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Net Payable (Jan)</div>
-                                    <div className="text-2xl font-bold text-slate-900">₦{(employee.salary + adjustments.reduce((sum, a) => sum + (a.type === 'Bonus' ? a.amount : -a.amount), 0)).toLocaleString()}</div>
-                                    <div className="text-xs text-orange-600 mt-1 font-medium">{payrollStatus.status}</div>
+                                    <div className="text-2xl font-bold text-slate-900">
+                                        {(employee.status === 'active' || employee.status === 'probation')
+                                            ? `₦${(employee.salary + adjustments.reduce((sum, a) => sum + (a.type === 'Bonus' ? a.amount : -a.amount), 0)).toLocaleString()}`
+                                            : '₦0.00'
+                                        }
+                                    </div>
+                                    <div className="text-xs text-orange-600 mt-1 font-medium">
+                                        {(employee.status === 'active' || employee.status === 'probation') ? payrollStatus.status : 'Not Eligible (Status)'}
+                                    </div>
                                 </div>
                             </div>
 
@@ -397,7 +416,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                                         <div className="flex items-start gap-3">
                                             <div className="mt-1"><FileText size={16} className="text-slate-400" /></div>
                                             <div>
-                                                <div className="text-sm font-medium text-slate-900">{log.action}</div>
+                                                <div className="text-sm font-medium text-slate-900">{log.actionType}</div>
                                                 <div className="text-xs text-slate-500">{log.details}</div>
                                                 <div className="text-[10px] text-slate-400 mt-1">{new Date(log.timestamp).toLocaleString()}</div>
                                             </div>
@@ -411,6 +430,6 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };

@@ -1,6 +1,4 @@
-import type { PayrollCycle } from '../context/AdminContext';
-
-
+import type { PayrollCycle } from '../data/mockData';
 
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -21,6 +19,7 @@ export const generatePastCycles = (currentCycle: PayrollCycle, count: number = 1
 
         cycles.push({
             id,
+            tenantId: currentCycle.tenantId, // Inherit tenant from current cycle
             month: monthName,
             year: year,
             status: 'Paid', // All past cycles are Paid for audit purposes

@@ -3,7 +3,7 @@ import { useAdmin } from '../../context/AdminContext';
 import { Target, TrendingUp, Award, Calendar, Play, X, CheckCircle2 } from 'lucide-react';
 
 export const PerformanceReviewPage: React.FC = () => {
-    const { currentUserId, performanceReviews, submitSelfReview, reviewCycles } = useAdmin();
+    const { currentUserId, performanceReviews, updatePerformanceReview, reviewCycles } = useAdmin();
     // Sort reviews by date descending
     const myReviews = performanceReviews
         .filter(r => r.employeeId === currentUserId)
@@ -46,7 +46,7 @@ export const PerformanceReviewPage: React.FC = () => {
         e.preventDefault();
         if (!currentUserId || !activeCycle) return;
 
-        const cycleId = activeCycle.id;
+
         // Store structured data as string for now
         const selfReviewJson = JSON.stringify({
             achievements: formData.achievements,
@@ -56,11 +56,11 @@ export const PerformanceReviewPage: React.FC = () => {
 
         setIsSubmitting(true);
         setTimeout(() => {
-            submitSelfReview({
-                employeeId: currentUserId,
-                cycleId: cycleId,
+            if (!currentReview) return;
+            updatePerformanceReview(currentReview.id, {
+                selfReview: selfReviewJson,
                 rating: formData.rating,
-                selfReview: selfReviewJson
+                status: 'Submitted'
             });
             setIsSubmitting(false);
             setIsModalOpen(false);
@@ -269,11 +269,10 @@ export const PerformanceReviewPage: React.FC = () => {
                                 </h3>
                                 <p className="text-xs text-slate-500">{activeCycle.title}</p>
                             </div>
-                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors">
+                            <button onClick={() => setIsModalOpen(false)} aria-label="Close modal" className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
-
                         <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto flex-1">
                             {/* Rating */}
                             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
@@ -285,6 +284,7 @@ export const PerformanceReviewPage: React.FC = () => {
                                             type="button"
                                             disabled={isReadOnly}
                                             onClick={() => setFormData({ ...formData, rating: score })}
+                                            aria-label={`Rate ${score} out of 5`}
                                             className={`
                                                 w-10 h-10 rounded-full font-bold text-lg flex items-center justify-center transition-all
                                                 ${formData.rating === score
@@ -306,9 +306,10 @@ export const PerformanceReviewPage: React.FC = () => {
                             {/* Questions */}
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Key Achievements</label>
+                                    <label htmlFor="achievements" className="block text-sm font-bold text-slate-700 mb-1">Key Achievements</label>
                                     <p className="text-xs text-slate-400 mb-2">What were your biggest wins this cycle?</p>
                                     <textarea
+                                        id="achievements"
                                         disabled={isReadOnly}
                                         required
                                         rows={4}
@@ -320,9 +321,10 @@ export const PerformanceReviewPage: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Challenges Faced</label>
+                                    <label htmlFor="challenges" className="block text-sm font-bold text-slate-700 mb-1">Challenges Faced</label>
                                     <p className="text-xs text-slate-400 mb-2">What obstacles did you encounter and how did you handle them?</p>
                                     <textarea
+                                        id="challenges"
                                         disabled={isReadOnly}
                                         required
                                         rows={3}
@@ -334,8 +336,9 @@ export const PerformanceReviewPage: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Goals for Next Cycle</label>
+                                    <label htmlFor="goals" className="block text-sm font-bold text-slate-700 mb-1">Goals for Next Cycle</label>
                                     <textarea
+                                        id="goals"
                                         disabled={isReadOnly}
                                         required
                                         rows={3}

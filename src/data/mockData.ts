@@ -1,22 +1,167 @@
+export type EmployeeStatus = 'onboarding' | 'probation' | 'active' | 'suspended' | 'exited';
+
+export type AdminRole = 'SUPER_ADMIN' | 'COO' | 'HR_ADMIN' | 'MANAGEMENT_ADMIN' | 'FINANCE_ADMIN' | 'PAYROLL_ADMIN' | 'TECHNICIAN' | 'USER' | 'CHIEF_RISK_OFFICER' | 'WEB_ADMIN' | 'VIEWER';
+
+export interface BankDetails {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+}
+
+export interface TaxDetails {
+    taxId: string; // TIN
+    pensionId: string; // PEN
+}
+
+export interface Asset {
+    id: string;
+    type: 'Laptop' | 'Monitor' | 'Phone' | 'ID Card' | 'Other';
+    serialNumber?: string;
+    assignedAt: string;
+    status: 'Active' | 'Returned' | 'Lost';
+}
+
+export interface ContractDocument {
+    id: string;
+    name: string;
+    type: 'Employment Contract' | 'NDA' | 'Offer Letter' | 'Amendment' | 'Other';
+    uploadedAt: string;
+    uploadedBy: string;
+    fileUrl: string; // Simulated for now
+    fileSize: number;
+    status: 'active' | 'expired' | 'superseded';
+}
+
+export interface ContractInfo {
+    contractType: 'Full-Time' | 'Part-Time' | 'Contract' | 'Intern';
+    startDate: string;
+    endDate?: string; // For contracts/internships
+    probationEndDate?: string;
+    noticePeriod: number; // in days
+    documents: ContractDocument[];
+}
+
+export interface SalaryStructure {
+    id: string;
+    tenantId: string;
+    role: AdminRole;
+    grade: string;
+    minSalary: number;
+    maxSalary: number;
+    currency: string;
+}
+
+export interface PromotionRequest {
+    id: string;
+    tenantId: string;
+    employeeId: string;
+    currentRole: AdminRole;
+    newRole: AdminRole;
+    currentSalary: number;
+    proposedSalary: number;
+    effectiveDate: string;
+    reason: string;
+    status: 'Pending' | 'Approved' | 'Rejected';
+    requestedBy: string; // User ID
+    requestedAt: string;
+    approvedBy?: string; // COO ID
+    approvedAt?: string;
+    rejectionReason?: string;
+    eligibilitySnapshot?: {
+        isEligible: boolean;
+        reasons: string[];
+        scores: {
+            performance: number; // Latest review rating
+            tenureMonths: number;
+        };
+    };
+}
+
+export interface PromotionEligibilityRule {
+    id: string;
+    tenantId: string;
+    name: string;
+    targetRole: AdminRole | 'Global';
+    minTimeInRoleMonths: number;
+    minPerformanceRating: number;
+    requireCleanRecord: boolean; // No disciplinary actions in last X months (mock logic for now)
+    isActive: boolean;
+}
+
+export const initialEligibilityRules: PromotionEligibilityRule[] = [
+    {
+        id: 'RULE-001',
+        tenantId: 'tenant-123',
+        name: 'Standard Promotion Criteria',
+        targetRole: 'Global',
+        minTimeInRoleMonths: 6,
+        minPerformanceRating: 4.0,
+        requireCleanRecord: true,
+        isActive: true
+    },
+    {
+        id: 'RULE-002',
+        tenantId: 'tenant-123',
+        name: 'Senior Management Criteria',
+        targetRole: 'COO',
+        minTimeInRoleMonths: 12,
+        minPerformanceRating: 4.5,
+        requireCleanRecord: true,
+        isActive: true
+    }
+];
+
+export interface SalaryHistoryEntry {
+    date: string;
+    amount: number;
+    reason: string;
+    approvedBy?: string;
+}
+
+export interface PromotionHistoryEntry {
+    date: string;
+    oldRole: AdminRole;
+    newRole: AdminRole;
+    reason: string;
+    approvedBy?: string;
+}
+
 export interface Employee {
     id: string;
+    tenantId: string;
     name: string;
     title: string;
     department: string;
     photoUrl: string;
     // Lifecycle Status
-    status: 'active' | 'inactive' | 'suspended' | 'terminated';
+    status: EmployeeStatus;
     verifiedAt: string;
     joinedAt: string; // New field for Length of Service
     salary: number;
     // Employment Contract Type
     employmentType: 'Full-time' | 'Part-time' | 'Intern';
     email: string;
+    password?: string; // Added for Auth
     // Access Control Fields
-    systemRole: 'Super Admin' | 'Management Admin' | 'User' | 'Viewer';
+    systemRole: AdminRole;
     accessGranted: boolean;
+    // Hierarchy
+    managerId?: string; // Reports to
+    // Financials
+    bankDetails?: BankDetails;
+    taxDetails?: TaxDetails;
+    // Assets
+    assets?: Asset[];
+    // Contract Information
+    contractInfo?: ContractInfo;
     // Self-Service Editable
     phoneNumber?: string;
+    address?: string;
+    emergencyContact?: {
+        name: string;
+        relationship: string;
+        phoneNumber: string;
+    };
     socialLinks?: {
         linkedin?: string;
         facebook?: string;
@@ -29,12 +174,16 @@ export interface Employee {
         sick: number; // e.g. 10
         used: number; // Total days used
     };
+    // Career History
+    salaryHistory?: SalaryHistoryEntry[];
+    promotionHistory?: PromotionHistoryEntry[];
 }
 
 export interface LeaveRequest {
     id: string;
+    tenantId: string;
     employeeId: string;
-    type: 'Annual' | 'Sick' | 'Unpaid' | 'Maternity' | 'Paternity';
+    type: 'Annual' | 'Sick' | 'Unpaid' | 'Maternity' | 'Paternity' | 'Other';
     startDate: string;
     endDate: string;
     days: number;
@@ -51,6 +200,7 @@ export interface LeaveRequest {
 
 export interface Application {
     id: string;
+    tenantId: string;
     jobId: string;
     candidateName: string;
     email: string;
@@ -61,6 +211,7 @@ export interface Application {
 
 export interface Job {
     id: string;
+    tenantId: string;
     title: string;
     department: string;
     type: 'Full-time' | 'Contract' | 'Internship';
@@ -74,8 +225,69 @@ export interface Job {
     applicationList?: Application[];
 }
 
+export interface BonusType {
+    id: string;
+    tenantId: string;
+    name: string;
+    description: string;
+    category: 'Individual' | 'Group' | 'Global';
+    isTaxable: boolean;
+    requiresApproval: boolean;
+    isActive: boolean;
+}
+
+export interface BonusEligibilityRule {
+    id: string;
+    tenantId: string;
+    bonusTypeId: string;
+    name: string;
+    targetRole: AdminRole | 'Global';
+    minPerformanceRating?: number;
+    minTenureMonths?: number;
+    isActive: boolean;
+}
+
+export interface BonusRequest {
+    id: string;
+    tenantId: string;
+    cycleId: string; // Linked to a payroll cycle
+    employeeId: string;
+    bonusTypeId: string;
+    amount: number;
+    reason: string;
+    requestedBy: string;
+    requestedAt: string;
+    status: 'Pending' | 'Approved' | 'Rejected';
+    approvedBy?: string;
+    approvedAt?: string;
+    rejectionReason?: string;
+}
+
+export interface LedgerEntry {
+    id: string;
+    tenantId: string;
+    payrollCycleId: string;
+    employeeId: string;
+    employeeName: string; // Snapshot
+    bankDetails: { // Snapshot
+        bankName: string;
+        accountNumber: string;
+        accountName: string;
+    };
+    amount: number;
+    currency: string;
+    type: 'Salary' | 'Bonus' | 'Deduction' | 'Tax' | 'Pension';
+    status: 'Pending Funding' | 'Funded' | 'Executed' | 'Failed';
+    createdAt: string;
+    approvedBy?: string;
+    approvedAt?: string;
+    executedAt?: string;
+    transactionReference?: string; // UTR
+}
+
 export const employees: Employee[] = [
     {
+        tenantId: 'tenant-default',
         id: "EMP-001",
         name: "Stephen Omovwigho",
         title: "CEO",
@@ -87,8 +299,25 @@ export const employees: Employee[] = [
         salary: 500000,
         employmentType: 'Full-time',
         email: "stephen@eleastar.com",
-        systemRole: 'Super Admin',
+        systemRole: 'SUPER_ADMIN',
         accessGranted: true,
+        contractInfo: {
+            contractType: 'Full-Time',
+            startDate: '2020-01-15T09:00:00Z',
+            noticePeriod: 90,
+            documents: [
+                {
+                    id: 'DOC-001',
+                    name: 'Employment Contract - CEO.pdf',
+                    type: 'Employment Contract',
+                    uploadedAt: '2020-01-10T10:00:00Z',
+                    uploadedBy: 'HR-SYSTEM',
+                    fileUrl: '/documents/contracts/ceo-contract.pdf',
+                    fileSize: 245000,
+                    status: 'active'
+                }
+            ]
+        },
         socialLinks: {
             linkedin: "https://linkedin.com",
             twitter: "https://twitter.com",
@@ -96,21 +325,41 @@ export const employees: Employee[] = [
         }
     },
     {
+        tenantId: 'tenant-default',
         id: "EMP-002",
         name: "Glory Omokefe",
-        title: "Manager",
+        title: "COO", // Updated to COO
         department: "Operations",
         photoUrl: "https://ui-avatars.com/api/?name=Glory+Omokefe&background=random",
         status: 'active',
         verifiedAt: new Date().toISOString(),
         joinedAt: '2021-03-10T09:00:00Z', // ~4 years
-        salary: 200000,
+        salary: 350000, // Bumped for C-level
         employmentType: 'Full-time',
         email: "glory@eleastar.com",
-        systemRole: 'Management Admin',
-        accessGranted: true
+        systemRole: 'COO', // Updated Role
+        accessGranted: true,
+        managerId: "EMP-001" // Reports to CEO
     },
     {
+        tenantId: 'tenant-default',
+        id: "EMP-CRO-01",
+        name: "Sarah Risk",
+        title: "CHIEF_RISK_OFFICER",
+        department: "Compliance",
+        photoUrl: "https://ui-avatars.com/api/?name=Sarah+Risk&background=random",
+        status: 'active',
+        verifiedAt: new Date().toISOString(),
+        joinedAt: '2022-01-10T09:00:00Z',
+        salary: 320000,
+        employmentType: 'Full-time',
+        email: "sarah@eleastar.com",
+        systemRole: 'CHIEF_RISK_OFFICER',
+        accessGranted: true,
+        managerId: "EMP-001" // Reports to CEO
+    },
+    {
+        tenantId: 'tenant-default',
         id: "EMP-003",
         name: "Odirin Success",
         title: "Backend Developer",
@@ -122,7 +371,7 @@ export const employees: Employee[] = [
         salary: 150000,
         employmentType: 'Full-time',
         email: "odirin@eleastar.com",
-        systemRole: 'User',
+        systemRole: 'USER',
         accessGranted: true,
         phoneNumber: "+234 812 345 6789",
         socialLinks: {
@@ -136,6 +385,7 @@ export const employees: Employee[] = [
         }
     },
     {
+        tenantId: 'tenant-default',
         id: "EMP-004",
         name: "Victor Ibanoson",
         title: "Backend Developer",
@@ -147,10 +397,11 @@ export const employees: Employee[] = [
         salary: 200000,
         employmentType: 'Full-time',
         email: "victor@eleastar.com",
-        systemRole: 'User',
+        systemRole: 'USER',
         accessGranted: true
     },
     {
+        tenantId: 'tenant-default',
         id: "EMP-005",
         name: "Fegor Idoro",
         title: "Frontend Developer",
@@ -162,10 +413,11 @@ export const employees: Employee[] = [
         salary: 200000,
         employmentType: 'Full-time',
         email: "fegor@eleastar.com",
-        systemRole: 'User',
+        systemRole: 'USER',
         accessGranted: true
     },
     {
+        tenantId: 'tenant-default',
         id: "EMP-006",
         name: "Daniel Idonor",
         title: "UI/UX Designer",
@@ -177,28 +429,127 @@ export const employees: Employee[] = [
         salary: 150000,
         employmentType: 'Full-time',
         email: "daniel@eleastar.com",
-        systemRole: 'Management Admin',
+        systemRole: 'COO',
         accessGranted: true
     },
     {
+        tenantId: 'tenant-default',
         id: "EMP-007",
         name: "Victory Inorko",
         title: "Intern",
         department: "Engineering",
         photoUrl: "https://ui-avatars.com/api/?name=Victory+Inorko&background=random",
-        status: 'active', // Changed to active lifecycle, but Intern type
+        status: 'active', // Changed to active lifecycle, but USER type
         verifiedAt: new Date().toISOString(),
         joinedAt: '2024-11-01T09:00:00Z', // Recent
         salary: 70000,
         employmentType: 'Intern',
         email: "victory@eleastar.com",
-        systemRole: 'Viewer',
+        systemRole: 'USER', // Updated from USER
         accessGranted: true
     }
 ];
 
+export const salaryStructures: SalaryStructure[] = [
+    {
+        id: 'SS-001',
+        tenantId: 'tenant-default',
+        role: 'USER',
+        grade: 'L1 - Entry',
+        minSalary: 100000,
+        maxSalary: 250000,
+        currency: 'NGN'
+    },
+    {
+        id: 'SS-002',
+        tenantId: 'tenant-default',
+        role: 'USER',
+        grade: 'T1 - Junior',
+        minSalary: 80000,
+        maxSalary: 180000,
+        currency: 'NGN'
+    },
+    {
+        id: 'SS-003',
+        tenantId: 'tenant-default',
+        role: 'COO',
+        grade: 'M1 - Lead',
+        minSalary: 300000,
+        maxSalary: 800000,
+        currency: 'NGN'
+    },
+    {
+        id: 'SS-004',
+        tenantId: 'tenant-default',
+        role: 'COO',
+        grade: 'C-Suite',
+        minSalary: 1000000,
+        maxSalary: 5000000,
+        currency: 'NGN'
+    },
+    {
+        id: 'SS-005',
+        tenantId: 'tenant-default',
+        role: 'USER',
+        grade: 'I1 - Intern',
+        minSalary: 50000,
+        maxSalary: 100000,
+        currency: 'NGN'
+    },
+    {
+        id: 'SS-006',
+        tenantId: 'tenant-default',
+        role: 'USER',
+        grade: 'JT1 - Junior Tech',
+        minSalary: 70000,
+        maxSalary: 150000,
+        currency: 'NGN'
+    }
+];
+
+export const promotionRequests: PromotionRequest[] = [];
+
+export interface PayrollCycle {
+    id: string;
+    tenantId: string;
+    month: string;
+    year: number;
+    status: 'Draft' | 'Reviewed' | 'Approved' | 'Paid';
+    adjustments: {
+        empId: string;
+        type: 'Bonus' | 'Fine' | 'Deduction';
+        amount: number;
+        reason: string;
+        // Reporting fields
+        requestedBy?: string;
+        appliedAt?: string;
+        approvedBy?: string;
+        approvedAt?: string;
+        status?: string;
+    }[];
+    snapshot?: {
+        generatedAt: string;
+        approvedBy: string;
+        totalPayout: number;
+        employeeCount: number;
+        dataHash: string;
+        rawData: string; // JSON stringified snapshot of eligible employees and their calculations
+        totalDeductions?: number; // Added for reportUtils
+        totalNet?: number; // Added for reportUtils
+    };
+    // Top-level reporting fields
+    totalPayout?: number;
+    approvedBy?: string;
+    approvedAt?: string;
+    executedAt?: string;
+    createdAt?: string;
+    paidAt?: string;
+    transactionId?: string;
+}
+
 export interface ReviewCycle {
     id: string;
+    tenantId: string;
     title: string;
     status: 'Draft' | 'Active' | 'Completed';
     startDate: string;
@@ -207,6 +558,7 @@ export interface ReviewCycle {
 
 export interface PerformanceReview {
     id: string;
+    tenantId: string;
     employeeId: string;
     cycleId: string;
     selfReview: string;
@@ -227,6 +579,7 @@ export interface PerformanceReview {
 
 export const initialReviewCycles: ReviewCycle[] = [
     {
+        tenantId: 'tenant-default',
         id: 'CYC-001',
         title: 'Q1 2026 Performance Review',
         status: 'Active',
@@ -239,6 +592,7 @@ export const initialPerformanceReviews: PerformanceReview[] = [];
 
 export const initialLeaveRequests: LeaveRequest[] = [
     {
+        tenantId: 'tenant-default',
         id: "LR-001",
         employeeId: "EMP-003", // Odirin Success
         type: 'Annual',
@@ -251,6 +605,7 @@ export const initialLeaveRequests: LeaveRequest[] = [
         reminderLevel: 0
     },
     {
+        tenantId: 'tenant-default',
         id: "LR-002",
         employeeId: "EMP-004", // Victor
         type: 'Sick',
@@ -263,6 +618,7 @@ export const initialLeaveRequests: LeaveRequest[] = [
         reminderLevel: 0
     },
     {
+        tenantId: 'tenant-default',
         id: "LR-003",
         employeeId: "EMP-005", // Fegor
         type: 'Unpaid',
@@ -278,7 +634,8 @@ export const initialLeaveRequests: LeaveRequest[] = [
 
 export const jobs: Job[] = [
     {
-        id: 'JOB-001',
+        id: "JOB-001",
+        tenantId: 'tenant-default',
         title: 'Frontend Developer',
         department: 'Engineering',
         type: 'Full-time',
@@ -289,13 +646,14 @@ export const jobs: Job[] = [
         description: 'We are looking for a skilled Frontend Developer with React experience...',
         deadline: '2026-02-28',
         applicationList: [
-            { id: 'APP-001', jobId: 'JOB-001', candidateName: 'John Doe', email: 'john@example.com', resumeUrl: '#', status: 'New', appliedAt: '2026-01-20' },
-            { id: 'APP-002', jobId: 'JOB-001', candidateName: 'Jane Smith', email: 'jane@example.com', resumeUrl: '#', status: 'Reviewing', appliedAt: '2026-01-18' },
-            { id: 'APP-003', jobId: 'JOB-001', candidateName: 'Samuel Green', email: 'sam@example.com', resumeUrl: '#', status: 'Rejected', appliedAt: '2026-01-15' }
+            { tenantId: 'tenant-default', id: 'APP-001', jobId: 'JOB-001', candidateName: 'John Doe', email: 'john@example.com', resumeUrl: '#', status: 'New', appliedAt: '2026-01-20' },
+            { tenantId: 'tenant-default', id: 'APP-002', jobId: 'JOB-001', candidateName: 'Jane Smith', email: 'jane@example.com', resumeUrl: '#', status: 'Reviewing', appliedAt: '2026-01-18' },
+            { tenantId: 'tenant-default', id: 'APP-003', jobId: 'JOB-001', candidateName: 'Samuel Green', email: 'sam@example.com', resumeUrl: '#', status: 'Rejected', appliedAt: '2026-01-15' }
         ]
     },
     {
         id: 'JOB-002',
+        tenantId: 'tenant-default',
         title: 'Backend Developer',
         department: 'Engineering',
         type: 'Full-time',
@@ -309,6 +667,7 @@ export const jobs: Job[] = [
     },
     {
         id: 'JOB-003',
+        tenantId: 'tenant-default',
         title: 'Product Marketing Manager',
         department: 'Marketing',
         type: 'Full-time',
@@ -319,7 +678,7 @@ export const jobs: Job[] = [
         description: 'Lead our marketing initiatives...',
         deadline: '2026-03-10',
         applicationList: [
-            { id: 'APP-004', jobId: 'JOB-003', candidateName: 'Michael Brown', email: 'michael@example.com', resumeUrl: '#', status: 'Shortlisted', appliedAt: '2026-01-22' }
+            { tenantId: 'tenant-default', id: 'APP-004', jobId: 'JOB-003', candidateName: 'Michael Brown', email: 'michael@example.com', resumeUrl: '#', status: 'Shortlisted', appliedAt: '2026-01-22' }
         ]
     }
 ];
@@ -351,12 +710,13 @@ export type SectionType =
     | 'ServiceDetailHero'
     | 'ServiceDetailOverview'
     | 'ServiceDetailOffering'
-    | 'ServiceDetailContact';
+    | 'ServiceDetailContact'
+    | 'CareersHero';
 
 export interface BaseSection {
     id: string;
     type: SectionType;
-    page: 'Home' | 'About' | 'Services' | 'IndustrialSolutions' | 'InformationTechnology' | 'ResearchAndDevelopment' | 'ElectronicsManufacturing' | 'SpecificITServices';
+    page: 'Home' | 'About' | 'Services' | 'IndustrialSolutions' | 'InformationTechnology' | 'ResearchAndDevelopment' | 'ElectronicsManufacturing' | 'SpecificITServices' | 'PrivacyPolicy' | 'TermsOfService' | 'Careers';
     isVisible: boolean;
     order: number; // 1-indexed
     lastUpdated: string;
@@ -508,6 +868,10 @@ export interface TeamMember {
     imageUrl: string;
     altText?: string;
     bio?: string;
+    generatedAt?: string;
+    processedAt?: string;
+    paidAt?: string;
+    transactionId?: string;
     linkedinUrl?: string; // Added for About Page
 }
 
@@ -593,11 +957,330 @@ export type CMSSection =
     | ServiceDetailHeroSection
     | ServiceDetailOverviewSection
     | ServiceDetailOfferingSection
-    | ServiceDetailContactSection;
+    | ServiceDetailOfferingSection
+    | ServiceDetailContactSection
+    | CareersHeroSection;
 
 // ... (keep HomepageSection alias)
 
 // ... (keep initialCMSContent and initialAboutContent)
+
+// --- GLOBAL SETTINGS ---
+export interface GlobalContent {
+    tenantId: string;
+    siteName: string;
+    logoUrl: string;
+    faviconUrl: string;
+    navigation: {
+        id: string;
+        label: string;
+        path: string; // Slug or absolute URL
+        type: 'Internal' | 'External';
+        isVisible: boolean;
+        order: number;
+    }[];
+    seoDefaults: {
+        siteTitle: string;
+        siteDescription: string;
+        ogImage: string;
+        twitterHandle?: string;
+    };
+    contactInfo: {
+        email: string;
+        phone: string;
+        address: string;
+    };
+    socialLinks: {
+        linkedin: string;
+        facebook: string;
+        twitter: string;
+        instagram: string;
+    };
+    metaDescription: string;
+    metaKeywords: string;
+}
+
+export type ServiceCollection = ServiceItem[];
+
+export const initialGlobalContent: GlobalContent = {
+    tenantId: 'tenant-default',
+    siteName: 'Eleastar',
+    logoUrl: '/logo.png',
+    faviconUrl: '/favicon.ico',
+    contactInfo: {
+        email: 'info@eleastar.com',
+        phone: '+234 800 123 4567',
+        address: '123 Innovation Drive, Lagos, Nigeria'
+    },
+    socialLinks: {
+        linkedin: 'https://linkedin.com/company/eleastar',
+        facebook: 'https://facebook.com/eleastar',
+        twitter: 'https://twitter.com/eleastar',
+        instagram: 'https://instagram.com/eleastar'
+    },
+    metaDescription: 'Leading provider of workforce solutions and technological innovation.',
+    metaKeywords: 'ERP, Workforce, Payroll, Verification, Technology',
+    navigation: [
+        { id: 'nav-services', label: 'Services', path: '/services', type: 'Internal', isVisible: true, order: 1 },
+        { id: 'nav-technologies', label: 'Technologies', path: '/technologies', type: 'Internal', isVisible: true, order: 2 },
+        { id: 'nav-culture', label: 'Eleastar & You', path: '/eleastar-and-you', type: 'Internal', isVisible: true, order: 3 },
+        { id: 'nav-about', label: 'About Eleastar', path: '/about', type: 'Internal', isVisible: true, order: 4 },
+        { id: 'nav-contact', label: 'Contact', path: '/contact', type: 'Internal', isVisible: true, order: 5 },
+    ],
+    seoDefaults: {
+        siteTitle: 'Eleastar - Innovative Tech Solutions',
+        siteDescription: 'Leading technology partner for industrial and digital transformation.',
+        ogImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80',
+    },
+
+};
+
+// --- SEO METADATA ---
+export interface PageMetadata {
+    id: string; // matches Page ID (e.g. 'Home')
+    tenantId: string;
+    path: string; // Canonical path
+    metaTitle: string;
+    metaDescription: string;
+    ogTitle: string;
+    ogDescription: string;
+    ogImage: string;
+    noIndex: boolean;
+}
+
+export const initialPageMetadata: Record<string, PageMetadata> = {
+    'Home': {
+        id: 'Home',
+        tenantId: 'tenant-default',
+        path: '/',
+        metaTitle: 'Home | Eleastar',
+        metaDescription: 'Welcome to Eleastar.',
+        ogTitle: 'Home | Eleastar',
+        ogDescription: 'Welcome to Eleastar.',
+        ogImage: '',
+        noIndex: false
+    },
+    'About': {
+        id: 'About',
+        tenantId: 'tenant-default',
+        path: '/about',
+        metaTitle: 'About Us | Eleastar',
+        metaDescription: 'Learn about our mission and team.',
+        ogTitle: 'About Us | Eleastar',
+        ogDescription: 'Learn about our mission and team.',
+        ogImage: '',
+        noIndex: false
+    },
+    'Services': {
+        id: 'Services',
+        tenantId: 'tenant-default',
+        path: '/services',
+        metaTitle: 'Our Services | Eleastar',
+        metaDescription: 'Explore our comprehensive services.',
+        ogTitle: 'Our Services | Eleastar',
+        ogDescription: 'Explore our comprehensive services.',
+        ogImage: '',
+        noIndex: false
+    },
+    'Contact': {
+        id: 'Contact',
+        tenantId: 'tenant-default',
+        path: '/contact',
+        metaTitle: 'Contact Us | Eleastar',
+        metaDescription: 'Get in touch with us.',
+        ogTitle: 'Contact Us | Eleastar',
+        ogDescription: 'Get in touch with us.',
+        ogImage: '',
+        noIndex: false
+    },
+    'PrivacyPolicy': {
+        id: 'PrivacyPolicy',
+        tenantId: 'tenant-default',
+        path: '/privacy-policy',
+        metaTitle: 'Privacy Policy | Eleastar',
+        metaDescription: 'Our commitment to your privacy.',
+        ogTitle: 'Privacy Policy | Eleastar',
+        ogDescription: 'Our commitment to your privacy.',
+        ogImage: '',
+        noIndex: false
+    },
+    'TermsOfService': {
+        id: 'TermsOfService',
+        tenantId: 'tenant-default',
+        path: '/terms-of-service',
+        metaTitle: 'Terms of Service | Eleastar',
+        metaDescription: 'Terms and conditions for using our services.',
+        ogTitle: 'Terms of Service | Eleastar',
+        ogDescription: 'Terms and conditions for using our services.',
+        ogImage: '',
+        noIndex: false
+    },
+    'IndustrialSolutions': {
+        id: 'IndustrialSolutions',
+        tenantId: 'tenant-default',
+        path: '/services/industrial-solutions',
+        metaTitle: 'Industrial Solutions | Eleastar',
+        metaDescription: 'We deliver automation systems, machinery maintenance, and industrial IoT setups.',
+        ogTitle: 'Industrial Solutions | Eleastar',
+        ogDescription: 'We deliver automation systems, machinery maintenance, and industrial IoT setups.',
+        ogImage: '',
+        noIndex: false
+    },
+    'InformationTechnology': {
+        id: 'InformationTechnology',
+        tenantId: 'tenant-default',
+        path: '/services/information-technology',
+        metaTitle: 'Information Technology | Eleastar',
+        metaDescription: 'End-to-end IT solutions including software development and cloud infrastructure.',
+        ogTitle: 'Information Technology | Eleastar',
+        ogDescription: 'End-to-end IT solutions including software development and cloud infrastructure.',
+        ogImage: '',
+        noIndex: false
+    },
+    'ResearchAndDevelopment': {
+        id: 'ResearchAndDevelopment',
+        tenantId: 'tenant-default',
+        path: '/services/research-and-development',
+        metaTitle: 'Research & Development | Eleastar',
+        metaDescription: 'Pioneering future technologies through dedicated research and innovative prototyping.',
+        ogTitle: 'Research & Development | Eleastar',
+        ogDescription: 'Pioneering future technologies through dedicated research and innovative prototyping.',
+        ogImage: '',
+        noIndex: false
+    },
+    'ElectronicsManufacturing': {
+        id: 'ElectronicsManufacturing',
+        tenantId: 'tenant-default',
+        path: '/services/electronics-manufacturing',
+        metaTitle: 'Electronics Manufacturing | Eleastar',
+        metaDescription: 'High-precision electronics manufacturing and assembly services delivering reliability and scalability.',
+        ogTitle: 'Electronics Manufacturing | Eleastar',
+        ogDescription: 'High-precision electronics manufacturing and assembly services delivering reliability and scalability.',
+        ogImage: '',
+        noIndex: false
+    }
+};
+
+
+// --- UNIFIED CMS STRUCTURE ---
+
+export interface SEOMetadata {
+    title: string;
+    description: string;
+    ogTitle: string;
+    ogDescription: string;
+    ogImage: string;
+    noIndex: boolean;
+}
+
+export interface CMSPage {
+    id: string;
+    tenantId: string;
+    slug: string;
+    name: string;
+    status: 'Published' | 'Draft';
+    seo: SEOMetadata;
+    sections: CMSSection[];
+    lastUpdated: string;
+}
+
+
+
+
+// --- SERVICES COLLECTION ---
+
+export interface ServiceContentBlock {
+    id: string;
+    type: 'Feature' | 'Benefit' | 'Process' | 'Standard'; // Just for categorization if needed
+    title1: string;
+    title2?: string;
+    description: string;
+    imageUrl?: string;
+    imageAlt?: string;
+    order: number;
+}
+
+export interface ServiceItem {
+    id: string; // UUID
+    tenantId: string;
+    slug: string; // e.g. 'industrial-solutions'
+    title: string;
+    shortDescription: string; // For listing
+    icon: string; // URL or Lucide name
+
+    // Detail Page Data
+    bannerImage: string;
+    bannerAlt: string;
+
+    contentBlocks: ServiceContentBlock[];
+
+    // SEO Override (Optional - falls back to defaults generated from content)
+    seo?: Partial<PageMetadata>;
+
+    status: 'Published' | 'Draft';
+    lastUpdated: string;
+}
+
+export const initialServicesCollection: ServiceItem[] = [
+    {
+        id: 'svc-industrial-solutions',
+        tenantId: 'tenant-default',
+        slug: 'industrial-solutions',
+        title: 'Industrial Solutions',
+        shortDescription: 'We deliver automation systems, machinery maintenance, and industrial IoT setups.',
+        icon: 'Factory', // Lucide icon name holder
+        bannerImage: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80',
+        bannerAlt: 'Industrial Pipes',
+        status: 'Published',
+        lastUpdated: new Date().toISOString(),
+        contentBlocks: [
+            {
+                id: 'sb-1',
+                type: 'Feature',
+                title1: 'Technological Solutions For Industries',
+                title2: '01',
+                description: 'Creating a modern software solutions for various industries, focusing on high-quality, innovative applications.',
+                imageUrl: 'https://images.unsplash.com/photo-1581093450065-0a6b42b12975?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+                imageAlt: 'Tech Solutions',
+                order: 1
+            },
+            {
+                id: 'sb-2',
+                type: 'Feature',
+                title1: 'IT Consulting For Industries',
+                title2: '02',
+                description: 'Developing custom software solutions for various industries, focusing on high-quality, innovative applications.',
+                imageUrl: 'https://images.unsplash.com/photo-1581092921461-eab62e97a780?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+                imageAlt: 'IT Consulting',
+                order: 2
+            }
+        ]
+    },
+    {
+        id: 'svc-information-technology',
+        tenantId: 'tenant-default',
+        slug: 'information-technology',
+        title: 'Information Technology',
+        shortDescription: 'End-to-end IT solutions including software development and cloud infrastructure.',
+        icon: 'Server',
+        bannerImage: 'https://images.unsplash.com/photo-1558494949-ef526b0042a0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80',
+        bannerAlt: 'Server Room',
+        status: 'Published',
+        lastUpdated: new Date().toISOString(),
+        contentBlocks: [
+            {
+                id: 'sb-it-1',
+                type: 'Feature',
+                title1: 'Software Development',
+                title2: '01',
+                description: 'Custom software solutions tailored to your business needs, from web applications to enterprise systems.',
+                imageUrl: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+                imageAlt: 'Coding',
+                order: 1
+            }
+        ]
+    }
+];
 
 export const initialServicesContent: CMSSection[] = [
     {
@@ -1097,6 +1780,21 @@ export interface ServiceDetailContactSection extends BaseSection {
     ctaLink: string;  // mailto: or link
 }
 
+export interface CareersHeroSection extends BaseSection {
+    type: 'CareersHero';
+    page: 'Careers';
+    title: string;
+    body: string;
+    imageUrl?: string;
+}
+export interface CareersHeroSection extends BaseSection {
+    type: 'CareersHero';
+    page: 'Careers';
+    title: string;
+    body: string;
+    imageUrl?: string;
+}
+
 
 
 export const initialCMSContent: CMSSection[] = [
@@ -1144,9 +1842,11 @@ export const initialCMSContent: CMSSection[] = [
         title: 'We Partner with SMEs And Industrial Giants, Offering',
         subtitle: 'Quality Services',
         services: [
-            { id: 'srv-1', title: 'Information Technology Services', description: 'Offering software development, IT consulting, and system integration.' },
-            { id: 'srv-2', title: 'Software Quality Assurance', description: 'Comprehensive testing and validation for your applications.' },
-            { id: 'srv-3', title: 'Background Verification', description: 'Thorough checks for employees and candidates.' }
+            { id: 'srv-1', title: 'Information Technology Services', description: 'Software Development, ISP, IT Consulting, Cloud Computing, Support, and Cybersecurity.' },
+            { id: 'srv-2', title: 'Research and Development', description: 'Innovative Product Development, Data Services, and Training.' },
+            { id: 'srv-3', title: 'Electronics Manufacturing', description: 'PCB Design, Component Sourcing, Custom Solutions, and Process Optimization.' },
+            { id: 'srv-4', title: 'Industrial Solutions', description: 'Automation, Equipment Maintenance, Energy Management, Safety and Compliance.' },
+            { id: 'srv-5', title: 'Specific IT Services', description: 'Ecommerce Solutions and Digital Marketing.' }
         ],
         ctaLabel: 'See All Services',
         ctaLink: '/services'
@@ -1177,11 +1877,11 @@ export const initialCMSContent: CMSSection[] = [
         title: 'Our Approach, The Standards',
         subtitle: 'For Our Uniqueness',
         steps: [
-            { id: 'step-1', title: 'Client Consultation and Needs Assessment', description: '' },
-            { id: 'step-2', title: 'Customized Solution Design', description: '' },
-            { id: 'step-3', title: 'Prototyping and Feedback', description: '' },
-            { id: 'step-4', title: 'Implementation and Integration', description: '' },
-            { id: 'step-5', title: 'Testing, Support and Maintenance', description: '' }
+            { id: 'step-1', title: 'Client Consultation and Needs Assessment', description: 'We begin by understanding your specific goals and requirements.' },
+            { id: 'step-2', title: 'Customized Solution Design', description: 'Tailoring strategies and technologies to fit your unique needs.' },
+            { id: 'step-3', title: 'Prototyping and Feedback', description: 'Creating initial models to gather your input and refine the solution.' },
+            { id: 'step-4', title: 'Implementation and Integration', description: 'Seamlessly deploying the solution into your existing systems.' },
+            { id: 'step-5', title: 'Testing, Support and Maintenance', description: 'Ensuring long-term performance and reliability through continuous support.' }
         ],
         ctaLabel: 'Explore Our Methods',
         ctaLink: '/approach'
@@ -1196,7 +1896,7 @@ export const initialCMSContent: CMSSection[] = [
         lastUpdated: new Date().toISOString(),
         title: 'Our Newest',
         subtitle: 'Technology',
-        description: 'Experience the future of workforce management with our latest mobile solutions.',
+        description: 'A mobile money platform for Naira and Dollar transactions. Available on Android and IOS.',
         ctaLabel: 'View App',
         ctaLink: '/app',
         showAndroid: true,
@@ -1241,7 +1941,7 @@ export const initialCMSContent: CMSSection[] = [
         status: 'Published',
         lastUpdated: new Date().toISOString(),
         title: "We're Reputable",
-        quote: "We are dedicated to building a future where technology empowers people and businesses to achieve more.",
+        quote: "At the heart of our company lies a passion for technology and a dedication to pushing the boundaries of what's possible. We are driven by the belief that technology should enhance and simplify lives.",
         authorName: "Stephen Omovwigho",
         authorTitle: "CEO, Eleastar",
         imageUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
@@ -1408,7 +2108,309 @@ export const initialSpecificITServicesContent: CMSSection[] = [
         description: 'Contact us today to learn how Eleastar Technologies Ltd. can support your business with our innovative and comprehensive service offerings.',
         ctaLabel: 'Reach Out To Us Today',
         ctaLink: '/contact'
+    },
+
+    // --- Privacy Policy ---
+    {
+        id: 'pp-hero',
+        type: 'AboutHero',
+        page: 'PrivacyPolicy',
+        isVisible: true,
+        order: 1,
+        status: 'Published',
+        lastUpdated: new Date().toISOString(),
+        title: 'Privacy Policy',
+        subtitle: '',
+        description: 'We value your privacy. Read our policy to understand how we handle your data.',
+        imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1920&q=80',
+        altText: 'Privacy Policy Banner'
+    },
+    {
+        id: 'pp-content',
+        type: 'About', // Using About as generic content block
+        page: 'PrivacyPolicy',
+        isVisible: true,
+        order: 2,
+        status: 'Published',
+        lastUpdated: new Date().toISOString(),
+        title: 'Data Collection',
+        text: 'We collect information that you provide directly to us...',
+        imageUrl: '', // Optional
+        ctaLabel: '',
+        ctaLink: ''
+    },
+
+    // --- Terms of Service ---
+    {
+        id: 'tos-hero',
+        type: 'AboutHero',
+        page: 'TermsOfService',
+        isVisible: true,
+        order: 1,
+        status: 'Published',
+        lastUpdated: new Date().toISOString(),
+        title: 'Terms of Service',
+        subtitle: '',
+        description: 'Please read these terms carefully before using our services.',
+        imageUrl: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1920&q=80',
+        altText: 'Terms of Service Banner'
+    },
+    {
+        id: 'tos-content',
+        type: 'About',
+        page: 'TermsOfService',
+        isVisible: true,
+        order: 2,
+        status: 'Published',
+        lastUpdated: new Date().toISOString(),
+        title: 'Agreement to Terms',
+        text: 'By accessing our website, you agree to be bound by these terms...',
+        imageUrl: '',
+        ctaLabel: '',
+        ctaLink: ''
     }
 ];
 
+export const initialCareersContent: CMSSection[] = [
+    {
+        id: 'careers-hero',
+        type: 'CareersHero',
+        page: 'Careers',
+        isVisible: true,
+        order: 1,
+        status: 'Published',
+        lastUpdated: new Date().toISOString(),
+        title: 'Careers at Eleastar',
+        body: 'Join our world-class team building enterprise ERPs, AI solutions, and digital infrastructure for the continent.',
+        imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80'
+    }
+];
+
+export const initialPages: Record<string, CMSPage> = {
+    'Home': {
+        id: 'Home',
+        tenantId: 'tenant-default',
+        slug: '/',
+        name: 'Home Page',
+        status: 'Published',
+        seo: {
+            title: initialPageMetadata['Home'].metaTitle,
+            description: initialPageMetadata['Home'].metaDescription,
+            ogTitle: initialPageMetadata['Home'].ogTitle,
+            ogDescription: initialPageMetadata['Home'].ogDescription,
+            ogImage: initialPageMetadata['Home'].ogImage,
+            noIndex: initialPageMetadata['Home'].noIndex
+        },
+        sections: initialCMSContent,
+        lastUpdated: new Date().toISOString()
+    },
+    'About': {
+        id: 'About',
+        tenantId: 'tenant-default',
+        slug: '/about',
+        name: 'About Us',
+        status: 'Published',
+        seo: {
+            title: initialPageMetadata['About'].metaTitle,
+            description: initialPageMetadata['About'].metaDescription,
+            ogTitle: initialPageMetadata['About'].ogTitle,
+            ogDescription: initialPageMetadata['About'].ogDescription,
+            ogImage: initialPageMetadata['About'].ogImage,
+            noIndex: initialPageMetadata['About'].noIndex
+        },
+        sections: initialAboutContent,
+        lastUpdated: new Date().toISOString()
+    },
+    'Services': {
+        id: 'Services',
+        tenantId: 'tenant-default',
+        slug: '/services',
+        name: 'Services Overview',
+        status: 'Published',
+        seo: {
+            title: initialPageMetadata['Services'].metaTitle,
+            description: initialPageMetadata['Services'].metaDescription,
+            ogTitle: initialPageMetadata['Services'].ogTitle,
+            ogDescription: initialPageMetadata['Services'].ogDescription,
+            ogImage: initialPageMetadata['Services'].ogImage,
+            noIndex: initialPageMetadata['Services'].noIndex
+        },
+        sections: initialServicesContent,
+        lastUpdated: new Date().toISOString()
+    },
+    'Contact': {
+        id: 'Contact',
+        tenantId: 'tenant-default',
+        slug: '/contact',
+        name: 'Contact Us',
+        status: 'Published',
+        seo: {
+            title: initialPageMetadata['Contact'].metaTitle,
+            description: initialPageMetadata['Contact'].metaDescription,
+            ogTitle: initialPageMetadata['Contact'].ogTitle,
+            ogDescription: initialPageMetadata['Contact'].ogDescription,
+            ogImage: initialPageMetadata['Contact'].ogImage,
+            noIndex: initialPageMetadata['Contact'].noIndex
+        },
+        sections: [],
+        lastUpdated: new Date().toISOString()
+    },
+    'PrivacyPolicy': {
+        id: 'PrivacyPolicy',
+        tenantId: 'tenant-default',
+        slug: '/privacy-policy',
+        name: 'Privacy Policy',
+        status: 'Published',
+        seo: {
+            title: initialPageMetadata['PrivacyPolicy'].metaTitle,
+            description: initialPageMetadata['PrivacyPolicy'].metaDescription,
+            ogTitle: initialPageMetadata['PrivacyPolicy'].ogTitle,
+            ogDescription: initialPageMetadata['PrivacyPolicy'].ogDescription,
+            ogImage: initialPageMetadata['PrivacyPolicy'].ogImage,
+            noIndex: initialPageMetadata['PrivacyPolicy'].noIndex
+        },
+        sections: initialSpecificITServicesContent.filter(s => s.page === 'PrivacyPolicy'),
+        lastUpdated: new Date().toISOString()
+    },
+    'TermsOfService': {
+        id: 'TermsOfService',
+        tenantId: 'tenant-default',
+        slug: '/terms-of-service',
+        name: 'Terms of Service',
+        status: 'Published',
+        seo: {
+            title: initialPageMetadata['TermsOfService'].metaTitle,
+            description: initialPageMetadata['TermsOfService'].metaDescription,
+            ogTitle: initialPageMetadata['TermsOfService'].ogTitle,
+            ogDescription: initialPageMetadata['TermsOfService'].ogDescription,
+            ogImage: initialPageMetadata['TermsOfService'].ogImage,
+            noIndex: initialPageMetadata['TermsOfService'].noIndex
+        },
+        sections: initialSpecificITServicesContent.filter(s => s.page === 'TermsOfService'),
+        lastUpdated: new Date().toISOString()
+    },
+    'SpecificITServices': {
+        id: 'SpecificITServices',
+        tenantId: 'tenant-default',
+        slug: '/services/specific-it-services',
+        name: 'Specific IT Services',
+        status: 'Published',
+        seo: {
+            // Assuming default or missing metadata for this specific page if not in initialPageMetadata
+            // But usually it should be there.
+            // If not, use defaults.
+            title: 'Specific IT Services | Eleastar',
+            description: 'Specific IT Services including Ecommerce and Digital Marketing.',
+            ogTitle: 'Specific IT Services | Eleastar',
+            ogDescription: 'Specific IT Services including Ecommerce and Digital Marketing.',
+            ogImage: '',
+            noIndex: false
+        },
+        sections: initialSpecificITServicesContent.filter(s => s.page === 'SpecificITServices'),
+        lastUpdated: new Date().toISOString()
+    },
+    'Careers': {
+        id: 'Careers',
+        tenantId: 'tenant-default',
+        slug: '/careers',
+        name: 'Careers',
+        status: 'Published',
+        seo: {
+            title: 'Careers | Eleastar',
+            description: 'Join our team and build the future of tech.',
+            ogTitle: 'Careers | Eleastar',
+            ogDescription: 'Join our team and build the future of tech.',
+            ogImage: '',
+            noIndex: false
+        },
+        sections: initialCareersContent,
+        lastUpdated: new Date().toISOString()
+    }
+};
+
+
+
+// --- Finance & Ledger Data ---
+export const initialLedgerEntries: LedgerEntry[] = [
+    {
+        id: 'L-001',
+        payrollCycleId: 'JAN-2026',
+        tenantId: 'tenant-default',
+        employeeId: 'EMP-001',
+        currency: 'NGN',
+        employeeName: 'Sarah Jenkins',
+        type: 'Salary',
+        bankDetails: { bankName: 'Access Bank', accountNumber: '0012345678', accountName: 'Sarah Jenkins' },
+        amount: 450000,
+        status: 'Pending Funding',
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: 'L-002',
+        payrollCycleId: 'JAN-2026',
+        tenantId: 'tenant-default',
+        employeeId: 'EMP-002',
+        currency: 'NGN',
+        employeeName: 'Michael Chen',
+        type: 'Salary',
+        bankDetails: { bankName: 'GTBank', accountNumber: '0098765432', accountName: 'Michael Chen' },
+        amount: 550000,
+        status: 'Funded',
+        createdAt: new Date().toISOString()
+    }
+];
+
+// --- Salary Structures ---
+export const initialSalaryStructures: SalaryStructure[] = [
+    {
+        id: 'SS-001',
+        tenantId: 'tenant-default',
+        role: 'USER',
+        grade: 'Associate',
+        minSalary: 150000,
+        maxSalary: 300000,
+        currency: 'NGN'
+    },
+    {
+        id: 'SS-002',
+        tenantId: 'tenant-default',
+        role: 'USER',
+        grade: 'Senior Tech',
+        minSalary: 250000,
+        maxSalary: 450000,
+        currency: 'NGN'
+    },
+    {
+        id: 'SS-003',
+        tenantId: 'tenant-default',
+        role: 'SUPER_ADMIN',
+        grade: 'Executive',
+        minSalary: 800000,
+        maxSalary: 1500000,
+        currency: 'NGN'
+    }
+];
+
+// --- Promotion Requests ---
+export const initialPromotionRequests: PromotionRequest[] = [
+    {
+        id: 'PR-001',
+        tenantId: 'tenant-default',
+        employeeId: 'EMP-003', // Assuming exists
+        currentRole: 'USER',
+        newRole: 'USER',
+        currentSalary: 200000,
+        proposedSalary: 280000,
+        effectiveDate: '2026-03-01',
+        reason: 'Consistently high performance ratings and completed certifications.',
+        requestedBy: 'EMP-001',
+        requestedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        status: 'Pending',
+        eligibilitySnapshot: {
+            isEligible: true,
+            reasons: [],
+            scores: { performance: 4.5, tenureMonths: 14 }
+        }
+    }
+];
 

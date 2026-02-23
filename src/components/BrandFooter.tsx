@@ -58,6 +58,9 @@ export const BrandFooter: React.FC = () => {
                             {link.label}
                         </a>
                     ))}
+                    <a href="/login" className="hover:text-white transition-colors">
+                        Admin Login
+                    </a>
                     <div className="flex-grow text-right">
                         <span>Copyright © {new Date().getFullYear()}</span>
                         <span className="mx-2">•</span>

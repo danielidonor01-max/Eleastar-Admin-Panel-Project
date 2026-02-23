@@ -1,0 +1,49 @@
+/* Salary Modal Specific Styles */
+.current-salary-display {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: #f8fafc;
+    border-radius: 8px;
+}
+
+.label-text {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+}
+
+.salary-amount {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.change-summary {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid;
+}
+
+.change-summary.positive {
+    background-color: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.change-summary.negative {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.change-amount {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.change-summary.positive .change-amount {
+    color: #22c55e;
+}
+
+.change-summary.negative .change-amount {
+    color: #ef4444;
+}

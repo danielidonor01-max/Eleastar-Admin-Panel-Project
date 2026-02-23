@@ -1,12 +1,28 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import { Calendar, FileDown, CreditCard, TrendingUp, Clock, User, ArrowRight, Briefcase } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { generatePayslipPDF } from '../../utils/generatePayslip';
 import { generatePastCycles } from '../../utils/payrollUtils';
 
 export const UserDashboard: React.FC = () => {
     const { payrollStatus, employees, currentUserId, leaveRequests, performanceReviews } = useAdmin();
+    const location = useLocation();
+
+    // Deep Linking Scroll
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const section = params.get('section');
+        if (section === 'payroll') {
+            const element = document.getElementById('payroll-status-card');
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Optional: Highlight effect
+                element.classList.add('ring-2', 'ring-brand-500');
+                setTimeout(() => element.classList.remove('ring-2', 'ring-brand-500'), 2000);
+            }
+        }
+    }, [location.search]);
 
     const currentUser = employees.find(e => e.id === currentUserId);
     const myAdjustments = payrollStatus.adjustments.filter(a => a.empId === currentUserId);
@@ -139,7 +155,7 @@ export const UserDashboard: React.FC = () => {
                 </div>
 
                 {/* 2. Payroll Status */}
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div id="payroll-status-card" className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between transition-all duration-300">
                     <div>
                         <div className="flex items-center gap-2 mb-4">
                             <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Bell, Calendar, TrendingUp, Wallet, UserPlus, QrCode, FileText, CheckCheck, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
-import type { Notification, NotificationType } from '../context/AdminContext';
+import type { AdminNotification, NotificationType } from '../context/AdminContext';
 import { NotificationDetailsModal } from './NotificationDetailsModal';
 
 export const NotificationMenu: React.FC = () => {
@@ -17,7 +17,7 @@ export const NotificationMenu: React.FC = () => {
     const [showMenu, setShowMenu] = useState(false);
     const [activeFilter, setActiveFilter] = useState<'All' | 'Unread' | NotificationType>('All');
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+    const [selectedNotification, setSelectedNotification] = useState<AdminNotification | null>(null);
 
     const navigate = useNavigate();
 
@@ -51,7 +51,7 @@ export const NotificationMenu: React.FC = () => {
 
     // 3. Time Grouping Helper
     const groupedNotifications = useMemo(() => {
-        const groups: Record<string, Notification[]> = {
+        const groups: Record<string, AdminNotification[]> = {
             'Today': [],
             'Yesterday': [],
             'Earlier': []
@@ -75,7 +75,7 @@ export const NotificationMenu: React.FC = () => {
         return groups;
     }, [filteredNotifications]);
 
-    const handleItemClick = (n: Notification) => {
+    const handleItemClick = (n: AdminNotification) => {
         markNotificationAsRead(n.id);
         setSelectedNotification(n);
         // Do not close menu immediately, let user interact with modal which is outside the menu
@@ -171,7 +171,7 @@ export const NotificationMenu: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Notification List */}
+                        {/* AdminNotification List */}
                         <div className="max-h-[450px] overflow-y-auto bg-slate-50/50">
                             {filteredNotifications.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
@@ -251,7 +251,7 @@ export const NotificationMenu: React.FC = () => {
                             <button
                                 onClick={() => {
                                     setShowMenu(false);
-                                    navigate(currentUserRole === 'User' ? '/user/notifications' : '/admin/notifications');
+                                    navigate(currentUserRole === 'USER' ? '/user/notifications' : '/admin/notifications');
                                 }}
                                 className="text-xs font-bold text-brand-600 hover:text-brand-700 transition-colors flex items-center justify-center gap-1 w-full py-1 hover:underline"
                             >

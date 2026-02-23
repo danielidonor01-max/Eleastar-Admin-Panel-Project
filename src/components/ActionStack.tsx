@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { MapPin, Phone, ChevronDown, Check } from 'lucide-react';
+import { useFeedback } from '../context/FeedbackContext';
 
 export const ActionStack: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [reported, setReported] = useState(false);
+    const { showInfo } = useFeedback();
 
     return (
         <div className="px-6 py-8 space-y-4 max-w-md mx-auto w-full">
@@ -30,7 +32,7 @@ export const ActionStack: React.FC = () => {
                             </div>
                         </a>
 
-                        <a href="#" className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors">
+                        <button onClick={() => showInfo({ title: 'Opening Maps', message: 'Redirecting to HQ location...' })} className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors">
                             <div className="w-10 h-10 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center">
                                 <MapPin size={20} />
                             </div>
@@ -38,7 +40,7 @@ export const ActionStack: React.FC = () => {
                                 <div className="font-semibold text-slate-900">Drop off at HQ</div>
                                 <div className="text-xs text-slate-500">VI, Lagos State</div>
                             </div>
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>

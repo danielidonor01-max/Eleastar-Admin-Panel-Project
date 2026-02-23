@@ -1,5 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
+import type { CareersHeroSection } from '../data/mockData';
 import { BookOpen, Briefcase, ChevronRight, GraduationCap, Globe, Users, TrendingUp } from 'lucide-react';
 import { BrandFooter } from '../components/BrandFooter';
 
@@ -15,9 +17,9 @@ export const CareersPage: React.FC = () => {
                     Eleastar
                 </div>
                 <div className="hidden md:flex gap-6 text-sm font-medium text-slate-600">
-                    <a href="#" className="hover:text-brand-600">Solutions</a>
-                    <a href="#" className="hover:text-brand-600">About</a>
-                    <a href="#" className="text-brand-600">Careers</a>
+                    <Link to="/services" className="hover:text-brand-600">Solutions</Link>
+                    <Link to="/about" className="hover:text-brand-600">About</Link>
+                    <Link to="/careers" className="text-brand-600">Careers</Link>
                 </div>
                 <button className="hidden md:block px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors">
                     Contact Us
@@ -219,7 +221,7 @@ export const CareersPage: React.FC = () => {
 
 const CMSCareersHero: React.FC = () => {
     const { cmsContent } = useAdmin();
-    const heroContent = cmsContent.find(c => c.id === 'careers-hero') as any;
+    const heroContent = cmsContent.find(c => c.id === 'careers-hero') as CareersHeroSection | undefined;
 
     if (!heroContent) return (
         <header className="px-6 py-16 md:py-24 max-w-7xl mx-auto text-center md:text-left">

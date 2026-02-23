@@ -1,6 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './App.css'
+import { FeedbackProvider } from './context/FeedbackContext';
 
 // Dynamic import to catch load-time errors
 async function bootstrap() {
@@ -16,7 +18,9 @@ async function bootstrap() {
 
     root.render(
       <StrictMode>
-        <App />
+        <FeedbackProvider>
+          <App />
+        </FeedbackProvider>
       </StrictMode>
     );
 

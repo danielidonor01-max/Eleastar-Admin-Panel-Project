@@ -1,12 +1,13 @@
 import React, { useMemo } from 'react';
 import { X, ExternalLink, Calendar, TrendingUp, Wallet, UserPlus, FileText, QrCode, Bell, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import type { Notification, NotificationType } from '../context/AdminContext';
+import type { AdminNotification, NotificationType } from '../services/notificationTypes';
+import { useAdmin } from '../context/AdminContext';
 
 interface NotificationDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    notification: Notification | null;
+    notification: AdminNotification | null;
 }
 
 export const NotificationDetailsModal: React.FC<NotificationDetailsModalProps> = ({ isOpen, onClose, notification }) => {
@@ -28,6 +29,8 @@ export const NotificationDetailsModal: React.FC<NotificationDetailsModalProps> =
         }
     };
 
+    const { currentUserRole } = useAdmin();
+
     // Routing Logic
     const actionConfig = useMemo(() => {
         // Default to safe values
@@ -41,11 +44,15 @@ export const NotificationDetailsModal: React.FC<NotificationDetailsModalProps> =
             case 'HR':
                 if (notification.title.includes("Onboarding")) {
                     // Keep general link unless detailed ID provided in future
-                    if (!path || path === '#') path = '/admin/employees';
+                    if (!path || path === '#') {
+                        path = currentUserRole === 'USER' ? '/user/dashboard' : '/admin/employees';
+                    }
                 }
                 break;
             case 'System':
-                if (!path || path === '#') path = '/admin/dashboard';
+                if (!path || path === '#') {
+                    path = currentUserRole === 'USER' ? '/user/dashboard' : '/admin/dashboard';
+                }
                 break;
             default:
                 // Trust the link provided in the notification object
@@ -61,7 +68,7 @@ export const NotificationDetailsModal: React.FC<NotificationDetailsModalProps> =
         }
 
         return { label, path, disabled, warning };
-    }, [notification]);
+    }, [notification, currentUserRole]);
 
     const handlePrimaryAction = () => {
         if (actionConfig.disabled) return;

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Bell, Calendar, TrendingUp, Wallet, UserPlus, QrCode, FileText, CheckCheck, Search } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
-import type { Notification, NotificationType } from '../../context/AdminContext';
+import type { AdminNotification, NotificationType } from '../../context/AdminContext';
 import { NotificationDetailsModal } from '../../components/NotificationDetailsModal';
 
 export const NotificationsPage: React.FC = () => {
@@ -15,7 +15,7 @@ export const NotificationsPage: React.FC = () => {
 
     const [activeFilter, setActiveFilter] = useState<'All' | 'Unread' | NotificationType>('All');
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+    const [selectedNotification, setSelectedNotification] = useState<AdminNotification | null>(null);
 
     // 1. Base Filter (User/Role Target)
     const myNotifications = useMemo(() => {
@@ -47,7 +47,7 @@ export const NotificationsPage: React.FC = () => {
 
     // 3. Time Grouping Helper
     const groupedNotifications = useMemo(() => {
-        const groups: Record<string, Notification[]> = {
+        const groups: Record<string, AdminNotification[]> = {
             'Today': [],
             'Yesterday': [],
             'Earlier': []
@@ -71,7 +71,7 @@ export const NotificationsPage: React.FC = () => {
         return groups;
     }, [filteredNotifications]);
 
-    const handleItemClick = (n: Notification) => {
+    const handleItemClick = (n: AdminNotification) => {
         markNotificationAsRead(n.id);
         setSelectedNotification(n);
     };

@@ -3,11 +3,13 @@ import { Search, MoreVertical, Plus, Download, UserPlus, FileText, Trash2, QrCod
 import { useAdmin } from '../../context/AdminContext';
 import type { Employee } from '../../data/mockData';
 import { EmployeeProfileModal } from '../../components/EmployeeProfileModal';
+import { ContractManagementModal } from '../../components/ContractManagementModal';
 
 export const Employees: React.FC = () => {
-    const { employees, addEmployee, updateEmployee, toggleQRStatus, logAction, requestAuth } = useAdmin();
+    const { employees, addEmployee, updateEmployee, toggleQRStatus, updateEmployeeContract, uploadContractDocument, logAction, requestAuth } = useAdmin();
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+    const [contractEmployee, setContractEmployee] = useState<Employee | null>(null);
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -21,7 +23,7 @@ export const Employees: React.FC = () => {
         e.preventDefault();
         if (!newEmp.name || !newEmp.email) return;
 
-        const emp: Employee = {
+        const emp: Omit<Employee, 'tenantId'> = {
             id: `EMP-${Math.floor(Math.random() * 1000)}`,
             name: newEmp.name!,
             title: newEmp.title || 'Staff',
@@ -33,7 +35,7 @@ export const Employees: React.FC = () => {
             verifiedAt: new Date().toISOString(),
             joinedAt: new Date().toISOString(),
             salary: newEmp.salary || 100000,
-            systemRole: 'User',
+            systemRole: 'USER',
             accessGranted: newEmp.status === 'active'
         };
         addEmployee(emp);
@@ -55,10 +57,15 @@ export const Employees: React.FC = () => {
             });
         } else if (action === 'view_profile') {
             setSelectedEmployee(emp);
+        } else if (action === 'manage_contract') {
+            setContractEmployee(emp);
         } else if (action === 'terminate') {
             requestAuth('SENSITIVE', `PERMANENTLY TERMINATE ${emp.name}`, () => {
-                updateEmployee(emp.id, { status: 'terminated', accessGranted: false });
-                logAction('Employee Termination', `Terminated ${emp.name} (ID: ${emp.id})`);
+                requestAuth('SENSITIVE', `PERMANENTLY TERMINATE ${emp.name}`, () => {
+                    updateEmployee(emp.id, { status: 'exited', accessGranted: false });
+                    logAction('Employee Termination', `Terminated ${emp.name} (${emp.id})`);
+                });
+                logAction('Employee Termination', `Terminated ${emp.name} (${emp.id})`);
             });
         }
     };
@@ -152,7 +159,7 @@ export const Employees: React.FC = () => {
                             <tr>
                                 <th className="px-6 py-4 border-b border-slate-200">Employee</th>
                                 <th className="px-6 py-4 border-b border-slate-200">ID</th>
-                                <th className="px-6 py-4 border-b border-slate-200">Role & Dept</th>
+                                <th className="px-6 py-4 border-b border-slate-200">Job Title & Dept</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Type</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Status</th>
                                 <th className="px-6 py-4 border-b border-slate-200 text-right">Actions</th>
@@ -180,8 +187,9 @@ export const Employees: React.FC = () => {
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${emp.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
                                             emp.status === 'suspended' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                                                emp.status === 'terminated' ? 'bg-slate-100 text-slate-500 border-slate-200' :
-                                                    'bg-red-50 text-red-700 border-red-100' // inactive
+                                                emp.status === 'exited' ? 'bg-red-50 text-red-700 border-red-100' :
+                                                    emp.status === 'probation' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                        'bg-slate-100 text-slate-600 border-slate-200' // onboarding
                                             }`}>
                                             {emp.status}
                                         </span>
@@ -216,7 +224,12 @@ export const Employees: React.FC = () => {
                                                         View Profile
                                                     </button>
 
-                                                    {emp.status !== 'terminated' && (
+                                                    <button onClick={() => handleAction('manage_contract', emp)} className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2">
+                                                        <FileText size={14} />
+                                                        Manage Contract
+                                                    </button>
+
+                                                    {emp.status !== 'exited' && (
                                                         <>
                                                             <div className="border-t border-slate-100 my-1"></div>
                                                             <button onClick={() => handleAction('terminate', emp)} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
@@ -247,7 +260,7 @@ export const Employees: React.FC = () => {
                             <h2 className="text-xl font-bold text-slate-900">Onboard New Employee</h2>
                         </div>
 
-                        <form onSubmit={handleAddSubmit} className="space-y-4">
+                        <form onSubmit={handleAddSubmit} className="space-y-6">
                             <div>
                                 <label htmlFor="emp-name" className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
                                 <input
@@ -331,19 +344,21 @@ export const Employees: React.FC = () => {
                                     <select
                                         id="emp-status"
                                         className="w-full p-2 border border-slate-200 rounded-lg"
-                                        value={newEmp.status || 'active'}
+                                        value={newEmp.status || 'onboarding'}
                                         onChange={e => setNewEmp({ ...newEmp, status: e.target.value as any })}
                                     >
+                                        <option value="onboarding">Onboarding</option>
+                                        <option value="probation">Probation</option>
                                         <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
                                         <option value="suspended">Suspended</option>
+                                        <option value="exited">Exited</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div className="pt-4 flex justify-end gap-3 border-t border-slate-100 mt-6">
-                                <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-                                <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-bold">Create Profile & QR</button>
+                                <button type="button" onClick={() => setShowAddModal(false)} className="btn-secondary">Cancel</button>
+                                <button type="submit" className="btn-primary">Create Profile & QR</button>
                             </div>
                         </form>
                     </div>
@@ -355,6 +370,21 @@ export const Employees: React.FC = () => {
                 <EmployeeProfileModal
                     employee={selectedEmployee}
                     onClose={() => setSelectedEmployee(null)}
+                />
+            )}
+
+            {/* Contract Management Modal */}
+            {contractEmployee && (
+                <ContractManagementModal
+                    employee={contractEmployee}
+                    onClose={() => setContractEmployee(null)}
+                    onSaveContract={(contractInfo) => {
+                        updateEmployeeContract(contractEmployee.id, contractInfo);
+                        setContractEmployee(null);
+                    }}
+                    onUploadDocument={(document) => {
+                        uploadContractDocument(contractEmployee.id, document);
+                    }}
                 />
             )}
         </div>
