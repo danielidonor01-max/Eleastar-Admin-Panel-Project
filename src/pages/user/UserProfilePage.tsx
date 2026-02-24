@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { Save, Linkedin, Facebook, Instagram, Phone, Mail, Camera, ShieldCheck } from 'lucide-react';
 
@@ -23,6 +23,7 @@ export const UserProfilePage: React.FC = () => {
 
     const [isEditing, setIsEditing] = useState(false);
     const [message, setMessage] = useState('');
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const currentUser = employees.find(e => e.id === currentUserId);
 
@@ -55,7 +56,18 @@ export const UserProfilePage: React.FC = () => {
         setIsEditing(false);
     };
 
-
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64String = reader.result as string;
+                setFormData(prev => ({ ...prev, photoUrl: base64String }));
+                setIsEditing(true); // Automatically trigger save-mode so they don't accidentally leave without saving
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
 
     return (
@@ -85,12 +97,19 @@ export const UserProfilePage: React.FC = () => {
                                         className="w-24 h-24 rounded-full border-4 border-white object-cover bg-slate-200"
                                     />
                                     <button
-                                        onClick={() => setIsEditing(true)}
+                                        onClick={() => fileInputRef.current?.click()}
                                         className="absolute bottom-0 right-0 p-1.5 bg-brand-600 text-white rounded-full hover:bg-brand-700 transition-colors shadow-sm"
                                         title="Change Photo"
                                     >
                                         <Camera size={14} />
                                     </button>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleImageUpload}
+                                        accept="image/*"
+                                        className="hidden"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -189,19 +208,7 @@ export const UserProfilePage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {isEditing && (
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Profile Photo URL</label>
-                                    <input
-                                        type="text"
-                                        value={formData.photoUrl}
-                                        onChange={(e) => setFormData({ ...formData, photoUrl: e.target.value })}
-                                        className="w-full px-4 py-2.5 border border-brand-300 rounded-lg focus:ring-2 focus:ring-brand-200 text-sm"
-                                        placeholder="https://..."
-                                    />
-                                    <p className="text-xs text-slate-500 mt-1">Enter a direct image URL.</p>
-                                </div>
-                            )}
+                            {/* Removed text-based photoUrl input block */}
 
                             {/* Social Links */}
                             <div className="border-t border-slate-100 pt-6">

@@ -1,5 +1,5 @@
 import { type ApiResponse, mockSuccess, delay } from './api';
-import type { GlobalContent } from '../data/mockData';
+import { initialGlobalContent, type GlobalContent } from '../data/mockData';
 
 /**
  * Service for Global Application Settings
@@ -11,7 +11,7 @@ export const settingsService = {
     getGlobalSettings: async (): Promise<ApiResponse<GlobalContent>> => {
         await delay();
         // In reality: return api.get('/settings/global');
-        return mockSuccess({} as GlobalContent); // Empty mock for now
+        return mockSuccess(initialGlobalContent);
     },
 
     /**

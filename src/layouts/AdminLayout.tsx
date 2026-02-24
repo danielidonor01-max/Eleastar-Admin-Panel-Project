@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Globe, ChevronDown, ChevronRight, LogOut, Calendar, Share2, BarChart2, QrCode, Wallet, FileText, Search, Check, Shield, TrendingUp, Gift, Activity } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Globe, ChevronDown, ChevronRight, LogOut, Calendar, Share2, BarChart2, QrCode, Wallet, FileText, Check, Shield, TrendingUp, Gift, Activity } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { NotificationMenu } from '../components/NotificationMenu';
+import { GlobalSearchMenu } from '../components/GlobalSearchMenu';
 import { useFeedback } from '../context/FeedbackContext';
 import type { AdminRole } from '../data/mockData';
 import type { ModuleType } from '../context/AdminContext';
@@ -82,7 +83,7 @@ export const AdminLayout: React.FC = () => {
                     </div>
                 </div>
 
-                <nav className="flex-grow p-4 space-y-1 overflow-y-auto">
+                <nav className="flex-grow p-4 space-y-1 overflow-y-auto custom-scrollbar">
                     {hasAccess('Dashboard') && (
                         <>
                             <div className="text-xs font-bold text-slate-500 uppercase px-3 mb-2 mt-2">Core</div>
@@ -356,14 +357,13 @@ export const AdminLayout: React.FC = () => {
                             )}
                         </>
                     )}
+                    <div className="pt-4 mt-2 mb-2 border-t border-slate-800">
+                        <NavLink to="/" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-slate-400">
+                            <LogOut size={20} />
+                            Exit to Public Site
+                        </NavLink>
+                    </div>
                 </nav>
-
-                <div className="p-4 border-t border-slate-800">
-                    <NavLink to="/" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-slate-400">
-                        <LogOut size={20} />
-                        Exit to Public Site
-                    </NavLink>
-                </div>
             </aside>
 
             {/* Main Content */}
@@ -372,14 +372,7 @@ export const AdminLayout: React.FC = () => {
                 <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 flex-shrink-0 z-20 relative">
                     {/* View As Info */}
                     <div className="flex items-center gap-4">
-                        <div className="w-96 relative hidden md:block">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                            <input
-                                type="text"
-                                placeholder="Search employees, payroll, or pages... (Cmd+K)"
-                                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
-                            />
-                        </div>
+                        <GlobalSearchMenu />
                         {currentUserRole !== 'SUPER_ADMIN' && (
                             <div className="px-3 py-1 bg-amber-50 border border-amber-200 rounded-md text-amber-700 text-xs font-medium animate-pulse">
                                 View Mode: {currentUserRole}
@@ -459,7 +452,7 @@ export const AdminLayout: React.FC = () => {
                 </header>
 
                 {/* Page Content */}
-                <main className="flex-1 overflow-y-auto bg-slate-50 p-8">
+                <main className="flex-1 overflow-y-auto bg-slate-50 p-8 custom-scrollbar">
                     <div className="max-w-7xl mx-auto">
                         <Outlet />
                     </div>

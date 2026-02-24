@@ -86,7 +86,7 @@ export const SettingsPage: React.FC = () => {
     };
 
     // Tab State
-    const [activeTab, setActiveTab] = useState<'roles' | 'users'>('roles');
+    const [activeTab, setActiveTab] = useState<'roles' | 'users' | 'assets'>('roles');
 
     // System USER State & Handlers
     const [showAddModal, setShowAddModal] = useState(false);
@@ -141,7 +141,7 @@ export const SettingsPage: React.FC = () => {
         setNewUSER({ name: '', email: '', role: 'USER', department: 'General' });
     };
 
-    const modules: ModuleType[] = ['Employees', 'QR & ID', 'Payroll', 'Recruitment', 'Website CMS', 'Settings'];
+    const modules: ModuleType[] = ['Employees', 'QR & ID', 'Payroll', 'Recruitment', 'Compliance', 'Website CMS', 'Settings'];
     // Filtered Roles as requested
     const rolesList: AdminRole[] = ['SUPER_ADMIN', 'COO', 'HR_ADMIN', 'FINANCE_ADMIN', 'PAYROLL_ADMIN', 'CHIEF_RISK_OFFICER', 'USER'];
 
@@ -173,9 +173,18 @@ export const SettingsPage: React.FC = () => {
                         >
                             System Users
                         </button>
+                        <button
+                            onClick={() => setActiveTab('assets')}
+                            className={`pb-3 px-1 text-sm font-medium transition-colors relative ${activeTab === 'assets'
+                                ? 'text-brand-600 border-b-2 border-brand-600'
+                                : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                        >
+                            System Assets
+                        </button>
                     </div>
 
-                    {activeTab === 'roles' ? (
+                    {activeTab === 'roles' && (
                         <div className="space-y-8">
                             {/* Role Access Matrix */}
                             <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -195,7 +204,7 @@ export const SettingsPage: React.FC = () => {
                                         <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
                                             <tr>
                                                 <th className="px-4 py-3">System Role</th>
-                                                {modules.map(m => <th key={m} className="px-2 py-3 text-center">{m.replace('Website ', '')}</th>)}
+                                                {modules.map(m => <th key={m} className="px-2 py-3 text-center">{m.replace('Website ', '').replace('Compliance', 'Risk & Compliance')}</th>)}
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
@@ -227,7 +236,11 @@ export const SettingsPage: React.FC = () => {
                                     </table>
                                 </div>
                             </section>
+                        </div>
+                    )}
 
+                    {activeTab === 'assets' && (
+                        <div className="space-y-8">
                             {/* CEO Signature Asset */}
                             <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                                 <div className="p-6 border-b border-slate-100">
@@ -273,7 +286,9 @@ export const SettingsPage: React.FC = () => {
                                 </div>
                             </section>
                         </div>
-                    ) : (
+                    )}
+
+                    {activeTab === 'users' && (
                         <div className="space-y-8">
                             {/* System Users List */}
                             <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">

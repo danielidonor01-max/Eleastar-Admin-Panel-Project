@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { useFeedback } from '../../context/FeedbackContext';
-import { User, Lock, Bell, LogOut } from 'lucide-react';
+import { User, Lock, Bell, LogOut, Camera } from 'lucide-react';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -21,8 +21,28 @@ export const ProfilePage: React.FC = () => {
         phone: '+234 800 000 0000',
         currentPassword: '',
         newPassword: '',
-        confirmPassword: ''
+        newPassword: '',
+        confirmPassword: '',
+        photoUrl: ''
     });
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // If there is an active global mock user we can populate this form
+    const { employees, currentUserId, updateUserProfile } = useAdmin();
+    const currentUser = employees.find(e => e.id === currentUserId);
+
+    useEffect(() => {
+        if (currentUser) {
+            setFormData(prev => ({
+                ...prev,
+                name: currentUser.name,
+                email: currentUser.email,
+                phone: currentUser.phoneNumber || prev.phone,
+                photoUrl: currentUser.photoUrl || ''
+            }));
+        }
+    }, [currentUser]);
 
     const [notifPrefs, setNotifPrefs] = useState({
         system: true,
@@ -33,8 +53,28 @@ export const ProfilePage: React.FC = () => {
     });
 
     const handleSave = () => {
+        if (currentUser) {
+            updateUserProfile({
+                name: formData.name,
+                email: formData.email,
+                phoneNumber: formData.phone,
+                photoUrl: formData.photoUrl
+            });
+        }
         logAction('UPDATE', 'System', 'Updated personal profile settings', 'SUCCESS');
         showSuccess({ title: 'Profile Updated', message: 'Profile details updated successfully.' });
+    };
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64String = reader.result as string;
+                setFormData(prev => ({ ...prev, photoUrl: base64String }));
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     const handlePasswordChange = (e: React.FormEvent) => {
@@ -52,10 +92,30 @@ export const ProfilePage: React.FC = () => {
                 {/* Sidebar */}
                 <div className="w-full md:w-64 bg-slate-50 border-r border-slate-200 p-4">
                     <div className="flex flex-col items-center mb-8 pt-4">
-                        <div className="w-20 h-20 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold text-2xl border-4 border-white shadow-sm mb-3">
-                            AU
+                        <div className="relative group mb-3">
+                            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-sm bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-2xl relative">
+                                {formData.photoUrl ? (
+                                    <img src={formData.photoUrl} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    <span>{formData.name.substring(0, 2).toUpperCase()}</span>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="absolute bottom-0 right-0 p-1.5 bg-brand-600 text-white rounded-full hover:bg-brand-700 transition-colors shadow-sm"
+                                title="Change Photo"
+                            >
+                                <Camera size={14} />
+                            </button>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleImageUpload}
+                                accept="image/*"
+                                className="hidden"
+                            />
                         </div>
-                        <h2 className="font-bold text-slate-900">Admin User</h2>
+                        <h2 className="font-bold text-slate-900">{formData.name}</h2>
                         <span className="text-xs px-2 py-1 bg-slate-200 text-slate-700 rounded-full mt-1 font-medium">{currentUserRole}</span>
                     </div>
 

@@ -1,52 +1,188 @@
 import { type ApiResponse, mockSuccess, delay } from './api';
-import type { CMSSection, ServiceItem, FooterSection, FooterContent, ServiceCollection } from '../data/mockData';
+import { CMS_API_BASE_URL, CMS_PUBLIC_API_KEY } from '../config';
+import {
+    type CMSSection,
+    type ServiceItem,
+    type FooterSection,
+    type FooterContent,
+    type ServiceCollection,
+    initialCMSContent,
+    initialAboutContent,
+    initialServicesContent,
+    initialIndustrialSolutionsContent,
+    initialInformationTechnologyContent,
+    initialResearchAndDevelopmentContent,
+    initialElectronicsManufacturingContent,
+    initialSpecificITServicesContent,
+    initialServicesCollection
+} from '../data/mockData';
+
+// Helper for fetching tokens securely. Assuming the app stores 'token' in localStorage
+const getAuthToken = () => localStorage.getItem('token') || '';
 
 /**
  * Service for Website Content Management (CMS)
  */
 export const cmsService = {
     /**
-     * Fetches all CMS sections
+     * Gets public slugs - no auth, relies on API Key
+     */
+    getPublicCMSSlugs: async (): Promise<ApiResponse<{ name: string; slug: string }[]>> => {
+        try {
+            const response = await fetch(`${CMS_API_BASE_URL}/cms/get-slugs`, {
+                headers: {
+                    'X-CMS-API-Key': CMS_PUBLIC_API_KEY,
+                    'Accept': 'application/json',
+                }
+            });
+            const data = await response.json();
+            return {
+                data: data.data || [],
+                success: true,
+                message: data.message
+            };
+        } catch (error: any) {
+            return { data: [] as any, success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Gets sections for a specific public page
+     */
+    getPublicPageSections: async (slug: string): Promise<ApiResponse<any>> => {
+        try {
+            const response = await fetch(`${CMS_API_BASE_URL}/cms/pages/${slug}`, {
+                headers: {
+                    'X-CMS-API-Key': CMS_PUBLIC_API_KEY,
+                    'Accept': 'application/json',
+                }
+            });
+            const data = await response.json();
+            return {
+                data: data.data || null,
+                success: true,
+                message: data.message
+            };
+        } catch (error: any) {
+            return { data: null as any, success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Fetches all CMS pages (Admin)
+     */
+    getCMSPages: async (): Promise<ApiResponse<any[]>> => {
+        try {
+            const token = getAuthToken();
+            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/pages`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                }
+            });
+            const data = await response.json();
+            return {
+                data: data.data || [],
+                success: true,
+                message: data.message
+            };
+        } catch (error: any) {
+            return { data: [] as any, success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Updates CMS content block (Admin)
+     */
+    updateCMSSection: async (sectionId: string | number, updates: any): Promise<ApiResponse<any>> => {
+        try {
+            const token = getAuthToken();
+            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/sections/${sectionId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(updates)
+            });
+            const data = await response.json();
+            if (!data.status) throw new Error(data.message || 'Failed to update section');
+            return {
+                data: data.data,
+                success: true,
+                message: data.message || 'CMS content updated successfully'
+            };
+        } catch (error: any) {
+            return { data: null as any, success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Updates CMS Section status e.g., publish (Admin)
+     */
+    updateCMSSectionStatus: async (sectionId: string | number, status: 'published' | 'draft'): Promise<ApiResponse<any>> => {
+        try {
+            const token = getAuthToken();
+            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/sections/${sectionId}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ status })
+            });
+            const data = await response.json();
+            if (!data.status) throw new Error(data.message || 'Failed to update section status');
+            return {
+                data: data.data,
+                success: true,
+                message: data.message || 'Section status updated'
+            };
+        } catch (error: any) {
+            return { data: null as any, success: false, error: error.message };
+        }
+    },
+
+
+    /**
+     * FALLBACK Methods - still using mockData temporarily depending on the context consumption.
+     * Over time, these will be replaced by the Live endpoints above when fully integrated
      */
     getCMSContent: async (): Promise<ApiResponse<CMSSection[]>> => {
         await delay();
-        // In reality: return api.get('/cms/sections');
-        return mockSuccess([]);
+        // Fallback for parts of the app that still expect the flat array of mock sections. 
+        // AdminContext will now switch to getCMSPages()/getPublicPageSections() where possible.
+        return mockSuccess([
+            ...initialCMSContent,
+            ...initialAboutContent,
+            ...initialServicesContent,
+            ...initialIndustrialSolutionsContent,
+            ...initialInformationTechnologyContent,
+            ...initialResearchAndDevelopmentContent,
+            ...initialElectronicsManufacturingContent,
+            ...initialSpecificITServicesContent
+        ]);
     },
 
-    /**
-     * Updates CMS content block
-     */
     updateCMSContent: async (_id: string, _updates: Partial<CMSSection>): Promise<ApiResponse<void>> => {
         await delay();
-        // In reality: return api.patch(`/cms/sections/${id}`, updates);
         return mockSuccess(undefined, 'CMS content updated successfully');
     },
 
-    /**
-     * Publishes CMS content
-     */
     publishCMSContent: async (_id: string): Promise<ApiResponse<void>> => {
         await delay();
-        // In reality: return api.post(`/cms/sections/${id}/publish`);
         return mockSuccess(undefined, 'Content published live');
     },
 
-    /**
-     * Adds a new CMS section
-     */
     addCMSContent: async (_section: CMSSection): Promise<ApiResponse<void>> => {
         await delay();
-        // In reality: return api.post('/cms/sections', section);
         return mockSuccess(undefined, 'New CMS section added');
     },
 
-    /**
-     * Deletes a CMS section
-     */
     deleteCMSContent: async (_id: string): Promise<ApiResponse<void>> => {
         await delay();
-        // In reality: return api.delete(`/cms/sections/${id}`);
         return mockSuccess(undefined, 'CMS section deleted');
     },
 
@@ -55,7 +191,6 @@ export const cmsService = {
      */
     updateFooter: async (_section: keyof FooterContent, _data: Partial<FooterSection>): Promise<ApiResponse<void>> => {
         await delay();
-        // In reality: return api.patch(`/cms/footer/${section}`, data);
         return mockSuccess(undefined, 'Footer updated');
     },
 
@@ -64,7 +199,7 @@ export const cmsService = {
      */
     getServices: async (): Promise<ApiResponse<ServiceCollection>> => {
         await delay();
-        return mockSuccess([]);
+        return mockSuccess(initialServicesCollection);
     },
 
     addService: async (_service: ServiceItem): Promise<ApiResponse<void>> => {

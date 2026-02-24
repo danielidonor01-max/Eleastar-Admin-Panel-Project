@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { jobs as initialJobs, initialLeaveRequests, initialReviewCycles, initialPerformanceReviews, initialCMSContent, initialAboutContent, initialServicesContent, initialIndustrialSolutionsContent, initialInformationTechnologyContent, initialResearchAndDevelopmentContent, initialElectronicsManufacturingContent, initialSpecificITServicesContent, initialFooterContent, initialGlobalContent, initialServicesCollection, initialLedgerEntries, initialSalaryStructures, initialPromotionRequests, initialEligibilityRules } from '../data/mockData';
+import { jobs as initialJobs, initialLeaveRequests, initialReviewCycles, initialPerformanceReviews, initialFooterContent, initialGlobalContent, initialServicesCollection, initialLedgerEntries, initialSalaryStructures, initialPromotionRequests, initialEligibilityRules } from '../data/mockData';
 import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, CMSSection, FooterContent, FooterSection, GlobalContent, ServiceItem, ServiceCollection, BonusType, BonusRequest, LedgerEntry, SalaryStructure, PromotionRequest, PromotionEligibilityRule, PayrollCycle, AdminRole } from '../data/mockData';
 
 import * as reportService from '../services/reportService';
@@ -62,7 +62,7 @@ export interface AdminContextType {
     // Auth
     requestAuth: (level: 'CMS' | 'SENSITIVE', description: string, onConfirm: () => void) => void;
 
-    cmsContent: CMSSection[]; // New CMS data
+    cmsContent: any[]; // Changed from CMSSection[] to handle live nested data structure
     footerContent: FooterContent; // Global Footer Data
     globalContent: GlobalContent;
     servicesCollection: ServiceCollection; // or ServiceItem[]
@@ -254,7 +254,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [employees, setEmployees] = useState<Employee[]>([]); // Start empty, fetch on mount
     const [jobs, setJobs] = useState<Job[]>(initialJobs);
     const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(initialLeaveRequests);
-    const [cmsContent, setCmsContent] = useState<CMSSection[]>([...initialCMSContent, ...initialAboutContent, ...initialServicesContent, ...initialIndustrialSolutionsContent, ...initialInformationTechnologyContent, ...initialResearchAndDevelopmentContent, ...initialElectronicsManufacturingContent, ...initialSpecificITServicesContent]);
+    const [cmsContent, setCmsContent] = useState<any[]>([]);
     const [footerContent, setFooterContent] = useState<FooterContent>(initialFooterContent);
     const [globalContent, setGlobalContent] = useState<GlobalContent>(initialGlobalContent);
     const [servicesCollection, setServicesCollection] = useState<ServiceCollection>(initialServicesCollection);
@@ -344,8 +344,18 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     if (notifResponse.success) setNotifications(notifResponse.data);
                     if (leaveResponse.success) setLeaveRequests(leaveResponse.data);
                     if (cycleResponse.success) setReviewCycles(cycleResponse.data);
-                    if (cmsResponse.success) setCmsContent(cmsResponse.data);
                     if (settingsResponse.success) setGlobalContent(settingsResponse.data);
+
+                    // Fetch real CMS content layout
+                    const pagesResponse = await cmsService.getCMSPages();
+                    if (pagesResponse.success && pagesResponse.data) {
+                        // Store the whole page structure, or specifically extract sections depending on how CMSPage relies on them
+                        setCmsContent(pagesResponse.data);
+                    } else {
+                        // fallback
+                        if (cmsResponse.success) setCmsContent(cmsResponse.data);
+                    }
+
                     if (servicesResponse.success) setServicesCollection(servicesResponse.data);
                     if (ledgerResponse.success) setLedgerEntries(ledgerResponse.data);
                     if (salaryResponse.success) setSalaryStructures(salaryResponse.data);
@@ -896,16 +906,24 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     // CMS & Content Actions
-    const updatePMSContent = async (id: string, content: any) => {
+    const updatePMSContent = async (id: string | number, content: any) => {
         setIsLoading(true);
         try {
-            const response = await cmsService.updateCMSContent(id, content);
+            const response = await cmsService.updateCMSSection(id, content);
             if (response.success) {
-                setCmsContent(prev => prev.map(s => s.id === id ? { ...s, ...content, status: 'Draft', lastUpdated: new Date().toISOString() } : s));
+                // Update local structure mapping. In the response, our updated node should live in response.data
+                setCmsContent(prev => {
+                    return prev.map(page => {
+                        return {
+                            ...page,
+                            sections: page.sections?.map((s: any) => s.id === id ? { ...s, ...response.data } : s) || []
+                        };
+                    });
+                });
                 logAction('CMS Edit', `Updated content for section ${id}`);
-                showSuccess({ title: 'Draft Saved', message: 'Changes have been saved as draft.' });
+                showSuccess({ title: 'Section Saved', message: 'Changes have been saved successfully.' });
             } else {
-                showError({ title: 'Update Failed', message: response.error });
+                showError({ title: 'Update Failed', message: response.error || 'Failed to update section' });
             }
         } catch (err) {
             showError({ title: 'Update Error', message: 'Failed to save CMS changes.' });
@@ -914,12 +932,19 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     };
 
-    const publishPMSContent = async (id: string) => {
+    const publishPMSContent = async (id: string | number) => {
         setIsLoading(true);
         try {
-            const response = await cmsService.publishCMSContent(id);
+            const response = await cmsService.updateCMSSectionStatus(id, 'published');
             if (response.success) {
-                setCmsContent(prev => prev.map(s => s.id === id ? { ...s, status: 'Published', lastUpdated: new Date().toISOString() } : s));
+                setCmsContent(prev => {
+                    return prev.map(page => {
+                        return {
+                            ...page,
+                            sections: page.sections?.map((s: any) => s.id === id ? { ...s, status: 'published' } : s) || []
+                        };
+                    });
+                });
                 logAction('CMS Publish', `Published section ${id}`);
 
                 dispatchNotification(
@@ -928,7 +953,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 );
                 showSuccess({ title: 'Published', message: 'Content is now live on the website.' });
             } else {
-                showError({ title: 'Publish Failed', message: response.error });
+                showError({ title: 'Publish Failed', message: response.error || 'Failed to update status' });
             }
         } catch (err) {
             showError({ title: 'Publish Error', message: 'Failed to publish content.' });

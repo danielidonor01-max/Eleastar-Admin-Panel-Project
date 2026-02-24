@@ -143,7 +143,7 @@ export const PromotionsPage: React.FC = () => {
                     {canManageRules && (
                         <button
                             onClick={() => { setActiveTab('Rules'); setIsRuleModalOpen(true); }}
-                            className="flex items-center gap-2 px-4 py-2 border border-purple-200 text-purple-700 rounded-lg hover:bg-purple-50 transition"
+                            className="flex items-center gap-2 px-4 py-2 border border-brand-200 text-brand-700 rounded-lg hover:bg-brand-50 transition"
                         >
                             <Settings className="w-4 h-4" />
                             Manage Rules
@@ -152,7 +152,7 @@ export const PromotionsPage: React.FC = () => {
                     {canRequest && (
                         <button
                             onClick={() => setIsModalOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition shadow-lg shadow-purple-200"
+                            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition shadow-lg shadow-brand-200"
                         >
                             <Plus className="w-4 h-4" />
                             Propose Promotion
@@ -164,25 +164,25 @@ export const PromotionsPage: React.FC = () => {
             {/* Tabs */}
             <div className="flex gap-4 border-b mb-6">
                 <button
-                    className={`pb-3 px-1 font-medium text-sm ${activeTab === 'Pending' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-3 px-1 font-medium text-sm ${activeTab === 'Pending' ? 'text-brand-600 border-b-2 border-brand-600' : 'text-gray-500 hover:text-gray-700'}`}
                     onClick={() => setActiveTab('Pending')}
                 >
                     Pending Approvals
                     {promotionRequests.filter(r => r.status === 'Pending').length > 0 && (
-                        <span className="ml-2 bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full text-xs">
+                        <span className="ml-2 bg-brand-100 text-brand-600 px-2 py-0.5 rounded-full text-xs">
                             {promotionRequests.filter(r => r.status === 'Pending').length}
                         </span>
                     )}
                 </button>
                 <button
-                    className={`pb-3 px-1 font-medium text-sm ${activeTab === 'History' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-3 px-1 font-medium text-sm ${activeTab === 'History' ? 'text-brand-600 border-b-2 border-brand-600' : 'text-gray-500 hover:text-gray-700'}`}
                     onClick={() => setActiveTab('History')}
                 >
                     History
                 </button>
                 {canManageRules && (
                     <button
-                        className={`pb-3 px-1 font-medium text-sm ${activeTab === 'Rules' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`pb-3 px-1 font-medium text-sm ${activeTab === 'Rules' ? 'text-brand-600 border-b-2 border-brand-600' : 'text-gray-500 hover:text-gray-700'}`}
                         onClick={() => setActiveTab('Rules')}
                     >
                         Eligibility Rules
@@ -193,11 +193,11 @@ export const PromotionsPage: React.FC = () => {
             {/* Rules Content */}
             {activeTab === 'Rules' && canManageRules && (
                 <div className="space-y-4">
-                    <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex items-start gap-3">
-                        <ShieldAlert className="w-5 h-5 text-purple-600 mt-0.5" />
+                    <div className="bg-brand-50 border border-brand-100 rounded-xl p-4 flex items-start gap-3">
+                        <ShieldAlert className="w-5 h-5 text-brand-600 mt-0.5" />
                         <div>
-                            <h3 className="font-bold text-purple-900">Promotion Eligibility Rules</h3>
-                            <p className="text-sm text-purple-700">These rules are advisory. They generate warnings during the promotion request process but do not strictly block promotions, allowing for management discretion.</p>
+                            <h3 className="font-bold text-brand-900">Promotion Eligibility Rules</h3>
+                            <p className="text-sm text-brand-700">These rules are advisory. They generate warnings during the promotion request process but do not strictly block promotions, allowing for management discretion.</p>
                         </div>
                     </div>
 
@@ -236,7 +236,7 @@ export const PromotionsPage: React.FC = () => {
                         ))}
                         <button
                             onClick={() => { setRuleFormData({ name: '', targetRole: 'Global', minTimeInRoleMonths: 6, minPerformanceRating: 3.0, isActive: true }); setIsRuleModalOpen(true); }}
-                            className="border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50 transition cursor-pointer h-full min-h-[200px]"
+                            className="border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50 transition cursor-pointer h-full min-h-[200px]"
                         >
                             <Plus className="w-8 h-8 mb-2" />
                             <span className="font-medium">Add New Rule</span>
@@ -262,7 +262,7 @@ export const PromotionsPage: React.FC = () => {
                             {canRequest && activeTab === 'Pending' && (
                                 <button
                                     onClick={() => setIsModalOpen(true)}
-                                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition shadow-sm font-medium flex items-center gap-2"
+                                    className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition shadow-sm font-medium flex items-center gap-2"
                                 >
                                     <Plus className="w-4 h-4" />
                                     Nominate Employee
@@ -292,7 +292,7 @@ export const PromotionsPage: React.FC = () => {
                                             <div className="text-sm text-gray-500 flex items-center gap-1">
                                                 <span>{req.currentRole}</span>
                                                 <ArrowRight className="w-3 h-3" />
-                                                <span className="font-medium text-purple-600">{req.newRole}</span>
+                                                <span className="font-medium text-brand-600">{req.newRole}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -465,7 +465,7 @@ export const PromotionsPage: React.FC = () => {
 
                             <div className="flex justify-end gap-3 mt-6">
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-                                <button type="submit" className={`px-4 py-2 text-white rounded-lg transition ${eligibilityCheck?.isEligible ? 'bg-purple-600 hover:bg-purple-700' : 'bg-amber-600 hover:bg-amber-700'}`}>
+                                <button type="submit" className={`px-4 py-2 text-white rounded-lg transition ${eligibilityCheck?.isEligible ? 'bg-brand-600 hover:bg-brand-700' : 'bg-amber-600 hover:bg-amber-700'}`}>
                                     {eligibilityCheck?.isEligible ? 'Submit Request' : 'Submit as Exception'}
                                 </button>
                             </div>
@@ -559,7 +559,7 @@ export const PromotionsPage: React.FC = () => {
 
                             <div className="flex justify-end gap-3 mt-6">
                                 <button type="button" onClick={() => setIsRuleModalOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-                                <button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">Save Rule</button>
+                                <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700">Save Rule</button>
                             </div>
                         </form>
                     </div>

@@ -12,6 +12,8 @@ import { CMSPreviewPane } from '../../components/cms/CMSPreviewPane';
 import { CMSJsonPreview } from '../../components/cms/CMSJsonPreview';
 
 import { PUBLIC_LINK } from '../../config';
+
+
 import type {
     CMSSection,
     HeroSection,
@@ -23,391 +25,447 @@ import type {
 
 // --- Specific Editor Components ---
 
-const HeroEditor: React.FC<{ section: HeroSection; onChange: (u: Partial<HeroSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-6">
-        {section.cards.map((card, idx) => (
-            <div key={card.id || idx} className="p-4 border border-slate-200 rounded-lg bg-slate-50 relative">
-                <div className="absolute top-2 right-2 flex gap-2">
-                    <button
-                        onClick={() => {
-                            const newCards = section.cards.filter((_, i) => i !== idx);
-                            onChange({ cards: newCards });
-                        }}
-                        className="p-1 text-red-500 hover:bg-red-50 rounded"
-                        title="Remove Card"
-                    >
-                        <Trash2 size={16} />
-                    </button>
-                </div>
-                <h4 className="text-sm font-bold text-slate-500 mb-3 uppercase">Slide {idx + 1}</h4>
-                <div className="grid gap-4">
-                    <RichTextEditor
-                        label="Headline"
-                        value={card.headline}
-                        onChange={val => {
-                            const newCards = [...section.cards];
-                            newCards[idx] = { ...newCards[idx], headline: val };
-                            onChange({ cards: newCards });
-                        }}
-                        minHeight="60px"
-                        charLimit={60}
-                        seoRecommend="Aim for 50-60 chars for best impact."
-                    />
-                    <RichTextEditor
-                        label="Subheadline"
-                        value={card.subheadline}
-                        onChange={val => {
-                            const newCards = [...section.cards];
-                            newCards[idx] = { ...newCards[idx], subheadline: val };
-                            onChange({ cards: newCards });
-                        }}
-                        minHeight="80px"
-                        charLimit={120}
-                        seoRecommend="Keep under 120 chars."
-                    />
-                    <ImageUploader
-                        label="Slide Background"
-                        imageUrl={card.imageUrl}
-                        altText={card.altText}
-                        onImageChange={val => {
-                            const newCards = [...section.cards];
-                            newCards[idx] = { ...newCards[idx], imageUrl: val };
-                            onChange({ cards: newCards });
-                        }}
-                        onAltTextChange={val => {
-                            const newCards = [...section.cards];
-                            newCards[idx] = { ...newCards[idx], altText: val };
-                            onChange({ cards: newCards });
-                        }}
-                        recommendedSize="1920 x 1080px"
-                        maxSizeInMB={2}
-                    />
-                </div>
-            </div>
-        ))}
-        {section.cards.length < 5 && (
-            <button
-                onClick={() => {
-                    const newCard = {
-                        id: `card-${Date.now()}`,
-                        headline: 'New Slide Title',
-                        subheadline: 'New slide description goes here.',
-                        ctaLabel: 'Learn More',
-                        ctaLink: '/',
-                        imageUrl: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5'
-                    };
-                    onChange({ cards: [...section.cards, newCard] });
-                }}
-                className="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-brand-500 hover:text-brand-600 font-medium flex items-center justify-center gap-2"
-            >
-                <Plus size={16} /> Add Hero Slide
-            </button>
-        )}
-    </div>
-);
+const HeroEditor: React.FC<{ section: any; onChange: (u: any) => void }> = ({ section, onChange }) => {
+    const slides = section.content?.slides || [];
 
-const AboutEditor: React.FC<{ section: AboutSection; onChange: (u: Partial<AboutSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-6">
-        <RichTextEditor
-            label="Title"
-            value={section.title}
-            onChange={val => onChange({ title: val })}
-            minHeight="60px"
-            charLimit={60}
-            seoRecommend="Clear, concise titles perform better."
-        />
-        <RichTextEditor
-            label="Text"
-            value={section.text}
-            onChange={val => onChange({ text: val })}
-            minHeight="150px"
-            charLimit={400}
-        />
-        <ImageUploader
-            label="Section Image"
-            imageUrl={section.imageUrl}
-            altText={section.altText}
-            onImageChange={val => onChange({ imageUrl: val })}
-            onAltTextChange={val => onChange({ altText: val })}
-            recommendedSize="800 x 600px"
-            maxSizeInMB={1}
-        />
-    </div>
-);
-
-const ServicesEditor: React.FC<{ section: ServicesSection; onChange: (u: Partial<ServicesSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-            <RichTextEditor label="Title" value={section.title} onChange={val => onChange({ title: val })} minHeight="60px" />
-            <RichTextEditor label="Subtitle" value={section.subtitle} onChange={val => onChange({ subtitle: val })} minHeight="60px" />
-        </div>
-
-        <div className="space-y-4">
-            <label className="block text-xs font-bold text-slate-700">Service List</label>
-            {section.services.map((svc, idx) => (
-                <div key={svc.id} className="p-4 bg-slate-50 border rounded-lg hover:border-slate-300">
-                    <div className="space-y-3">
-                        <div className="border-b border-slate-200 pb-2">
-                            <input
-                                className="w-full bg-transparent font-bold outline-none placeholder-slate-400"
-                                placeholder="Service Title (Plain Text for ID usage)"
-                                value={svc.title}
-                                onChange={e => {
-                                    const newSvcs = [...section.services];
-                                    newSvcs[idx] = { ...newSvcs[idx], title: e.target.value };
-                                    onChange({ services: newSvcs });
-                                }}
-                            />
-                        </div>
+    return (
+        <div className="space-y-6">
+            {slides.map((card: any, idx: number) => (
+                <div key={idx} className="p-4 border border-slate-200 rounded-lg bg-slate-50 relative">
+                    <div className="absolute top-2 right-2 flex gap-2">
+                        <button
+                            onClick={() => {
+                                const newSlides = slides.filter((_: any, i: number) => i !== idx);
+                                onChange({ content: { ...section.content, slides: newSlides } });
+                            }}
+                            className="p-1 text-red-500 hover:bg-red-50 rounded"
+                            title="Remove Slide"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-500 mb-3 uppercase">Slide {idx + 1}</h4>
+                    <div className="grid gap-4">
                         <RichTextEditor
-                            placeholder="Description"
-                            value={svc.description}
+                            label="Headline"
+                            value={card.headline || ''}
                             onChange={val => {
-                                const newSvcs = [...section.services];
-                                newSvcs[idx] = { ...newSvcs[idx], description: val };
-                                onChange({ services: newSvcs });
+                                const newSlides = [...slides];
+                                newSlides[idx] = { ...newSlides[idx], headline: val };
+                                onChange({ content: { ...section.content, slides: newSlides } });
+                            }}
+                            minHeight="60px"
+                            charLimit={100}
+                            seoRecommend="Aim for 50-60 chars for best impact."
+                        />
+                        <RichTextEditor
+                            label="Subheadline"
+                            value={card.subheadline || ''}
+                            onChange={val => {
+                                const newSlides = [...slides];
+                                newSlides[idx] = { ...newSlides[idx], subheadline: val };
+                                onChange({ content: { ...section.content, slides: newSlides } });
                             }}
                             minHeight="80px"
+                            charLimit={200}
+                            seoRecommend="Keep under 120 chars."
+                        />
+                        <label className="block text-xs font-bold text-slate-700 mt-2">Background Image</label>
+                        <input
+                            type="text"
+                            className="w-full px-3 py-2 border rounded-md text-sm outline-none focus:border-brand-500 transition-colors"
+                            placeholder="Image URL"
+                            value={card.background_image?.url || ''}
+                            onChange={e => {
+                                const newSlides = [...slides];
+                                newSlides[idx] = {
+                                    ...newSlides[idx],
+                                    background_image: { ...newSlides[idx].background_image, url: e.target.value }
+                                };
+                                onChange({ content: { ...section.content, slides: newSlides } });
+                            }}
+                        />
+                        <input
+                            type="text"
+                            className="w-full px-3 py-2 border rounded-md text-sm outline-none focus:border-brand-500 transition-colors mt-2"
+                            placeholder="Image Alt Text"
+                            value={card.background_image?.alt || ''}
+                            onChange={e => {
+                                const newSlides = [...slides];
+                                newSlides[idx] = {
+                                    ...newSlides[idx],
+                                    background_image: { ...newSlides[idx].background_image, alt: e.target.value }
+                                };
+                                onChange({ content: { ...section.content, slides: newSlides } });
+                            }}
                         />
                     </div>
                 </div>
             ))}
+            {slides.length < 5 && (
+                <button
+                    onClick={() => {
+                        const newCard = {
+                            headline: 'New Slide Title',
+                            subheadline: 'New slide description goes here.',
+                            cta_label: 'Learn More',
+                            cta_link: '/',
+                            background_image: { url: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5', alt: '' }
+                        };
+                        onChange({ content: { ...section.content, slides: [...slides, newCard] } });
+                    }}
+                    className="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-brand-500 hover:text-brand-600 font-medium flex items-center justify-center gap-2"
+                >
+                    <Plus size={16} /> Add Hero Slide
+                </button>
+            )}
         </div>
-    </div>
-);
+    );
+};
+
+const AboutEditor: React.FC<{ section: any; onChange: (u: any) => void }> = ({ section, onChange }) => {
+    const content = section.content || {};
+    return (
+        <div className="space-y-6">
+            <RichTextEditor
+                label="Title"
+                value={content.title || ''}
+                onChange={val => onChange({ content: { ...content, title: val } })}
+                minHeight="60px"
+                charLimit={60}
+                seoRecommend="Clear, concise titles perform better."
+            />
+            <RichTextEditor
+                label="Text"
+                value={content.text || ''}
+                onChange={val => onChange({ content: { ...content, text: val } })}
+                minHeight="150px"
+                charLimit={400}
+            />
+            <ImageUploader
+                label="Section Image"
+                imageUrl={content.image?.url || ''}
+                altText={content.image?.alt || ''}
+                onImageChange={val => onChange({ content: { ...content, image: { ...content.image, url: val } } })}
+                onAltTextChange={val => onChange({ content: { ...content, image: { ...content.image, alt: val } } })}
+                recommendedSize="800 x 600px"
+                maxSizeInMB={1}
+            />
+        </div>
+    );
+};
+
+const ServicesEditor: React.FC<{ section: any; onChange: (u: any) => void }> = ({ section, onChange }) => {
+    const content = section.content || {};
+    const services = content.services || [];
+
+    return (
+        <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+                <RichTextEditor label="Title" value={content.title || ''} onChange={val => onChange({ content: { ...content, title: val } })} minHeight="60px" />
+                <RichTextEditor label="Subtitle" value={content.subtitle || ''} onChange={val => onChange({ content: { ...content, subtitle: val } })} minHeight="60px" />
+            </div>
+
+            <div className="space-y-4">
+                <label className="block text-xs font-bold text-slate-700">Service List</label>
+                {services.map((svc: any, idx: number) => (
+                    <div key={idx} className="p-4 bg-slate-50 border rounded-lg hover:border-slate-300">
+                        <div className="space-y-3">
+                            <div className="border-b border-slate-200 pb-2">
+                                <input
+                                    className="w-full bg-transparent font-bold outline-none placeholder-slate-400"
+                                    placeholder="Service Title (Plain Text for ID usage)"
+                                    value={svc.title || ''}
+                                    onChange={e => {
+                                        const newSvcs = [...services];
+                                        newSvcs[idx] = { ...newSvcs[idx], title: e.target.value };
+                                        onChange({ content: { ...content, services: newSvcs } });
+                                    }}
+                                />
+                            </div>
+                            <RichTextEditor
+                                placeholder="Description"
+                                value={svc.description || ''}
+                                onChange={val => {
+                                    const newSvcs = [...services];
+                                    newSvcs[idx] = { ...newSvcs[idx], description: val };
+                                    onChange({ content: { ...content, services: newSvcs } });
+                                }}
+                                minHeight="80px"
+                            />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
 
 // --- About Page Specific Editors ---
 
-const AboutHeroEditor: React.FC<{ section: AboutHeroSection; onChange: (u: Partial<AboutHeroSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-6">
-        <RichTextEditor label="Title" value={section.title} onChange={val => onChange({ title: val })} minHeight="60px" charLimit={60} seoRecommend="Max 60 chars." />
-        <RichTextEditor label="Subtitle" value={section.subtitle} onChange={val => onChange({ subtitle: val })} minHeight="60px" charLimit={120} />
-        <RichTextEditor label="Description" value={section.description} onChange={val => onChange({ description: val })} minHeight="120px" charLimit={300} />
-        <ImageUploader label="Hero Banner" imageUrl={section.imageUrl} altText={section.altText} onImageChange={val => onChange({ imageUrl: val })} onAltTextChange={val => onChange({ altText: val })} recommendedSize="1920 x 600px" maxSizeInMB={2} />
-    </div>
-);
+const AboutHeroEditor: React.FC<{ section: any; onChange: (u: any) => void }> = ({ section, onChange }) => {
+    const content = section.content || {};
+    return (
+        <div className="space-y-6">
+            <RichTextEditor label="Title" value={content.title || ''} onChange={val => onChange({ content: { ...content, title: val } })} minHeight="60px" charLimit={60} seoRecommend="Max 60 chars." />
+            <RichTextEditor label="Subtitle" value={content.subtitle || ''} onChange={val => onChange({ content: { ...content, subtitle: val } })} minHeight="60px" charLimit={120} />
+            <RichTextEditor label="Description" value={content.description || ''} onChange={val => onChange({ content: { ...content, description: val } })} minHeight="120px" charLimit={300} />
+            <ImageUploader label="Hero Banner" imageUrl={content.image?.url || ''} altText={content.image?.alt || ''} onImageChange={val => onChange({ content: { ...content, image: { ...content.image, url: val } } })} onAltTextChange={val => onChange({ content: { ...content, image: { ...content.image, alt: val } } })} recommendedSize="1920 x 600px" maxSizeInMB={2} />
+        </div>
+    );
+};
 
-const OurMissionEditor: React.FC<{ section: OurMissionSection; onChange: (u: Partial<OurMissionSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-6">
-        <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-            <h4 className="font-bold text-slate-700 mb-3">Our Mission</h4>
+const OurMissionEditor: React.FC<{ section: any; onChange: (u: any) => void }> = ({ section, onChange }) => {
+    const content = section.content || {};
+    return (
+        <div className="space-y-6">
+            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <h4 className="font-bold text-slate-700 mb-3">Our Mission</h4>
+                <div className="space-y-3">
+                    <input aria-label="Mission Title" className="w-full px-3 py-2 border rounded-md" placeholder="Mission Title" value={content.missionTitle || ''} onChange={e => onChange({ content: { ...content, missionTitle: e.target.value } })} />
+                    <textarea aria-label="Mission Text" className="w-full px-3 py-2 border rounded-md h-20" placeholder="Mission Text" value={content.missionText || ''} onChange={e => onChange({ content: { ...content, missionText: e.target.value } })} />
+                </div>
+            </div>
+            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <h4 className="font-bold text-slate-700 mb-3">Our Vision</h4>
+                <div className="space-y-3">
+                    <input aria-label="Vision Title" className="w-full px-3 py-2 border rounded-md" placeholder="Vision Title" value={content.visionTitle || ''} onChange={e => onChange({ content: { ...content, visionTitle: e.target.value } })} />
+                    <textarea aria-label="Vision Text" className="w-full px-3 py-2 border rounded-md h-20" placeholder="Vision Text" value={content.visionText || ''} onChange={e => onChange({ content: { ...content, visionText: e.target.value } })} />
+                </div>
+            </div>
+            <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Image URL</label>
+                <input aria-label="Image URL" className="w-full px-3 py-2 border rounded-md text-sm text-slate-600" value={content.image?.url || ''} onChange={e => onChange({ content: { ...content, image: { ...content.image, url: e.target.value } } })} />
+            </div>
+        </div>
+    );
+};
+
+const MeetTeamEditor: React.FC<{ section: any; onChange: (u: any) => void }> = ({ section, onChange }) => {
+    const content = section.content || {};
+    const members = content.members || [];
+
+    return (
+        <div className="space-y-6">
+            <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Section Title</label>
+                <input aria-label="Section Title" className="w-full px-3 py-2 border rounded-md" value={content.title || ''} onChange={e => onChange({ content: { ...content, title: e.target.value } })} />
+            </div>
+            <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Subtitle</label>
+                <input aria-label="Subtitle" className="w-full px-3 py-2 border rounded-md" value={content.subtitle || ''} onChange={e => onChange({ content: { ...content, subtitle: e.target.value } })} />
+            </div>
+
             <div className="space-y-3">
-                <input aria-label="Mission Title" className="w-full px-3 py-2 border rounded-md" placeholder="Mission Title" value={section.missionTitle} onChange={e => onChange({ missionTitle: e.target.value })} />
-                <textarea aria-label="Mission Text" className="w-full px-3 py-2 border rounded-md h-20" placeholder="Mission Text" value={section.missionText} onChange={e => onChange({ missionText: e.target.value })} />
-            </div>
-        </div>
-        <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-            <h4 className="font-bold text-slate-700 mb-3">Our Vision</h4>
-            <div className="space-y-3">
-                <input aria-label="Vision Title" className="w-full px-3 py-2 border rounded-md" placeholder="Vision Title" value={section.visionTitle} onChange={e => onChange({ visionTitle: e.target.value })} />
-                <textarea aria-label="Vision Text" className="w-full px-3 py-2 border rounded-md h-20" placeholder="Vision Text" value={section.visionText} onChange={e => onChange({ visionText: e.target.value })} />
-            </div>
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Image URL</label>
-            <input aria-label="Image URL" className="w-full px-3 py-2 border rounded-md text-sm text-slate-600" value={section.imageUrl} onChange={e => onChange({ imageUrl: e.target.value })} />
-        </div>
-    </div>
-);
-
-const MeetTeamEditor: React.FC<{ section: MeetTeamSection; onChange: (u: Partial<MeetTeamSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-6">
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Section Title</label>
-            <input aria-label="Section Title" className="w-full px-3 py-2 border rounded-md" value={section.title} onChange={e => onChange({ title: e.target.value })} />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Subtitle</label>
-            <input aria-label="Subtitle" className="w-full px-3 py-2 border rounded-md" value={section.subtitle} onChange={e => onChange({ subtitle: e.target.value })} />
-        </div>
-
-        <div className="space-y-3">
-            <div className="flex justify-between items-center">
-                <label className="block text-xs font-bold text-slate-700">Team Members</label>
-                <button
-                    className="text-xs text-brand-600 font-bold hover:underline"
-                    onClick={() => {
-                        const newMember: TeamMember = { id: `tm-${Date.now()}`, name: 'New Member', role: 'Role', imageUrl: 'https://ui-avatars.com/api/?name=New+Member' };
-                        onChange({ members: [...section.members, newMember] });
-                    }}
-                >
-                    + Add Member
-                </button>
-            </div>
-            {section.members.map((member, idx) => (
-                <div key={member.id} className="p-4 border rounded-md bg-slate-50 relative">
+                <div className="flex justify-between items-center">
+                    <label className="block text-xs font-bold text-slate-700">Team Members</label>
                     <button
+                        className="text-xs text-brand-600 font-bold hover:underline"
                         onClick={() => {
-                            const newMembers = section.members.filter((_, i) => i !== idx);
-                            onChange({ members: newMembers });
+                            const newMember: TeamMember = { id: `tm-${Date.now()}`, name: 'New Member', role: 'Role', imageUrl: 'https://ui-avatars.com/api/?name=New+Member' };
+                            onChange({ content: { ...content, members: [...members, newMember] } });
                         }}
-                        className="absolute top-2 right-2 p-1 text-red-400 hover:text-red-600"
-                        title="Remove Member"
                     >
-                        <Trash2 size={14} />
+                        + Add Member
                     </button>
-                    <div className="grid grid-cols-2 gap-3 mb-3 pr-6">
-                        <input aria-label="Member Name" className="w-full px-2 py-1 border rounded text-sm placeholder:text-slate-400" placeholder="Name" value={member.name} onChange={e => {
-                            const newMembers = [...section.members];
-                            newMembers[idx] = { ...newMembers[idx], name: e.target.value };
-                            onChange({ members: newMembers });
-                        }} />
-                        <input aria-label="Member Role" className="w-full px-2 py-1 border rounded text-sm placeholder:text-slate-400" placeholder="Role" value={member.role} onChange={e => {
-                            const newMembers = [...section.members];
-                            newMembers[idx] = { ...newMembers[idx], role: e.target.value };
-                            onChange({ members: newMembers });
-                        }} />
-                    </div>
-                    <div className="mb-3">
-                        <ImageUploader
-                            label="Member Photo"
-                            imageUrl={member.imageUrl}
-                            onImageChange={val => {
-                                const newMembers = [...section.members];
-                                newMembers[idx] = { ...newMembers[idx], imageUrl: val };
-                                onChange({ members: newMembers });
+                </div>
+                {members.map((member: any, idx: number) => (
+                    <div key={idx} className="p-4 border rounded-md bg-slate-50 relative">
+                        <button
+                            onClick={() => {
+                                const newMembers = members.filter((_: any, i: number) => i !== idx);
+                                onChange({ content: { ...content, members: newMembers } });
                             }}
-                            recommendedSize="400 x 400px (Square)"
+                            className="absolute top-2 right-2 p-1 text-red-400 hover:text-red-600"
+                            title="Remove Member"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                        <div className="grid grid-cols-2 gap-3 mb-3 pr-6">
+                            <input aria-label="Member Name" className="w-full px-2 py-1 border rounded text-sm placeholder:text-slate-400" placeholder="Name" value={member.name || ''} onChange={e => {
+                                const newMembers = [...members];
+                                newMembers[idx] = { ...newMembers[idx], name: e.target.value };
+                                onChange({ content: { ...content, members: newMembers } });
+                            }} />
+                            <input aria-label="Member Role" className="w-full px-2 py-1 border rounded text-sm placeholder:text-slate-400" placeholder="Role" value={member.role || ''} onChange={e => {
+                                const newMembers = [...members];
+                                newMembers[idx] = { ...newMembers[idx], role: e.target.value };
+                                onChange({ content: { ...content, members: newMembers } });
+                            }} />
+
+                        </div>
+                        <div className="mb-3">
+                            <ImageUploader
+                                label="Member Photo"
+                                imageUrl={member.imageUrl}
+                                onImageChange={val => {
+                                    const newMembers = [...members];
+                                    newMembers[idx] = { ...newMembers[idx], imageUrl: val };
+                                    onChange({ content: { ...content, members: newMembers } });
+                                }}
+                                recommendedSize="400 x 400px"
+                            />
+                        </div>
+                        <RichTextEditor
+                            placeholder="Short Bio"
+                            value={member.bio || ''}
+                            onChange={val => {
+                                const newMembers = [...members];
+                                newMembers[idx] = { ...newMembers[idx], bio: val };
+                                onChange({ content: { ...content, members: newMembers } });
+                            }}
+                            minHeight="100px"
                         />
                     </div>
-                    <RichTextEditor
-                        placeholder="Short Bio"
-                        value={member.bio || ''}
-                        onChange={val => {
-                            const newMembers = [...section.members];
-                            newMembers[idx] = { ...newMembers[idx], bio: val };
-                            onChange({ members: newMembers });
-                        }}
-                        minHeight="100px"
-                    />
-                </div>
-            ))}
+                ))}
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 // --- Services Page Specific Editors ---
 
-const ServicesHeroEditor: React.FC<{ section: ServicesHeroSection; onChange: (u: Partial<ServicesHeroSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-6">
-        <RichTextEditor label="Title (Small)" value={section.title} onChange={val => onChange({ title: val })} minHeight="60px" charLimit={40} />
-        <RichTextEditor label="Headline (Large)" value={section.headline} onChange={val => onChange({ headline: val })} minHeight="80px" charLimit={80} seoRecommend="Powerful, short headline." />
-        <RichTextEditor label="Description" value={section.description} onChange={val => onChange({ description: val })} minHeight="120px" charLimit={250} />
-        <ImageUploader label="Hero Banner" imageUrl={section.imageUrl} altText={section.altText} onImageChange={val => onChange({ imageUrl: val })} onAltTextChange={val => onChange({ altText: val })} recommendedSize="1920 x 600px" maxSizeInMB={2} />
-    </div>
-);
+const ServicesHeroEditor: React.FC<{ section: any; onChange: (u: any) => void }> = ({ section, onChange }) => {
+    const content = section.content || {};
+    return (
+        <div className="space-y-6">
+            <RichTextEditor label="Title (Small)" value={content.title || ''} onChange={val => onChange({ content: { ...content, title: val } })} minHeight="60px" charLimit={40} />
+            <RichTextEditor label="Headline (Large)" value={content.headline || ''} onChange={val => onChange({ content: { ...content, headline: val } })} minHeight="80px" charLimit={80} seoRecommend="Powerful, short headline." />
+            <RichTextEditor label="Description" value={content.description || ''} onChange={val => onChange({ content: { ...content, description: val } })} minHeight="120px" charLimit={250} />
+            <ImageUploader label="Hero Banner" imageUrl={content.image?.url || ''} altText={content.image?.alt || ''} onImageChange={val => onChange({ content: { ...content, image: { ...content.image, url: val } } })} onAltTextChange={val => onChange({ content: { ...content, image: { ...content.image, alt: val } } })} recommendedSize="1920 x 600px" maxSizeInMB={2} />
+        </div>
+    );
+};
 
-const ServiceBlockEditor: React.FC<{ section: ServiceBlockSection; onChange: (u: Partial<ServiceBlockSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-4">
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Service Title</label>
-            <input aria-label="Service Title" className="w-full px-3 py-2 border rounded-md" value={section.serviceTitle} onChange={e => onChange({ serviceTitle: e.target.value })} />
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Description</label>
-            <textarea aria-label="Description" className="w-full px-3 py-2 border rounded-md h-32" value={section.description} onChange={e => onChange({ description: e.target.value })} />
-            <p className="text-xs text-slate-400 mt-1">Supports basic HTML or newlines.</p>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
+const ServiceBlockEditor: React.FC<{ section: any; onChange: (u: any) => void }> = ({ section, onChange }) => {
+    const content = section.content || {};
+    return (
+        <div className="space-y-4">
             <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">CTA Label</label>
-                <input className="w-full px-3 py-2 border rounded-md" value={section.ctaLabel} onChange={e => onChange({ ctaLabel: e.target.value })} />
+                <label className="block text-xs font-bold text-slate-700 mb-1">Service Title</label>
+                <input aria-label="Service Title" className="w-full px-3 py-2 border rounded-md" value={content.serviceTitle || ''} onChange={e => onChange({ content: { ...content, serviceTitle: e.target.value } })} />
             </div>
             <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">CTA Link</label>
-                <input className="w-full px-3 py-2 border rounded-md" value={section.ctaLink} onChange={e => onChange({ ctaLink: e.target.value })} />
+                <label className="block text-xs font-bold text-slate-700 mb-1">Description</label>
+                <textarea aria-label="Description" className="w-full px-3 py-2 border rounded-md h-32" value={content.description || ''} onChange={e => onChange({ content: { ...content, description: e.target.value } })} />
+                <p className="text-xs text-slate-400 mt-1">Supports basic HTML or newlines.</p>
             </div>
-        </div>
-        <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Image URL</label>
-            <input className="w-full px-3 py-2 border rounded-md text-sm text-slate-600" value={section.imageUrl} onChange={e => onChange({ imageUrl: e.target.value })} />
-        </div>
-    </div>
-);
-
-const ContactCTAEditor: React.FC<{ section: ContactCTASection; onChange: (u: Partial<ContactCTASection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-6">
-        <RichTextEditor label="Title" value={section.title} onChange={val => onChange({ title: val })} minHeight="60px" charLimit={60} />
-        <RichTextEditor label="Text" value={section.text} onChange={val => onChange({ text: val })} minHeight="100px" charLimit={200} />
-        <div className="grid grid-cols-2 gap-4">
-            <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">CTA Label</label>
-                <input aria-label="CTA Label" className="w-full px-3 py-2 border rounded-md" value={section.ctaLabel} onChange={e => onChange({ ctaLabel: e.target.value })} />
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">CTA Label</label>
+                    <input className="w-full px-3 py-2 border rounded-md" value={content.ctaLabel || ''} onChange={e => onChange({ content: { ...content, ctaLabel: e.target.value } })} />
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">CTA Link</label>
+                    <input className="w-full px-3 py-2 border rounded-md" value={content.ctaLink || ''} onChange={e => onChange({ content: { ...content, ctaLink: e.target.value } })} />
+                </div>
             </div>
             <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">CTA Link</label>
-                <input aria-label="CTA Link" className="w-full px-3 py-2 border rounded-md" value={section.ctaLink} onChange={e => onChange({ ctaLink: e.target.value })} />
+                <label className="block text-xs font-bold text-slate-700 mb-1">Image URL</label>
+                <input className="w-full px-3 py-2 border rounded-md text-sm text-slate-600" value={content.image?.url || ''} onChange={e => onChange({ content: { ...content, image: { ...content.image, url: e.target.value } } })} />
             </div>
         </div>
-    </div>
-);
+    );
+};
 
-const ServiceDetailHeroEditor: React.FC<{ section: ServiceDetailHeroSection; onChange: (u: Partial<ServiceDetailHeroSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-6">
-        <RichTextEditor
-            label="Page Title"
-            value={section.title}
-            onChange={val => onChange({ title: val })}
-            minHeight="60px"
-            charLimit={60}
-            seoRecommend="Primary keyword in title."
-        />
-        <RichTextEditor
-            label="Intro Text"
-            value={section.intro}
-            onChange={val => onChange({ intro: val })}
-            minHeight="120px"
-            charLimit={300}
-        />
-    </div>
-);
-
-const ServiceDetailOverviewEditor: React.FC<{ section: ServiceDetailOverviewSection; onChange: (u: Partial<ServiceDetailOverviewSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-6">
-        <ImageUploader
-            label="Overview Image"
-            imageUrl={section.imageUrl}
-            altText={section.altText}
-            onImageChange={val => onChange({ imageUrl: val })}
-            onAltTextChange={val => onChange({ altText: val })}
-            recommendedSize="1920 x 800px"
-            maxSizeInMB={2}
-        />
-    </div>
-);
-
-const ServiceDetailOfferingEditor: React.FC<{ section: ServiceDetailOfferingSection; onChange: (u: Partial<ServiceDetailOfferingSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-6">
-        <div className="flex gap-4">
-            <div className="w-1/4">
-                <label className="block text-xs font-bold text-slate-700 mb-1">Number</label>
-                <input aria-label="Number" className="w-full px-3 py-2 border rounded-md" value={section.number} onChange={e => onChange({ number: e.target.value })} />
-            </div>
-            <div className="w-3/4">
-                <RichTextEditor label="Title" value={section.title} onChange={val => onChange({ title: val })} minHeight="60px" />
+const ContactCTAEditor: React.FC<{ section: any; onChange: (u: any) => void }> = ({ section, onChange }) => {
+    const content = section.content || {};
+    return (
+        <div className="space-y-6">
+            <RichTextEditor label="Title" value={content.title || ''} onChange={val => onChange({ content: { ...content, title: val } })} minHeight="60px" charLimit={60} />
+            <RichTextEditor label="Text" value={content.text || ''} onChange={val => onChange({ content: { ...content, text: val } })} minHeight="100px" charLimit={200} />
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">CTA Label</label>
+                    <input aria-label="CTA Label" className="w-full px-3 py-2 border rounded-md" value={content.ctaLabel || ''} onChange={e => onChange({ content: { ...content, ctaLabel: e.target.value } })} />
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">CTA Link</label>
+                    <input aria-label="CTA Link" className="w-full px-3 py-2 border rounded-md" value={content.ctaLink || ''} onChange={e => onChange({ content: { ...content, ctaLink: e.target.value } })} />
+                </div>
             </div>
         </div>
-        <RichTextEditor label="Description" value={section.description} onChange={val => onChange({ description: val })} minHeight="120px" />
-        <ImageUploader label="Section Image" imageUrl={section.imageUrl} altText={section.altText} onImageChange={val => onChange({ imageUrl: val })} onAltTextChange={val => onChange({ altText: val })} recommendedSize="800 x 600px" maxSizeInMB={1} />
-    </div>
-);
+    );
+};
 
-const ServiceDetailContactEditor: React.FC<{ section: ServiceDetailContactSection; onChange: (u: Partial<ServiceDetailContactSection>) => void }> = ({ section, onChange }) => (
-    <div className="space-y-6">
-        <RichTextEditor label="Title" value={section.title} onChange={val => onChange({ title: val })} minHeight="60px" />
-        <RichTextEditor label="Description" value={section.description} onChange={val => onChange({ description: val })} minHeight="100px" />
-        <div className="grid grid-cols-2 gap-4">
-            <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">CTA Label</label>
-                <input aria-label="CTA Label" className="w-full px-3 py-2 border rounded-md" value={section.ctaLabel} onChange={e => onChange({ ctaLabel: e.target.value })} />
+const ServiceDetailHeroEditor: React.FC<{ section: any; onChange: (u: any) => void }> = ({ section, onChange }) => {
+    const content = section.content || {};
+    return (
+        <div className="space-y-6">
+            <RichTextEditor
+                label="Page Title"
+                value={content.title || ''}
+                onChange={val => onChange({ content: { ...content, title: val } })}
+                minHeight="60px"
+                charLimit={60}
+                seoRecommend="Primary keyword in title."
+            />
+            <RichTextEditor
+                label="Intro Text"
+                value={content.intro || ''}
+                onChange={val => onChange({ content: { ...content, intro: val } })}
+                minHeight="120px"
+                charLimit={300}
+            />
+        </div>
+    );
+};
+
+const ServiceDetailOverviewEditor: React.FC<{ section: any; onChange: (u: any) => void }> = ({ section, onChange }) => {
+    const content = section.content || {};
+    return (
+        <div className="space-y-6">
+            <ImageUploader
+                label="Overview Image"
+                imageUrl={content.image?.url || ''}
+                altText={content.image?.alt || ''}
+                onImageChange={val => onChange({ content: { ...content, image: { ...content.image, url: val } } })}
+                onAltTextChange={val => onChange({ content: { ...content, image: { ...content.image, alt: val } } })}
+                recommendedSize="1920 x 800px"
+                maxSizeInMB={2}
+            />
+        </div>
+    );
+};
+
+const ServiceDetailOfferingEditor: React.FC<{ section: any; onChange: (u: any) => void }> = ({ section, onChange }) => {
+    const content = section.content || {};
+    return (
+        <div className="space-y-6">
+            <div className="flex gap-4">
+                <div className="w-1/4">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Number</label>
+                    <input aria-label="Number" className="w-full px-3 py-2 border rounded-md" value={content.number || ''} onChange={e => onChange({ content: { ...content, number: e.target.value } })} />
+                </div>
+                <div className="w-3/4">
+                    <RichTextEditor label="Title" value={content.title || ''} onChange={val => onChange({ content: { ...content, title: val } })} minHeight="60px" />
+                </div>
             </div>
-            <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">CTA Link</label>
-                <input aria-label="CTA Link" className="w-full px-3 py-2 border rounded-md" value={section.ctaLink} onChange={e => onChange({ ctaLink: e.target.value })} />
+            <RichTextEditor label="Description" value={content.description || ''} onChange={val => onChange({ content: { ...content, description: val } })} minHeight="120px" />
+            <ImageUploader label="Section Image" imageUrl={content.image?.url || ''} altText={content.image?.alt || ''} onImageChange={val => onChange({ content: { ...content, image: { ...content.image, url: val } } })} onAltTextChange={val => onChange({ content: { ...content, image: { ...content.image, alt: val } } })} recommendedSize="800 x 600px" maxSizeInMB={1} />
+        </div>
+    );
+};
+
+const ServiceDetailContactEditor: React.FC<{ section: any; onChange: (u: any) => void }> = ({ section, onChange }) => {
+    const content = section.content || {};
+    return (
+        <div className="space-y-6">
+            <RichTextEditor label="Title" value={content.title || ''} onChange={val => onChange({ content: { ...content, title: val } })} minHeight="60px" />
+            <RichTextEditor label="Description" value={content.description || ''} onChange={val => onChange({ content: { ...content, description: val } })} minHeight="100px" />
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">CTA Label</label>
+                    <input aria-label="CTA Label" className="w-full px-3 py-2 border rounded-md" value={content.ctaLabel || ''} onChange={e => onChange({ content: { ...content, ctaLabel: e.target.value } })} />
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">CTA Link</label>
+                    <input aria-label="CTA Link" className="w-full px-3 py-2 border rounded-md" value={content.ctaLink || ''} onChange={e => onChange({ content: { ...content, ctaLink: e.target.value } })} />
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 const CommonEditor: React.FC<{ section: CMSSection; onChange: (u: Partial<CMSSection>) => void }> = ({ section, onChange }) => (
     <div className="p-4 bg-yellow-50 text-yellow-800 rounded-lg text-sm border border-yellow-200">
@@ -961,9 +1019,20 @@ export const CMSPage: React.FC = () => {
     // Allow any string to support new Global/Collection pages without strict enum config yet
     const activePage = rawPage || 'Home';
 
-    // Filter sections by active page
-    // Note: Careers page content handling might need specific check if it's not standard CMSSection
-    const pageSections = cmsContent.filter(s => s.page === activePage);
+    // Handle both flat array of sections and nested array of pages
+    let pageSections = [];
+    if (cmsContent && cmsContent.length > 0) {
+        if ('sections' in cmsContent[0]) {
+            // Nested structure from live CMS pages API
+            const activePageData = cmsContent.find((p: any) => p.name === activePage || p.slug === activePage.toLowerCase());
+            const rawSections = activePageData?.sections || [];
+            // Normalise `key` into `id` as the frontend uses `section.id` everywhere.
+            pageSections = rawSections.map((s: any) => ({ ...s, id: s.id || s.key }));
+        } else {
+            // Fallback flat array structure from mock data
+            pageSections = cmsContent.filter((s: any) => s.page === activePage || (s.page_slug && s.page_slug === activePage.toLowerCase()));
+        }
+    }
 
     // Manage selection state per page or globally? Globally is fine, just reset on page switch if needed.
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -973,7 +1042,7 @@ export const CMSPage: React.FC = () => {
     React.useEffect(() => {
         if (activePage === 'FooterLayout') {
             if (!selectedId) setSelectedId('footer-nav');
-        } else if (!selectedId || !pageSections.find(s => s.id === selectedId)) {
+        } else if (!selectedId || !pageSections.find((s: any) => s.id === selectedId)) {
             if (pageSections.length > 0) {
                 setSelectedId(pageSections[0].id);
             } else {
@@ -982,7 +1051,7 @@ export const CMSPage: React.FC = () => {
         }
     }, [activePage, pageSections, selectedId]);
 
-    const activeSection = cmsContent.find(c => c.id === selectedId);
+    const activeSection = pageSections.find((c: any) => c.id === selectedId);
 
     const PREVIEW_URL = PUBLIC_LINK || window.location.origin;
     const currentPagePreviewLink = activePage === 'About'
@@ -1154,7 +1223,7 @@ export const CMSPage: React.FC = () => {
                         <div className="w-64 overflow-y-auto pr-2 flex-shrink-0 py-2">
                             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2">Page Structure</h3>
                             <div className="space-y-2">
-                                {pageSections.map((section) => (
+                                {pageSections.map((section: any) => (
                                     <div
                                         key={section.id}
                                         onClick={() => setSelectedId(section.id)}
