@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { useFeedback } from '../../context/FeedbackContext';
-import { Search, Filter, Plus, Calendar, AlertCircle, CheckCircle2, Clock, Eye, Trash2 } from 'lucide-react';
+import { Search, Filter, Plus, Calendar, AlertCircle, CheckCircle2, Clock, Eye } from 'lucide-react';
 import type { Task } from '../../data/mockData';
 
 export const AdminTasksPage: React.FC = () => {

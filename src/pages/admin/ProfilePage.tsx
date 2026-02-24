@@ -21,7 +21,6 @@ export const ProfilePage: React.FC = () => {
         phone: '+234 800 000 0000',
         currentPassword: '',
         newPassword: '',
-        newPassword: '',
         confirmPassword: '',
         photoUrl: ''
     });
