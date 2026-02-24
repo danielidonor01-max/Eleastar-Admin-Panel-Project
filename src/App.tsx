@@ -28,6 +28,8 @@ import { PromotionsPage } from './pages/admin/PromotionsPage';
 import { SalarySettings } from './pages/admin/SalarySettings';
 import { BonusPage } from './pages/admin/BonusPage';
 import { AnalyticsDashboard } from './pages/admin/AnalyticsDashboard';
+import { InquiriesPage } from './pages/admin/InquiriesPage';
+import { AdminTasksPage } from './pages/admin/AdminTasksPage';
 
 import { ComplianceReportsPage } from './pages/admin/ComplianceReportsPage';
 
@@ -38,6 +40,7 @@ import { UserDashboard } from './pages/user/UserDashboard';
 import { UserProfilePage } from './pages/user/UserProfilePage';
 import { LeavePage } from './pages/user/LeavePage';
 import { PerformanceReviewPage } from './pages/user/PerformanceReviewPage';
+import { UserTasksPage } from './pages/user/UserTasksPage';
 import PreviewBadge from './components/PreviewBadge';
 
 function App() {
@@ -73,6 +76,8 @@ function App() {
             <Route path="leave" element={<LeaveManagement />} />
             <Route path="performance" element={<PerformancePage />} />
             <Route path="cms" element={<CMSPage />} />
+            <Route path="inquiries" element={<InquiriesPage />} />
+            <Route path="tasks" element={<AdminTasksPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="compliance" element={<CompliancePage />} />
@@ -94,6 +99,7 @@ function App() {
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="profile" element={<UserProfilePage />} />
             <Route path="leave" element={<LeavePage />} />
+            <Route path="tasks" element={<UserTasksPage />} />
             <Route path="performance" element={<PerformanceReviewPage />} />
           </Route>
         </Routes>

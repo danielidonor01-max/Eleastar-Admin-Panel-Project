@@ -92,6 +92,33 @@ export const cmsService = {
     },
 
     /**
+     * Generates a new CMS API Key (Admin)
+     */
+    generateApiKey: async (name: string): Promise<ApiResponse<{ name: string; key: string }>> => {
+        try {
+            const token = getAuthToken();
+            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/api-keys`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ name })
+            });
+            const data = await response.json();
+            if (!data.status) throw new Error(data.message || 'Failed to generate API key');
+            return {
+                data: data.data,
+                success: true,
+                message: data.message || 'API key generated successfully'
+            };
+        } catch (error: any) {
+            return { data: null as any, success: false, error: error.message };
+        }
+    },
+
+    /**
      * Updates CMS content block (Admin)
      */
     updateCMSSection: async (sectionId: string | number, updates: any): Promise<ApiResponse<any>> => {

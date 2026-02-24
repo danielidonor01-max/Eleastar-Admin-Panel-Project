@@ -77,6 +77,20 @@ export interface PromotionRequest {
     };
 }
 
+export interface Task {
+    id: string;
+    title: string;
+    description: string;
+    assignedTo: string; // Employee ID
+    assignedBy: string; // Admin ID
+    priority: 'Low' | 'Medium' | 'High' | 'Critical';
+    status: 'Pending' | 'In Progress' | 'In Review' | 'Completed';
+    deliveryDate: string;
+    createdAt: string;
+    progressNotes?: string;
+    evidenceUrls?: string[]; // Arrays of base64 strings or URLs
+}
+
 export interface PromotionEligibilityRule {
     id: string;
     tenantId: string;
@@ -1796,6 +1810,51 @@ export interface CareersHeroSection extends BaseSection {
 }
 
 
+export interface Inquiry {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    company?: string;
+    subject: string;
+    message: string;
+    status: 'unread' | 'read' | 'resolved';
+    submittedAt: string;
+}
+
+export const initialInquiries: Inquiry[] = [
+    {
+        id: 'INQ-001',
+        name: 'Jane Doe',
+        email: 'jane.doe@example.com',
+        phone: '+1 555-0101',
+        company: 'Tech Innovators Inc.',
+        subject: 'Partnership Inquiry',
+        message: 'We are interested in discussing a potential partnership regarding your industrial solutions.',
+        status: 'unread',
+        submittedAt: new Date(Date.now() - 86400000 * 2).toISOString()
+    },
+    {
+        id: 'INQ-002',
+        name: 'John Smith',
+        email: 'john.smith@example.com',
+        subject: 'Service Pricing',
+        message: 'Could you please provide a quote for your Specific IT Services for a team of 50?',
+        status: 'read',
+        submittedAt: new Date(Date.now() - 86400000 * 5).toISOString()
+    },
+    {
+        id: 'INQ-003',
+        name: 'Alice Johnson',
+        email: 'ajohnson@startup.io',
+        phone: '+44 20 7123 4567',
+        company: 'Startup IO',
+        subject: 'General Question',
+        message: 'Where is your main office located?',
+        status: 'resolved',
+        submittedAt: new Date(Date.now() - 86400000 * 10).toISOString()
+    }
+];
 
 export const initialCMSContent: CMSSection[] = [
     {
@@ -2414,3 +2473,29 @@ export const initialPromotionRequests: PromotionRequest[] = [
     }
 ];
 
+// --- Task Management ---
+export const initialTasks: Task[] = [
+    {
+        id: 'TSK-001',
+        title: 'Complete Q1 Financial Audit',
+        description: 'Review and compile the Q1 financial reports for the upcoming board meeting.',
+        assignedTo: 'EMP-003', // e.g., Sarah Chen
+        assignedBy: 'EMP-001', // Admin
+        priority: 'High',
+        status: 'In Progress',
+        deliveryDate: new Date(Date.now() + 86400000 * 5).toISOString(), // 5 days from now
+        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        progressNotes: 'Gathered preliminary reports from department heads.',
+    },
+    {
+        id: 'TSK-002',
+        title: 'Update Employee Handbook',
+        description: 'Revise sections 4 and 5 of the employee handbook to reflect new work-from-home policies.',
+        assignedTo: 'EMP-003', // Assign to same user for easy testing
+        assignedBy: 'EMP-002', // Admin
+        priority: 'Medium',
+        status: 'Pending',
+        deliveryDate: new Date(Date.now() + 86400000 * 14).toISOString(), // 14 days from now
+        createdAt: new Date().toISOString(),
+    }
+];

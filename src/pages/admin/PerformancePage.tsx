@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { useFeedback } from '../../context/FeedbackContext';
-import { Calendar, Plus, User } from 'lucide-react';
+import { Calendar, Plus, User, CheckSquare } from 'lucide-react';
 
 export const PerformancePage: React.FC = () => {
     const {
         reviewCycles,
         performanceReviews,
         employees,
+        tasks,
         currentUserId,
         createReviewCycle,
         updatePerformanceReview,
@@ -207,6 +208,81 @@ export const PerformancePage: React.FC = () => {
                     </form>
                 </div>
             )}
+
+            {/* Task Performance Leaderboard */}
+            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-8">
+                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <div>
+                        <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <CheckSquare size={20} className="text-brand-600" />
+                            Task Completion Metrics
+                        </h2>
+                        <p className="text-sm text-slate-500 mt-1">Real-time tracking of assigned vs. completed tasks per employee.</p>
+                    </div>
+                </div>
+                <div className="p-0 overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                                <th className="p-4 font-bold">Personnel</th>
+                                <th className="p-4 font-bold">Department</th>
+                                <th className="p-4 font-bold text-center">Total Tasks</th>
+                                <th className="p-4 font-bold text-center">Completed</th>
+                                <th className="p-4 font-bold text-right">Completion Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {(() => {
+                                const stats = employees.map(emp => {
+                                    const empTasks = tasks.filter(t => t.assignedTo === emp.id);
+                                    const total = empTasks.length;
+                                    const completed = empTasks.filter(t => t.status === 'Completed').length;
+                                    const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+                                    return { ...emp, totalTasks: total, completedTasks: completed, completionRate: rate };
+                                }).filter(stat => stat.totalTasks > 0).sort((a, b) => b.completionRate - a.completionRate);
+
+                                if (stats.length === 0) {
+                                    return (
+                                        <tr>
+                                            <td colSpan={5} className="p-8 text-center text-slate-500 italic">No tasks assigned to any personnel yet.</td>
+                                        </tr>
+                                    );
+                                }
+
+                                return stats.map(stat => (
+                                    <tr key={stat.id} className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="p-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center font-bold text-xs border border-brand-100 hidden sm:flex">
+                                                    {stat.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-slate-900 text-sm">{stat.name}</p>
+                                                    <p className="text-xs text-slate-500">{stat.id}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="p-4 text-sm text-slate-600">{stat.department}</td>
+                                        <td className="p-4 text-center font-medium text-slate-900">{stat.totalTasks}</td>
+                                        <td className="p-4 text-center text-emerald-600 font-bold">{stat.completedTasks}</td>
+                                        <td className="p-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full ${stat.completionRate >= 80 ? 'bg-emerald-500' : stat.completionRate >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                                        style={{ width: `${stat.completionRate}%` }}
+                                                    />
+                                                </div>
+                                                <span className="text-sm font-bold text-slate-700 w-10">{stat.completionRate}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ));
+                            })()}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
             {/* Active Cycles */}
             <div className="grid grid-cols-1 gap-6">

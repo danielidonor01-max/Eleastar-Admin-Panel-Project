@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Navigate, useNavigate, NavLink, useLocation } from 'react-router-dom';
-import { LogOut, User, LayoutDashboard, Menu, ChevronDown, Calendar, BarChart2 } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, Menu, ChevronDown, Calendar, BarChart2, CheckSquare } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { NotificationMenu } from '../components/NotificationMenu';
 
@@ -69,6 +69,14 @@ export const UserLayout: React.FC = () => {
                     >
                         <User size={20} />
                         My Profile
+                    </NavLink>
+                    <NavLink
+                        to="/user/tasks"
+                        onClick={() => setSidebarOpen(false)}
+                        className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white shadow-md shadow-brand-900/20' : 'hover:bg-slate-800 hover:text-white'}`}
+                    >
+                        <CheckSquare size={20} />
+                        My Tasks
                     </NavLink>
                     <NavLink
                         to="/user/leave"

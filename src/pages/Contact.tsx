@@ -1,9 +1,44 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StickyHeader } from '../components/StickyHeader';
 import { BrandFooter } from '../components/BrandFooter';
-import { MapPin, Phone, Mail, Send } from 'lucide-react';
+import { MapPin, Phone, Mail, Send, CheckCircle2 } from 'lucide-react';
+import { useAdmin } from '../context/AdminContext';
 
 export const Contact: React.FC = () => {
+    const { submitInquiry } = useAdmin();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+
+    const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        message: ''
+    });
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        submitInquiry({
+            name: `${formData.firstName} ${formData.lastName}`.trim(),
+            email: formData.email,
+            subject: 'General Inquiry (Website Form)',
+            message: formData.message,
+            phone: '',
+            company: ''
+        });
+
+        setIsSubmitting(false);
+        setIsSuccess(true);
+        setFormData({ firstName: '', lastName: '', email: '', message: '' });
+
+        setTimeout(() => setIsSuccess(false), 5000);
+    };
+
     return (
         <div className="min-h-screen bg-white font-sans flex flex-col">
             <StickyHeader />
@@ -68,31 +103,41 @@ export const Contact: React.FC = () => {
                         </div>
 
                         {/* Contact Form */}
-                        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
-                            <form className="space-y-6">
+                        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
+                            {isSuccess && (
+                                <div className="absolute inset-0 bg-white/95 z-10 flex flex-col items-center justify-center animate-in fade-in duration-300">
+                                    <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+                                        <CheckCircle2 size={32} />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-slate-900 mb-2">Message Sent!</h3>
+                                    <p className="text-slate-600 text-center max-w-xs">Thank you for reaching out. Our team will get back to you shortly.</p>
+                                </div>
+                            )}
+
+                            <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-2">First Name</label>
-                                        <input type="text" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all" placeholder="John" />
+                                        <input required value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} type="text" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all" placeholder="John" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-2">Last Name</label>
-                                        <input type="text" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all" placeholder="Doe" />
+                                        <input required value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} type="text" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all" placeholder="Doe" />
                                     </div>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
-                                    <input type="email" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all" placeholder="john@example.com" />
+                                    <input required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} type="email" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all" placeholder="john@example.com" />
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-2">Message</label>
-                                    <textarea rows={4} className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all" placeholder="How can we help you?" />
+                                    <textarea required value={formData.message} onChange={e => setFormData({ ...formData, message: e.target.value })} rows={4} className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all" placeholder="How can we help you?" />
                                 </div>
 
-                                <button type="submit" className="w-full bg-brand-600 text-white font-bold py-4 rounded-lg hover:bg-brand-700 transition-colors flex items-center justify-center gap-2">
-                                    Send Message <Send size={18} />
+                                <button type="submit" disabled={isSubmitting} className="w-full bg-brand-600 text-white font-bold py-4 rounded-lg hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-70">
+                                    {isSubmitting ? 'Sending...' : <>Send Message <Send size={18} /></>}
                                 </button>
                             </form>
                         </div>

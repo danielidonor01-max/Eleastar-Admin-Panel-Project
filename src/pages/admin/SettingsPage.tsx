@@ -3,8 +3,9 @@ import { useAdmin } from '../../context/AdminContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import type { ModuleType } from '../../context/AdminContext';
 import type { AdminRole } from '../../data/mockData';
-import { Shield, Upload, Save, AlertTriangle, Check, Lock, Eye, RefreshCw, Key, Activity } from 'lucide-react';
+import { Shield, Upload, Save, AlertTriangle, Check, Lock, Eye, RefreshCw, Key, Activity, Copy, CheckCircle2 } from 'lucide-react';
 import type { Employee } from '../../data/mockData';
+import { cmsService } from '../../services/cmsService';
 
 export const SettingsPage: React.FC = () => {
     const { activityLogs, employees, updateEmployee, ceoSignature, updateCeoSignature, rolePermissions, updateRolePermissions, currentUserRole, requestAuth, logAction, generateSystemPassword, sendEmail, addEmployee } = useAdmin();
@@ -86,7 +87,47 @@ export const SettingsPage: React.FC = () => {
     };
 
     // Tab State
-    const [activeTab, setActiveTab] = useState<'roles' | 'users' | 'assets'>('roles');
+    const [activeTab, setActiveTab] = useState<'roles' | 'users' | 'assets' | 'api'>('roles');
+
+    // API Key State
+    const [apiKeyName, setApiKeyName] = useState('');
+    const [generatedKey, setGeneratedKey] = useState<string | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    const handleGenerateKey = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!apiKeyName.trim()) {
+            showError({ title: 'Missing Name', message: 'Please provide a name for the API key.' });
+            return;
+        }
+
+        setIsGenerating(true);
+        try {
+            const res = await cmsService.generateApiKey(apiKeyName);
+            if (res.success && res.data) {
+                setGeneratedKey(res.data.key);
+                showSuccess({ title: 'Key Generated', message: 'API Key has been created successfully. Copy it now, it will not be shown again.' });
+                setApiKeyName('');
+                setCopied(false);
+                logAction('System Integration', `Generated new CMS API Key: ${apiKeyName}`);
+            } else {
+                showError({ title: 'Generation Failed', message: res.error || 'Failed to generate key.' });
+            }
+        } catch (err) {
+            showError({ title: 'Error', message: 'An unexpected error occurred.' });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const copyToClipboard = () => {
+        if (generatedKey) {
+            navigator.clipboard.writeText(generatedKey);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
 
     // System USER State & Handlers
     const [showAddModal, setShowAddModal] = useState(false);
@@ -181,6 +222,15 @@ export const SettingsPage: React.FC = () => {
                                 }`}
                         >
                             System Assets
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('api')}
+                            className={`pb-3 px-1 text-sm font-medium transition-colors relative ${activeTab === 'api'
+                                ? 'text-brand-600 border-b-2 border-brand-600'
+                                : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                        >
+                            API Configuration
                         </button>
                     </div>
 
@@ -283,6 +333,71 @@ export const SettingsPage: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </section>
+                        </div>
+                    )}
+
+                    {activeTab === 'api' && (
+                        <div className="space-y-8">
+                            {/* API Key Generation */}
+                            <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-slate-800 rounded-lg">
+                                            <Key className="text-white" size={24} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-bold text-slate-900">CMS API Configuration</h2>
+                                            <p className="text-sm text-slate-500">Generate secure tokens to authenticate external data reads.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="p-6">
+                                    <div className="max-w-xl mx-auto bg-slate-50 border border-slate-200 rounded-xl p-6 mb-6">
+                                        <h3 className="text-sm font-bold text-slate-900 mb-2">Generate New Key</h3>
+                                        <p className="text-xs text-slate-500 mb-4">Create a new API key for a specific integration. For your security, the key will only be shown once.</p>
+
+                                        <form onSubmit={handleGenerateKey} className="flex gap-3">
+                                            <input
+                                                type="text"
+                                                value={apiKeyName}
+                                                onChange={(e) => setApiKeyName(e.target.value)}
+                                                placeholder="e.g., Main Website Frontend"
+                                                className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-shadow outline-none"
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={isGenerating || !apiKeyName.trim()}
+                                                className="px-6 py-2 bg-brand-600 text-white font-medium rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex items-center gap-2"
+                                            >
+                                                {isGenerating ? <RefreshCw size={16} className="animate-spin" /> : <Key size={16} />}
+                                                Generate
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    {generatedKey && (
+                                        <div className="max-w-xl mx-auto bg-emerald-50 border border-emerald-200 rounded-xl p-6 animate-in fade-in slide-in-from-top-4">
+                                            <div className="flex items-center gap-2 mb-2 text-emerald-800">
+                                                <CheckCircle2 size={18} />
+                                                <h3 className="font-bold">Key Generated Successfully</h3>
+                                            </div>
+                                            <p className="text-sm text-emerald-600 mb-4 font-medium">Please copy this key immediately. You will not be able to retrieve it again later.</p>
+
+                                            <div className="flex items-stretch gap-2">
+                                                <div className="flex-1 bg-white border border-emerald-200 px-4 py-3 rounded-lg font-mono text-sm text-slate-700 break-all overflow-x-auto whitespace-nowrap scrollbar-hide">
+                                                    {generatedKey}
+                                                </div>
+                                                <button
+                                                    onClick={copyToClipboard}
+                                                    className={`px-4 flex items-center justify-center rounded-lg transition-colors border ${copied ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-100'}`}
+                                                >
+                                                    {copied ? <Check size={18} /> : <Copy size={18} />}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </section>
                         </div>
