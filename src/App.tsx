@@ -28,7 +28,6 @@ import { PromotionsPage } from './pages/admin/PromotionsPage';
 import { SalarySettings } from './pages/admin/SalarySettings';
 import { BonusPage } from './pages/admin/BonusPage';
 import { AnalyticsDashboard } from './pages/admin/AnalyticsDashboard';
-import { InquiriesPage } from './pages/admin/InquiriesPage';
 import { AdminTasksPage } from './pages/admin/AdminTasksPage';
 
 import { ComplianceReportsPage } from './pages/admin/ComplianceReportsPage';
@@ -76,7 +75,6 @@ function App() {
             <Route path="leave" element={<LeaveManagement />} />
             <Route path="performance" element={<PerformancePage />} />
             <Route path="cms" element={<CMSPage />} />
-            <Route path="inquiries" element={<InquiriesPage />} />
             <Route path="tasks" element={<AdminTasksPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="profile" element={<ProfilePage />} />

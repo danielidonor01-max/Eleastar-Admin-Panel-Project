@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import { StickyHeader } from '../components/StickyHeader';
 import { BrandFooter } from '../components/BrandFooter';
 import { MapPin, Phone, Mail, Send, CheckCircle2 } from 'lucide-react';
-import { useAdmin } from '../context/AdminContext';
-
 export const Contact: React.FC = () => {
-    const { submitInquiry } = useAdmin();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
 
@@ -20,17 +17,7 @@ export const Contact: React.FC = () => {
         e.preventDefault();
         setIsSubmitting(true);
 
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        submitInquiry({
-            name: `${formData.firstName} ${formData.lastName}`.trim(),
-            email: formData.email,
-            subject: 'General Inquiry (Website Form)',
-            message: formData.message,
-            phone: '',
-            company: ''
-        });
+        // Success logic. Data no longer sent to admin.
 
         setIsSubmitting(false);
         setIsSuccess(true);

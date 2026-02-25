@@ -591,111 +591,13 @@ export interface PerformanceReview {
     lastRemindedAt?: string;
 }
 
-export const initialReviewCycles: ReviewCycle[] = [
-    {
-        tenantId: 'tenant-default',
-        id: 'CYC-001',
-        title: 'Q1 2026 Performance Review',
-        status: 'Active',
-        startDate: '2026-03-01',
-        endDate: '2026-03-31'
-    }
-];
+export const initialReviewCycles: ReviewCycle[] = [];
 
 export const initialPerformanceReviews: PerformanceReview[] = [];
 
-export const initialLeaveRequests: LeaveRequest[] = [
-    {
-        tenantId: 'tenant-default',
-        id: "LR-001",
-        employeeId: "EMP-003", // Odirin Success
-        type: 'Annual',
-        startDate: '2026-02-10',
-        endDate: '2026-02-12',
-        days: 3,
-        reason: "Personal time off to attend a wedding.",
-        status: 'Pending',
-        requestedAt: '2026-01-29T10:00:00Z', // ~3 days ago (Trigger 72h)
-        reminderLevel: 0
-    },
-    {
-        tenantId: 'tenant-default',
-        id: "LR-002",
-        employeeId: "EMP-004", // Victor
-        type: 'Sick',
-        startDate: '2026-02-05',
-        endDate: '2026-02-06',
-        days: 2,
-        reason: "Feeling unwell",
-        status: 'Pending',
-        requestedAt: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(), // ~25 hours ago (Trigger 24h)
-        reminderLevel: 0
-    },
-    {
-        tenantId: 'tenant-default',
-        id: "LR-003",
-        employeeId: "EMP-005", // Fegor
-        type: 'Unpaid',
-        startDate: '2026-03-01',
-        endDate: '2026-03-05',
-        days: 5,
-        reason: "Traveling",
-        status: 'Pending',
-        requestedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), // ~6 days ago (Trigger Escalation)
-        reminderLevel: 0
-    }
-];
+export const initialLeaveRequests: LeaveRequest[] = [];
 
-export const jobs: Job[] = [
-    {
-        id: "JOB-001",
-        tenantId: 'tenant-default',
-        title: 'Frontend Developer',
-        department: 'Engineering',
-        type: 'Full-time',
-        location: 'Abuja (Hybrid)',
-        applicants: 3,
-        status: 'Published',
-        postedAt: new Date().toISOString(),
-        description: 'We are looking for a skilled Frontend Developer with React experience...',
-        deadline: '2026-02-28',
-        applicationList: [
-            { tenantId: 'tenant-default', id: 'APP-001', jobId: 'JOB-001', candidateName: 'John Doe', email: 'john@example.com', resumeUrl: '#', status: 'New', appliedAt: '2026-01-20' },
-            { tenantId: 'tenant-default', id: 'APP-002', jobId: 'JOB-001', candidateName: 'Jane Smith', email: 'jane@example.com', resumeUrl: '#', status: 'Reviewing', appliedAt: '2026-01-18' },
-            { tenantId: 'tenant-default', id: 'APP-003', jobId: 'JOB-001', candidateName: 'Samuel Green', email: 'sam@example.com', resumeUrl: '#', status: 'Rejected', appliedAt: '2026-01-15' }
-        ]
-    },
-    {
-        id: 'JOB-002',
-        tenantId: 'tenant-default',
-        title: 'Backend Developer',
-        department: 'Engineering',
-        type: 'Full-time',
-        location: 'Abuja (Hybrid)',
-        applicants: 0,
-        status: 'Published',
-        postedAt: new Date().toISOString(),
-        description: 'Join our backend team to build scalable APIs...',
-        deadline: '2026-02-15',
-        applicationList: []
-    },
-    {
-        id: 'JOB-003',
-        tenantId: 'tenant-default',
-        title: 'Product Marketing Manager',
-        department: 'Marketing',
-        type: 'Full-time',
-        location: 'Lagos (Remote)',
-        applicants: 1,
-        status: 'Published',
-        postedAt: new Date().toISOString(),
-        description: 'Lead our marketing initiatives...',
-        deadline: '2026-03-10',
-        applicationList: [
-            { tenantId: 'tenant-default', id: 'APP-004', jobId: 'JOB-003', candidateName: 'Michael Brown', email: 'michael@example.com', resumeUrl: '#', status: 'Shortlisted', appliedAt: '2026-01-22' }
-        ]
-    }
-];
+export const jobs: Job[] = [];
 
 export const mockEmployee = employees[5]; // Default for verification page
 
@@ -1810,52 +1712,6 @@ export interface CareersHeroSection extends BaseSection {
 }
 
 
-export interface Inquiry {
-    id: string;
-    name: string;
-    email: string;
-    phone?: string;
-    company?: string;
-    subject: string;
-    message: string;
-    status: 'unread' | 'read' | 'resolved';
-    submittedAt: string;
-}
-
-export const initialInquiries: Inquiry[] = [
-    {
-        id: 'INQ-001',
-        name: 'Jane Doe',
-        email: 'jane.doe@example.com',
-        phone: '+1 555-0101',
-        company: 'Tech Innovators Inc.',
-        subject: 'Partnership Inquiry',
-        message: 'We are interested in discussing a potential partnership regarding your industrial solutions.',
-        status: 'unread',
-        submittedAt: new Date(Date.now() - 86400000 * 2).toISOString()
-    },
-    {
-        id: 'INQ-002',
-        name: 'John Smith',
-        email: 'john.smith@example.com',
-        subject: 'Service Pricing',
-        message: 'Could you please provide a quote for your Specific IT Services for a team of 50?',
-        status: 'read',
-        submittedAt: new Date(Date.now() - 86400000 * 5).toISOString()
-    },
-    {
-        id: 'INQ-003',
-        name: 'Alice Johnson',
-        email: 'ajohnson@startup.io',
-        phone: '+44 20 7123 4567',
-        company: 'Startup IO',
-        subject: 'General Question',
-        message: 'Where is your main office located?',
-        status: 'resolved',
-        submittedAt: new Date(Date.now() - 86400000 * 10).toISOString()
-    }
-];
-
 export const initialCMSContent: CMSSection[] = [
     {
         id: 'sec-hero',
@@ -2390,34 +2246,7 @@ export const initialPages: Record<string, CMSPage> = {
 
 
 // --- Finance & Ledger Data ---
-export const initialLedgerEntries: LedgerEntry[] = [
-    {
-        id: 'L-001',
-        payrollCycleId: 'JAN-2026',
-        tenantId: 'tenant-default',
-        employeeId: 'EMP-001',
-        currency: 'NGN',
-        employeeName: 'Sarah Jenkins',
-        type: 'Salary',
-        bankDetails: { bankName: 'Access Bank', accountNumber: '0012345678', accountName: 'Sarah Jenkins' },
-        amount: 450000,
-        status: 'Pending Funding',
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: 'L-002',
-        payrollCycleId: 'JAN-2026',
-        tenantId: 'tenant-default',
-        employeeId: 'EMP-002',
-        currency: 'NGN',
-        employeeName: 'Michael Chen',
-        type: 'Salary',
-        bankDetails: { bankName: 'GTBank', accountNumber: '0098765432', accountName: 'Michael Chen' },
-        amount: 550000,
-        status: 'Funded',
-        createdAt: new Date().toISOString()
-    }
-];
+export const initialLedgerEntries: LedgerEntry[] = [];
 
 // --- Salary Structures ---
 export const initialSalaryStructures: SalaryStructure[] = [
@@ -2451,51 +2280,7 @@ export const initialSalaryStructures: SalaryStructure[] = [
 ];
 
 // --- Promotion Requests ---
-export const initialPromotionRequests: PromotionRequest[] = [
-    {
-        id: 'PR-001',
-        tenantId: 'tenant-default',
-        employeeId: 'EMP-003', // Assuming exists
-        currentRole: 'USER',
-        newRole: 'USER',
-        currentSalary: 200000,
-        proposedSalary: 280000,
-        effectiveDate: '2026-03-01',
-        reason: 'Consistently high performance ratings and completed certifications.',
-        requestedBy: 'EMP-001',
-        requestedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-        status: 'Pending',
-        eligibilitySnapshot: {
-            isEligible: true,
-            reasons: [],
-            scores: { performance: 4.5, tenureMonths: 14 }
-        }
-    }
-];
+export const initialPromotionRequests: PromotionRequest[] = [];
 
 // --- Task Management ---
-export const initialTasks: Task[] = [
-    {
-        id: 'TSK-001',
-        title: 'Complete Q1 Financial Audit',
-        description: 'Review and compile the Q1 financial reports for the upcoming board meeting.',
-        assignedTo: 'EMP-003', // e.g., Sarah Chen
-        assignedBy: 'EMP-001', // Admin
-        priority: 'High',
-        status: 'In Progress',
-        deliveryDate: new Date(Date.now() + 86400000 * 5).toISOString(), // 5 days from now
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-        progressNotes: 'Gathered preliminary reports from department heads.',
-    },
-    {
-        id: 'TSK-002',
-        title: 'Update Employee Handbook',
-        description: 'Revise sections 4 and 5 of the employee handbook to reflect new work-from-home policies.',
-        assignedTo: 'EMP-003', // Assign to same user for easy testing
-        assignedBy: 'EMP-002', // Admin
-        priority: 'Medium',
-        status: 'Pending',
-        deliveryDate: new Date(Date.now() + 86400000 * 14).toISOString(), // 14 days from now
-        createdAt: new Date().toISOString(),
-    }
-];
+export const initialTasks: Task[] = [];

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
-import { jobs as initialJobs, initialLeaveRequests, initialReviewCycles, initialPerformanceReviews, initialFooterContent, initialGlobalContent, initialServicesCollection, initialLedgerEntries, initialSalaryStructures, initialPromotionRequests, initialEligibilityRules, initialInquiries, initialTasks } from '../data/mockData';
-import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, CMSSection, FooterContent, FooterSection, GlobalContent, ServiceItem, ServiceCollection, BonusType, BonusRequest, LedgerEntry, SalaryStructure, PromotionRequest, PromotionEligibilityRule, PayrollCycle, AdminRole, Inquiry, Task } from '../data/mockData';
+import { jobs as initialJobs, initialLeaveRequests, initialReviewCycles, initialPerformanceReviews, initialFooterContent, initialGlobalContent, initialServicesCollection, initialLedgerEntries, initialSalaryStructures, initialPromotionRequests, initialEligibilityRules, initialTasks } from '../data/mockData';
+import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, CMSSection, FooterContent, FooterSection, GlobalContent, ServiceItem, ServiceCollection, BonusType, BonusRequest, LedgerEntry, SalaryStructure, PromotionRequest, PromotionEligibilityRule, PayrollCycle, AdminRole, Task } from '../data/mockData';
 
 import * as reportService from '../services/reportService';
 import { authService } from '../services/authService';
@@ -194,12 +194,6 @@ export interface AdminContextType {
     cfoApprovePayroll: () => void;
     updateEmployeeSalary: (empId: string, newSalary: number, reason: string, effectiveDate: string) => void;
 
-    // Contact Inquiries
-    inquiries: Inquiry[];
-    submitInquiry: (inquiry: Omit<Inquiry, 'id' | 'status' | 'submittedAt'>) => void;
-    markInquiryAsRead: (id: string) => void;
-    resolveInquiry: (id: string) => void;
-    deleteInquiry: (id: string) => void;
 
     // Task Management
     tasks: Task[];
@@ -278,7 +272,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [notifications, setNotifications] = useState<AdminNotification[]>(INITIAL_NOTIFICATIONS);
     const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
     const [currentTenantId] = useState('tenant-default');
-    const [inquiries, setInquiries] = useState<Inquiry[]>(initialInquiries);
+
 
     // Define helper functions before they are used in other functions
     const sendEmail = (to: string, subject: string, body: string) => {
@@ -365,11 +359,11 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
                     // Fetch real CMS content layout
                     const pagesResponse = await cmsService.getCMSPages();
-                    if (pagesResponse.success && pagesResponse.data) {
+                    if (pagesResponse.success && pagesResponse.data && pagesResponse.data.length > 0) {
                         // Store the whole page structure, or specifically extract sections depending on how CMSPage relies on them
                         setCmsContent(pagesResponse.data);
                     } else {
-                        // fallback
+                        // fallback to local seeded mock data if live API has no pages yet
                         if (cmsResponse.success) setCmsContent(cmsResponse.data);
                     }
 
@@ -2086,35 +2080,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         };
     };
 
-    // --- Contact Inquiries ---
-    const submitInquiry = (inquiryData: Omit<Inquiry, 'id' | 'status' | 'submittedAt'>) => {
-        const newInquiry: Inquiry = {
-            ...inquiryData,
-            id: `INQ-${Date.now()}`,
-            status: 'unread',
-            submittedAt: new Date().toISOString()
-        };
-        setInquiries(prev => [newInquiry, ...prev]);
-
-        // Optional: Notify admins
-        dispatchNotification(
-            { title: 'New Web Inquiry', message: `Incoming message from ${inquiryData.name}`, type: 'HR', link: '/admin/inquiries' },
-            { roles: ['SUPER_ADMIN', 'WEB_ADMIN'] as any }
-        );
-    };
-
-    const markInquiryAsRead = (id: string) => {
-        setInquiries(prev => prev.map(inq => inq.id === id ? { ...inq, status: 'read' as const } : inq));
-    };
-
-    const resolveInquiry = (id: string) => {
-        setInquiries(prev => prev.map(inq => inq.id === id ? { ...inq, status: 'resolved' as const } : inq));
-    };
-
-    const deleteInquiry = (id: string) => {
-        setInquiries(prev => prev.filter(inq => inq.id !== id));
-    };
-
     // --- Task Management ---
     const createTask = (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => {
         const newTask: Task = {
@@ -2166,12 +2131,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             payrollStatus,
             requestAuth,
             ceoSignature,
-            // Contact Inquiries
-            inquiries,
-            submitInquiry,
-            markInquiryAsRead,
-            resolveInquiry,
-            deleteInquiry,
             // Task Management
             tasks,
             createTask,

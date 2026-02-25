@@ -1,0 +1,204 @@
+{
+    "metaData": [
+        {
+            "slug": "home",
+            "title": "Welcome to Eleastar Technologies Ltd.",
+            "description": "Eleastar is a leading provider of technology solutions for businesses and organizations",
+            "keywords": "Eleastar, technology, solutions, business, organization",
+            "author": "Eleastar Technologies Ltd.",
+            "ogTags": {
+                "ogTitle": "Welcome to Eleastar Technologies Ltd.",
+                "ogDescription": "Eleastar is a leading provider of technology solutions for businesses and organizations",
+                "ogKeywords": "Eleastar, technology, solutions, business, organization",
+                "ogUrl": "https://eleastar.com",
+                "ogImage": {
+                    "url": "/images/hero/1.png",
+                    "alt": "Hero",
+                    "type": "image/png",
+                    "width": 1200,
+                    "height": 630
+                },
+                "ogType": "website",
+                "ogLocale": "en_US",
+                "ogSiteName": "Eleastar Technologies Ltd."
+            }
+        },
+        {
+            "slug": "services",
+            "title": "Services | Eleastar Technologies Ltd.",
+            "description": "We provide a wide range of services to our clients",
+            "keywords": "services, technology, solutions, business, organization",
+            "author": "Eleastar Technologies Ltd.",
+            "ogTags": {
+                "ogTitle": "Services | Eleastar Technologies Ltd.",
+                "ogDescription": "We provide a wide range of services to our clients",
+                "ogKeywords": "services, technology, solutions, business, organization",
+                "ogUrl": "https://eleastar.com/services",
+                "ogImage": {
+                    "url": "/images/hero/1.png",
+                    "alt": "Hero",
+                    "type": "image/png",
+                    "width": 1200,
+                    "height": 630
+                },
+                "ogType": "website",
+                "ogLocale": "en_US",
+                "ogSiteName": "Eleastar Technologies Ltd."
+            }
+        },
+        {
+            "slug": "specific-it-services",
+            "title": "Specific IT Services | Eleastar Technologies Ltd.",
+            "description": "We provide specific IT services to meet the unique needs of various industries, ensuring robust, scalable, and user-friendly applications",
+            "keywords": "specific it services, robust, scalable, user-friendly applications, specific it services services for businesses",
+            "author": "Eleastar Technologies Ltd.",
+            "ogTags": {
+                "ogTitle": "Specific IT Services | Eleastar Technologies Ltd.",
+                "ogDescription": "We provide specific IT services to meet the unique needs of various industries, ensuring robust, scalable, and user-friendly applications",
+                "ogKeywords": "specific it services, robust, scalable, user-friendly applications, specific it services services for businesses",
+                "ogUrl": "https://eleastar.com/services/specific-it-services",
+                "ogImage": {
+                    "url": "/images/hero/1.png",
+                    "alt": "Hero",
+                    "type": "image/png",
+                    "width": 1200,
+                    "height": 630
+                },
+                "ogType": "website",
+                "ogLocale": "en_US",
+                "ogSiteName": "Eleastar Technologies Ltd."
+            }
+        }
+    ],
+    "navData": [
+        {
+            "label": "Services",
+            "slug": "services",
+            "href": "/services",
+            "subItems": [
+                {
+                    "label": "Information Technology Services",
+                    "slug": "information-technology-services",
+                    "href": "/services/information-technology-services"
+                },
+                {
+                    "label": "Research and Development",
+                    "slug": "research-and-development",
+                    "href": "/services/research-and-development"
+                }
+            ]
+        },
+        {
+            "label": "Technologies",
+            "slug": "technologies",
+            "href": "/technologies"
+        },
+        {
+            "label": "Eleastar & You",
+            "slug": "eleastar-and-you",
+            "href": "/eleastar-and-you"
+        }
+    ],
+    "footerNavData": {
+        "group1": [
+            {
+                "label": "Services",
+                "slug": "services",
+                "href": "/services"
+            }
+        ],
+        "socialLinks": [
+            {
+                "icon": "fi fi-brands-facebook",
+                "href": "/facebook"
+            }
+        ],
+        "copyright": "Copyright © 2026",
+        "rc": "RC - 7130026",
+        "footerLogo": "/images/footer_logo.png"
+    },
+    "contactUsCardData": {
+        "title": "Contact Us",
+        "titleColor": "text-white",
+        "backgroundImage": "/images/services/contact-bg.png",
+        "cardColor": "bg-primary-2",
+        "description": "Contact us today to learn how Eleastar Technologies Ltd. can support your business with our innovative and comprehensive service offerings.",
+        "textColor": "text-white",
+        "button": {
+            "color": "text-white",
+            "backgroundColor": "bg-primary",
+            "text": "Reach out to us today!",
+            "icon": "fi fi-rr-arrow-right",
+            "link": "/contact"
+        }
+    },
+    "pages": {
+        "home": {
+            "heroCardData": [
+                {
+                    "cardTitle": "Driving Innovation, Delivering Excellence",
+                    "cardDescription": "Discover our comprehensive IT services, cutting-edge research, and tailored industrial solutions.",
+                    "cardImages": {
+                        "mainImage": {
+                            "src": "/images/hero/1.png",
+                            "alt": "Hero"
+                        },
+                        "subImage1": {
+                            "src": "/images/hero/home-2.png",
+                            "alt": "Hero"
+                        },
+                        "subImage2": {
+                            "src": "/images/hero/home-2.png",
+                            "alt": "Hero"
+                        },
+                        "subCardColor": "bg-card-2"
+                    },
+                    "backgroundColor": "bg-card-1",
+                    "cardColor": "bg-card-2",
+                    "button": {
+                        "color": "text-card-1",
+                        "backgroundColor": "bg-white",
+                        "text": "Learn More",
+                        "icon": "fi-rr-arrow-right",
+                        "link": "/services/information-technology-services"
+                    }
+                }
+            ]
+        },
+        "about": {
+            "aboutEleastarHeroData": {
+                "topTitle": {
+                    "first": "Who we are",
+                    "second": ""
+                },
+                "bottomTitle": "Explore Eleastar Technologies LTD.",
+                "description": "Eleastar partners with companies to transform and manage their business by unlocking the value of technology.",
+                "image": {
+                    "src": "/images/hero/about-eleastar-hero.png",
+                    "alt": "About Eleastar"
+                }
+            }
+        },
+        "services": {
+            "servicesListData": [
+                {
+                    "slug": "information-technology-services",
+                    "title": "Information Technology Services",
+                    "description": "We provide a wide range of IT services to enhance operational efficiency and drive business growth.",
+                    "bannerImage": "/images/services/information-tech.png",
+                    "bannerImageAlt": "Information Technology Services",
+                    "servicesContent": [
+                        {
+                            "index": 1,
+                            "TextTitle1": "Software",
+                            "TextTitle2": "Development",
+                            "TextDescription": "Develop custom software solutions for various industries, focusing on high-quality, innovative applications.",
+                            "image": "/images/services/it-services/software-development.png",
+                            "imageAlt": "Custom Software Development"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

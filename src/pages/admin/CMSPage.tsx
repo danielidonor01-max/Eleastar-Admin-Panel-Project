@@ -22,6 +22,7 @@ import type {
     ServiceDetailHeroSection, ServiceDetailOverviewSection, ServiceDetailOfferingSection, ServiceDetailContactSection,
     FooterSection, FooterContent, ServiceContentBlock
 } from '../../data/mockData';
+import { exportCMSToJSON } from '../../utils/cmsExportAdapter';
 
 // --- Specific Editor Components ---
 
@@ -1187,14 +1188,22 @@ export const CMSPage: React.FC = () => {
                             </span>
                         </div>
 
-                        <a
-                            href={currentPagePreviewLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm"
-                        >
-                            <Eye size={16} /> Preview Page
-                        </a>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => exportCMSToJSON(cmsContent, globalContent, servicesCollection, footerContent)}
+                                className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors font-medium text-sm"
+                            >
+                                <FileCode size={16} /> Export JSON
+                            </button>
+                            <a
+                                href={currentPagePreviewLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm"
+                            >
+                                <Eye size={16} /> Preview Page
+                            </a>
+                        </div>
                     </div>
                     <div>
                         {activeSection?.status === 'Draft' && (

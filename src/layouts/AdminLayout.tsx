@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Globe, ChevronDown, ChevronRight, LogOut, Calendar, Share2, BarChart2, QrCode, Wallet, FileText, Check, Shield, TrendingUp, Gift, Activity, Mail, CheckSquare } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Globe, ChevronDown, ChevronRight, LogOut, Calendar, Share2, BarChart2, QrCode, Wallet, FileText, Check, Shield, TrendingUp, Gift, Activity, CheckSquare } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { NotificationMenu } from '../components/NotificationMenu';
 import { GlobalSearchMenu } from '../components/GlobalSearchMenu';
@@ -353,13 +353,6 @@ export const AdminLayout: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-                            )}
-
-                            {hasAccess('Website CMS') && (
-                                <NavLink to="/admin/inquiries" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
-                                    <Mail size={20} />
-                                    Customer Inquiries
-                                </NavLink>
                             )}
 
                             {hasAccess('Settings') && (
