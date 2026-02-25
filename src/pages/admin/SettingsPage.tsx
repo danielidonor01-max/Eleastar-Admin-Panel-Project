@@ -8,7 +8,7 @@ import type { Employee } from '../../data/mockData';
 import { cmsService } from '../../services/cmsService';
 
 export const SettingsPage: React.FC = () => {
-    const { activityLogs, employees, updateEmployee, ceoSignature, updateCeoSignature, rolePermissions, updateRolePermissions, currentUserRole, requestAuth, logAction, generateSystemPassword, sendEmail, addEmployee } = useAdmin();
+    const { activityLogs, employees, updateEmployee, ceoSignature, updateCeoSignature, rolePermissions, updateRolePermissions, currentUserRole, requestAuth, logAction, generateSystemPassword, sendEmail, addEmployee, apiKeys, addApiKey, toggleApiKeyStatus } = useAdmin();
     const { showError, showSuccess } = useFeedback();
 
     // UI State
@@ -108,9 +108,14 @@ export const SettingsPage: React.FC = () => {
             if (res.success && res.data) {
                 setGeneratedKey(res.data.key);
                 showSuccess({ title: 'Key Generated', message: 'API Key has been created successfully. Copy it now, it will not be shown again.' });
+                // Automatically save it to our history list via context
+                addApiKey({
+                    name: apiKeyName,
+                    keyPreview: `${res.data.key.substring(0, 5)}********************${res.data.key.substring(res.data.key.length - 4)}`
+                });
+
                 setApiKeyName('');
                 setCopied(false);
-                logAction('System Integration', `Generated new CMS API Key: ${apiKeyName}`);
             } else {
                 showError({ title: 'Generation Failed', message: res.error || 'Failed to generate key.' });
             }
@@ -398,6 +403,77 @@ export const SettingsPage: React.FC = () => {
                                             </div>
                                         </div>
                                     )}
+                                </div>
+                            </section>
+
+                            {/* API Keys History Table */}
+                            <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-8">
+                                <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-slate-100 rounded-lg">
+                                            <Activity className="text-slate-600" size={24} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-bold text-slate-900">Active API Keys</h2>
+                                            <p className="text-sm text-slate-500">Manage and disable previously generated keys.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
+                                            <tr>
+                                                <th className="px-6 py-4">Key Name</th>
+                                                <th className="px-6 py-4">Preview</th>
+                                                <th className="px-6 py-4">Created Date</th>
+                                                <th className="px-6 py-4 text-center">Status</th>
+                                                <th className="px-6 py-4 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {apiKeys.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                                                        No API keys generated yet. Use the tool above to create one.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                apiKeys.map((key) => (
+                                                    <tr key={key.id} className={`hover:bg-slate-50 transition-colors ${key.status === 'disabled' ? 'opacity-60 bg-slate-50' : ''}`}>
+                                                        <td className="px-6 py-4">
+                                                            <div className="font-bold text-slate-900">{key.name}</div>
+                                                            <div className="text-xs text-slate-500 font-mono mt-0.5">{key.id}</div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <code className="px-2 py-1 bg-slate-100 rounded border border-slate-200 text-slate-600 font-mono text-xs">
+                                                                {key.keyPreview}
+                                                            </code>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-slate-600">
+                                                            {new Date(key.createdAt).toLocaleDateString()}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${key.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'}`}>
+                                                                {key.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <button
+                                                                onClick={() => toggleApiKeyStatus(key.id)}
+                                                                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${key.status === 'active' ? 'bg-emerald-600' : 'bg-slate-300'}`}
+                                                                title={key.status === 'active' ? 'Disable API Key' : 'Enable API Key'}
+                                                            >
+                                                                <span
+                                                                    aria-hidden="true"
+                                                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${key.status === 'active' ? 'translate-x-5' : 'translate-x-0'}`}
+                                                                />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </section>
                         </div>

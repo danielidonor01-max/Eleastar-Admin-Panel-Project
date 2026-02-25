@@ -140,6 +140,15 @@ export interface PromotionHistoryEntry {
     approvedBy?: string;
 }
 
+export interface SystemApiKey {
+    id: string;
+    tenantId: string;
+    name: string;
+    keyPreview: string; // First few and last few chars for display
+    createdAt: string;
+    status: 'active' | 'disabled';
+}
+
 export interface Employee {
     id: string;
     tenantId: string;
@@ -2284,3 +2293,22 @@ export const initialPromotionRequests: PromotionRequest[] = [];
 
 // --- Task Management ---
 export const initialTasks: Task[] = [];
+
+export const initialApiKeys: SystemApiKey[] = [
+    {
+        id: 'API-1',
+        tenantId: 'tenant-default',
+        name: 'Main Website Frontend',
+        keyPreview: 'es_pk_********************a87b',
+        createdAt: '2026-02-10T09:30:00Z',
+        status: 'active'
+    },
+    {
+        id: 'API-2',
+        tenantId: 'tenant-default',
+        name: 'Staging Environment Test',
+        keyPreview: 'es_pk_********************4f9c',
+        createdAt: '2026-02-01T14:15:00Z',
+        status: 'disabled'
+    }
+];

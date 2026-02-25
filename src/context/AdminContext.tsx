@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
-import { jobs as initialJobs, initialLeaveRequests, initialReviewCycles, initialPerformanceReviews, initialFooterContent, initialGlobalContent, initialServicesCollection, initialLedgerEntries, initialSalaryStructures, initialPromotionRequests, initialEligibilityRules, initialTasks } from '../data/mockData';
-import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, CMSSection, FooterContent, FooterSection, GlobalContent, ServiceItem, ServiceCollection, BonusType, BonusRequest, LedgerEntry, SalaryStructure, PromotionRequest, PromotionEligibilityRule, PayrollCycle, AdminRole, Task } from '../data/mockData';
+import { jobs as initialJobs, initialLeaveRequests, initialReviewCycles, initialPerformanceReviews, initialFooterContent, initialGlobalContent, initialServicesCollection, initialLedgerEntries, initialSalaryStructures, initialPromotionRequests, initialEligibilityRules, initialTasks, initialApiKeys } from '../data/mockData';
+import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, CMSSection, FooterContent, FooterSection, GlobalContent, ServiceItem, ServiceCollection, BonusType, BonusRequest, LedgerEntry, SalaryStructure, PromotionRequest, PromotionEligibilityRule, PayrollCycle, AdminRole, Task, SystemApiKey } from '../data/mockData';
 
 import * as reportService from '../services/reportService';
 import { authService } from '../services/authService';
@@ -136,6 +136,11 @@ export interface AdminContextType {
     addService: (service: Omit<ServiceItem, 'tenantId'>) => Promise<void>;
     updateService: (id: string, updates: Partial<ServiceItem>) => Promise<void>;
     deleteService: (id: string) => Promise<void>;
+
+    // API Keys Management
+    apiKeys: SystemApiKey[];
+    addApiKey: (apiKey: Omit<SystemApiKey, 'id' | 'tenantId' | 'createdAt' | 'status'>) => void;
+    toggleApiKeyStatus: (id: string) => void;
 
     // New Actions
     switchRole: (role: AdminRole) => void;
@@ -310,6 +315,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [salaryStructures, setSalaryStructures] = useState<SalaryStructure[]>(initialSalaryStructures);
     const [promotionRequests, setPromotionRequests] = useState<PromotionRequest[]>(initialPromotionRequests);
     const [eligibilityRules, setEligibilityRules] = useState<PromotionEligibilityRule[]>(initialEligibilityRules);
+    const [apiKeys, setApiKeys] = useState<SystemApiKey[]>(initialApiKeys);
 
     // AdminNotification Deduplication Ref
     const lastNotificationRef = React.useRef<{ sig: string; time: number } | null>(null);
@@ -2122,6 +2128,31 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     };
 
+    // --- API Key Management ---
+    const addApiKey = (apiKeyData: Omit<SystemApiKey, 'id' | 'tenantId' | 'createdAt' | 'status'>) => {
+        const newApiKey: SystemApiKey = {
+            ...apiKeyData,
+            id: `API-${Date.now()}`,
+            tenantId: currentTenantId,
+            createdAt: new Date().toISOString(),
+            status: 'active'
+        };
+        setApiKeys(prev => [newApiKey, ...prev]);
+        logAction('System Integration', `Recorded generated CMS API Key: ${apiKeyData.name}`);
+    };
+
+    const toggleApiKeyStatus = (id: string) => {
+        setApiKeys(prev => prev.map(key => {
+            if (key.id === id) {
+                const newStatus = key.status === 'active' ? 'disabled' : 'active';
+                logAction('System Integration', `Changed API Key (${key.name}) status to ${newStatus}`);
+                showSuccess({ title: 'Status Updated', message: `API Key ${key.name} is now ${newStatus}.` });
+                return { ...key, status: newStatus };
+            }
+            return key;
+        }));
+    };
+
     return (
         <AdminContext.Provider value={{
             employees: visibleEmployees,
@@ -2156,6 +2187,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             bulkPayrollAdjustment,
             logAction,
             updateCeoSignature,
+            // API Keys
+            apiKeys,
+            addApiKey,
+            toggleApiKeyStatus,
             // Bonus Management
             bonusTypes,
             bonusRequests,
