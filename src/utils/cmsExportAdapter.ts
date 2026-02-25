@@ -18,12 +18,12 @@ export function exportCMSToJSON(
 
     // 2. Map Footer
     const footerNavData = {
-        group1: footerContent.navigation.links.filter(l => l.isVisible).map(l => ({
+        group1: (footerContent.navigation.links || []).filter(l => l.isVisible).map(l => ({
             label: l.label,
             slug: l.url.replace(/^\//, ''),
             href: l.url
         })),
-        socialLinks: footerContent.social.links.filter(l => l.isVisible).map(l => ({
+        socialLinks: (footerContent.social.links || []).filter(l => l.isVisible).map(l => ({
             icon: `fi fi-brands-${l.label.toLowerCase()}`,
             href: l.url
         })),
