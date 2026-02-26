@@ -61,9 +61,11 @@ export const authService = {
 
                 return { success: true, data: { user: loggedInUser, token, refreshToken: data.refresh_token || token }, message: data.message || 'Login successful' };
             } else {
+                console.error("Login failed. Server returned:", response.status, data);
                 return { success: false, data: null as any, error: data.message || 'Invalid credentials' };
             }
         } catch (error: any) {
+            console.error("Login catch block error:", error);
             return { success: false, data: null as any, error: error.message };
         }
     },
@@ -145,7 +147,7 @@ export const authService = {
 
         try {
             // Support both Postman /auth/me and boilerplate /users/me endpoints
-            const response = await fetch(`${API_BASE_URL}/users/me`, {
+            const response = await fetch(`${API_BASE_URL}/auth/me`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,

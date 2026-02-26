@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import './App.css'
@@ -17,11 +16,9 @@ async function bootstrap() {
     const root = createRoot(rootElement);
 
     root.render(
-      <StrictMode>
-        <FeedbackProvider>
-          <App />
-        </FeedbackProvider>
-      </StrictMode>
+      <FeedbackProvider>
+        <App />
+      </FeedbackProvider>
     );
 
   } catch (err: any) {

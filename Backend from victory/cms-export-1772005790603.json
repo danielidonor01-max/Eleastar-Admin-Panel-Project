@@ -1,0 +1,327 @@
+{
+  "metaData": [
+    {
+      "slug": "home",
+      "title": "Eleastar - Innovative Tech Solutions",
+      "description": "Leading technology partner for industrial and digital transformation.",
+      "keywords": "ERP, Workforce, Payroll, Verification, Technology",
+      "author": "Eleastar",
+      "ogTags": {
+        "ogTitle": "Eleastar - Innovative Tech Solutions",
+        "ogDescription": "Leading technology partner for industrial and digital transformation.",
+        "ogKeywords": "ERP, Workforce, Payroll, Verification, Technology",
+        "ogUrl": "https://eleastar.com",
+        "ogImage": {
+          "url": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80",
+          "alt": "Hero",
+          "type": "image/png",
+          "width": 1200,
+          "height": 630
+        },
+        "ogType": "website",
+        "ogLocale": "en_US",
+        "ogSiteName": "Eleastar"
+      }
+    },
+    {
+      "slug": "information-technology-services",
+      "title": "Information Technology Services | Eleastar",
+      "description": "We provide a wide range of IT services to enhance operational efficiency and drive business growth.",
+      "keywords": "information technology services, services, technology, solutions",
+      "author": "Eleastar",
+      "ogTags": {
+        "ogTitle": "Information Technology Services | Eleastar",
+        "ogDescription": "We provide a wide range of IT services to enhance operational efficiency and drive business growth.",
+        "ogKeywords": "information technology services, services, technology, solutions",
+        "ogUrl": "https://eleastar.com/services/information-technology-services",
+        "ogImage": {
+          "url": "/images/services/information-tech.png",
+          "alt": "Information Technology Services",
+          "type": "image/png",
+          "width": 1200,
+          "height": 630
+        },
+        "ogType": "website",
+        "ogLocale": "en_US",
+        "ogSiteName": "Eleastar"
+      }
+    },
+    {
+      "slug": "research-and-development",
+      "title": "Research and Development | Eleastar",
+      "description": "We provide a wide range of research and development services to help businesses innovate and grow.",
+      "keywords": "research and development, services, technology, solutions",
+      "author": "Eleastar",
+      "ogTags": {
+        "ogTitle": "Research and Development | Eleastar",
+        "ogDescription": "We provide a wide range of research and development services to help businesses innovate and grow.",
+        "ogKeywords": "research and development, services, technology, solutions",
+        "ogUrl": "https://eleastar.com/services/research-and-development",
+        "ogImage": {
+          "url": "/images/services/research-and-dev.png",
+          "alt": "Research and Development",
+          "type": "image/png",
+          "width": 1200,
+          "height": 630
+        },
+        "ogType": "website",
+        "ogLocale": "en_US",
+        "ogSiteName": "Eleastar"
+      }
+    },
+    {
+      "slug": "electronics-manufacturing",
+      "title": "Electronics Manufacturing | Eleastar",
+      "description": "We provide electronics manufacturing services to help businesses innovate and grow.",
+      "keywords": "electronics manufacturing, services, technology, solutions",
+      "author": "Eleastar",
+      "ogTags": {
+        "ogTitle": "Electronics Manufacturing | Eleastar",
+        "ogDescription": "We provide electronics manufacturing services to help businesses innovate and grow.",
+        "ogKeywords": "electronics manufacturing, services, technology, solutions",
+        "ogUrl": "https://eleastar.com/services/electronics-manufacturing",
+        "ogImage": {
+          "url": "/images/services/electronics-manufacturing.png",
+          "alt": "Electronics Manufacturing",
+          "type": "image/png",
+          "width": 1200,
+          "height": 630
+        },
+        "ogType": "website",
+        "ogLocale": "en_US",
+        "ogSiteName": "Eleastar"
+      }
+    },
+    {
+      "slug": "industry-solutions",
+      "title": "Industry Solutions | Eleastar",
+      "description": "We provide industry solutions to help businesses innovate and grow.",
+      "keywords": "industry solutions, services, technology, solutions",
+      "author": "Eleastar",
+      "ogTags": {
+        "ogTitle": "Industry Solutions | Eleastar",
+        "ogDescription": "We provide industry solutions to help businesses innovate and grow.",
+        "ogKeywords": "industry solutions, services, technology, solutions",
+        "ogUrl": "https://eleastar.com/services/industry-solutions",
+        "ogImage": {
+          "url": "/images/services/industry-solutions.png",
+          "alt": "Industry Solutions",
+          "type": "image/png",
+          "width": 1200,
+          "height": 630
+        },
+        "ogType": "website",
+        "ogLocale": "en_US",
+        "ogSiteName": "Eleastar"
+      }
+    },
+    {
+      "slug": "specific-it-services",
+      "title": "Specific IT Services | Eleastar",
+      "description": "We provide specific IT services to help businesses innovate and grow.",
+      "keywords": "specific it services, services, technology, solutions",
+      "author": "Eleastar",
+      "ogTags": {
+        "ogTitle": "Specific IT Services | Eleastar",
+        "ogDescription": "We provide specific IT services to help businesses innovate and grow.",
+        "ogKeywords": "specific it services, services, technology, solutions",
+        "ogUrl": "https://eleastar.com/services/specific-it-services",
+        "ogImage": {
+          "url": "/images/services/specific-it-services.png",
+          "alt": "Specific IT Services",
+          "type": "image/png",
+          "width": 1200,
+          "height": 630
+        },
+        "ogType": "website",
+        "ogLocale": "en_US",
+        "ogSiteName": "Eleastar"
+      }
+    }
+  ],
+  "navData": [
+    {
+      "label": "Services",
+      "slug": "services",
+      "href": "/services"
+    },
+    {
+      "label": "Technologies",
+      "slug": "technologies",
+      "href": "/technologies"
+    },
+    {
+      "label": "Eleastar & You",
+      "slug": "eleastar-and-you",
+      "href": "/eleastar-and-you"
+    },
+    {
+      "label": "About Eleastar",
+      "slug": "about",
+      "href": "/about"
+    },
+    {
+      "label": "Contact",
+      "slug": "contact",
+      "href": "/contact"
+    }
+  ],
+  "footerNavData": {
+    "group1": [
+      {
+        "label": "Services",
+        "slug": "services",
+        "href": "/services"
+      },
+      {
+        "label": "Technology",
+        "slug": "technology",
+        "href": "/technology"
+      },
+      {
+        "label": "Eleastar & You",
+        "slug": "culture",
+        "href": "/culture"
+      },
+      {
+        "label": "About Eleastar",
+        "slug": "about",
+        "href": "/about"
+      },
+      {
+        "label": "Contact",
+        "slug": "contact",
+        "href": "/contact"
+      },
+      {
+        "label": "New Update",
+        "slug": "news",
+        "href": "/news"
+      },
+      {
+        "label": "Locate us",
+        "slug": "contact#map",
+        "href": "/contact#map"
+      }
+    ],
+    "socialLinks": [
+      {
+        "icon": "fi fi-brands-facebook",
+        "href": "#"
+      },
+      {
+        "icon": "fi fi-brands-x (twitter)",
+        "href": "#"
+      },
+      {
+        "icon": "fi fi-brands-linkedin",
+        "href": "#"
+      },
+      {
+        "icon": "fi fi-brands-instagram",
+        "href": "#"
+      }
+    ],
+    "copyright": "RC - 7130026",
+    "rc": "RC - 7130026",
+    "footerLogo": "/logo.png"
+  },
+  "contactUsCardData": null,
+  "pages": {
+    "home": {
+      "heroCardData": []
+    },
+    "about": {
+      "aboutEleastarHeroData": null
+    },
+    "services": {
+      "servicesListData": [
+        {
+          "slug": "information-technology-services",
+          "title": "Information Technology Services",
+          "description": "We provide a wide range of IT services to enhance operational efficiency and drive business growth.",
+          "bannerImage": "/images/services/information-tech.png",
+          "bannerImageAlt": "Information Technology Services",
+          "servicesContent": [
+            {
+              "index": 1,
+              "TextTitle1": "Software Development",
+              "TextTitle2": "01",
+              "TextDescription": "Develop custom software solutions for various industries.",
+              "image": "/images/services/it-services/software-development.png",
+              "imageAlt": "Service Image"
+            }
+          ]
+        },
+        {
+          "slug": "research-and-development",
+          "title": "Research and Development",
+          "description": "We provide a wide range of research and development services to help businesses innovate and grow.",
+          "bannerImage": "/images/services/research-and-dev.png",
+          "bannerImageAlt": "Research and Development",
+          "servicesContent": [
+            {
+              "index": 1,
+              "TextTitle1": "Innovative Product Development",
+              "TextTitle2": "01",
+              "TextDescription": "Develop innovative products to help businesses grow.",
+              "image": "/images/services/research-and-development/innovative-product-development.png",
+              "imageAlt": "Service Image"
+            }
+          ]
+        },
+        {
+          "slug": "electronics-manufacturing",
+          "title": "Electronics Manufacturing",
+          "description": "We provide electronics manufacturing services to help businesses innovate and grow.",
+          "bannerImage": "/images/services/electronics-manufacturing.png",
+          "bannerImageAlt": "Electronics Manufacturing",
+          "servicesContent": [
+            {
+              "index": 1,
+              "TextTitle1": "Electronic Components and Devices",
+              "TextTitle2": "01",
+              "TextDescription": "Source and manufacture electronic components and devices.",
+              "image": "/images/services/electronics-manufacturing/electronic-components-and-devices.png",
+              "imageAlt": "Service Image"
+            }
+          ]
+        },
+        {
+          "slug": "industry-solutions",
+          "title": "Industry Solutions",
+          "description": "We provide industry solutions to help businesses innovate and grow.",
+          "bannerImage": "/images/services/industry-solutions.png",
+          "bannerImageAlt": "Industry Solutions",
+          "servicesContent": [
+            {
+              "index": 1,
+              "TextTitle1": "Technological Solutions for Industries",
+              "TextTitle2": "01",
+              "TextDescription": "Provide technological solutions for industries.",
+              "image": "/images/services/industry-solutions/technological-solutions-for-industries.png",
+              "imageAlt": "Service Image"
+            }
+          ]
+        },
+        {
+          "slug": "specific-it-services",
+          "title": "Specific IT Services",
+          "description": "We provide specific IT services to help businesses innovate and grow.",
+          "bannerImage": "/images/services/specific-it-services.png",
+          "bannerImageAlt": "Specific IT Services",
+          "servicesContent": [
+            {
+              "index": 1,
+              "TextTitle1": "E-commerce Solutions",
+              "TextTitle2": "01",
+              "TextDescription": "Develop robust e-commerce platforms.",
+              "image": "/images/services/specific-it-services/ecommerce-solutions.png",
+              "imageAlt": "Service Image"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
