@@ -19,7 +19,7 @@ export class AuditService {
                 action: data.action,
                 entityType: data.entityType,
                 entityId: data.entityId,
-                details: data.details ? (data.details as Prisma.InputJsonValue) : undefined,
+                details: data.details ? JSON.stringify(data.details) : undefined,
             },
         });
     }

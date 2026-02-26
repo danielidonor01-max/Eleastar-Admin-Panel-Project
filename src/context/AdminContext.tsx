@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { jobs as initialJobs, initialLeaveRequests, initialReviewCycles, initialPerformanceReviews, initialFooterContent, initialGlobalContent, initialServicesCollection, initialLedgerEntries, initialSalaryStructures, initialPromotionRequests, initialEligibilityRules, initialTasks, initialApiKeys } from '../data/mockData';
+import { initialReviewCycles, initialPerformanceReviews, initialFooterContent, initialGlobalContent, initialServicesCollection, initialLedgerEntries, initialSalaryStructures, initialPromotionRequests, initialEligibilityRules, initialTasks, initialApiKeys } from '../data/mockData';
 import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, CMSSection, FooterContent, FooterSection, GlobalContent, ServiceItem, ServiceCollection, BonusType, BonusRequest, LedgerEntry, SalaryStructure, PromotionRequest, PromotionEligibilityRule, PayrollCycle, AdminRole, Task, SystemApiKey } from '../data/mockData';
 
 import * as reportService from '../services/reportService';
@@ -158,8 +158,9 @@ export interface AdminContextType {
 
     // Authentication
     isAuthenticated: boolean;
-    login: (email: string, password: string) => Promise<AdminRole | false>;
-    logout: () => Promise<void>;
+    login: (email: string, pass: string) => Promise<{ role?: AdminRole, requiresOtp?: boolean }>;
+    verifyOTP: (email: string, otp: string) => Promise<AdminRole | undefined>;
+    logout: () => void;
     // Password Management
     generateSystemPassword: () => string;
     sendEmail: (to: string, subject: string, body: string) => void;
@@ -267,8 +268,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     // State
     const [employees, setEmployees] = useState<Employee[]>([]); // Start empty, fetch on mount
-    const [jobs, setJobs] = useState<Job[]>(initialJobs);
-    const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(initialLeaveRequests);
+    const [jobs, setJobs] = useState<Job[]>([]);
+    const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
     const [cmsContent, setCmsContent] = useState<any[]>([]);
     const [footerContent, setFooterContent] = useState<FooterContent>(initialFooterContent);
     const [globalContent, setGlobalContent] = useState<GlobalContent>(initialGlobalContent);
@@ -344,7 +345,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
                 // 3. Load Notifications (if auth)
                 if (authResponse.success && authResponse.data) {
-                    const [notifResponse, leaveResponse, cycleResponse, cmsResponse, settingsResponse, servicesResponse, ledgerResponse, salaryResponse, promotionResponse, bonusTypeResponse, bonusRequestResponse] = await Promise.all([
+                    const [notifResponse, leaveResponse, cycleResponse, cmsResponse, settingsResponse, servicesResponse, ledgerResponse, salaryResponse, promotionResponse, bonusTypeResponse, bonusRequestResponse, jobsResponse, payrollStatusResponse] = await Promise.all([
                         notificationService.getNotifications(authResponse.data.id, authResponse.data.role),
                         leaveService.getAllLeaveRequests(),
                         performanceService.getReviewCycles(),
@@ -355,13 +356,20 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                         salaryService.getSalaryStructures(),
                         promotionService.getPromotionRequests(),
                         bonusService.getBonusTypes(),
-                        bonusService.getBonusRequests()
+                        bonusService.getBonusRequests(),
+                        jobService.getAllJobs(),
+                        payrollService.getPayrollStatus()
                     ]);
 
                     if (notifResponse.success) setNotifications(notifResponse.data);
                     if (leaveResponse.success) setLeaveRequests(leaveResponse.data);
                     if (cycleResponse.success) setReviewCycles(cycleResponse.data);
                     if (settingsResponse.success) setGlobalContent(settingsResponse.data);
+                    if (jobsResponse.success) setJobs(jobsResponse.data);
+                    if (payrollStatusResponse.success && payrollStatusResponse.data && payrollStatusResponse.data.length > 0) {
+                        // Assuming the backend returns an array of cycles, pick the latest or active one. For now, take the first.
+                        setPayrollStatus(payrollStatusResponse.data[0]);
+                    }
 
                     // Fetch real CMS content layout
                     const pagesResponse = await cmsService.getCMSPages();
@@ -497,7 +505,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const interval = setInterval(checkReminders, 60000);
         return () => clearInterval(interval);
 
-        // Intentionally missing dispatchNotification/employees from deps to simulate background service behavior 
+        // Intentionally missing dispatchNotification/employees from deps to simulate background service behavior
         // and avoid re-triggering on every state update, essentially running independently.
         // In a real app, this would be a backend job.
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1773,15 +1781,52 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     // Auth Actions
 
-    // Auth Actions
-
-    const login = async (email: string, password: string): Promise<AdminRole | false> => {
+    const login = async (email: string, pass: string): Promise<{ role?: AdminRole, requiresOtp?: boolean }> => {
         setIsLoading(true);
         try {
-            const response = await authService.login(email, password);
+            const res = await authService.login(email, pass);
+            if (res.success && res.data) {
+                // Check if backend flagged OTP
+                if ('requires_otp' in res.data && res.data.requires_otp) {
+                    setIsLoading(false); // Stop loading, user needs to enter OTP
+                    return { requiresOtp: true };
+                }
 
-            if (response.success && response.data) {
-                const user = response.data.user;
+                // Standard login success case
+                if ('user' in res.data) {
+                    const user = res.data.user;
+                    setIsAuthenticated(true);
+                    setCurrentUserRole(user.role);
+                    setCurrentUserId(user.id);
+
+                    // Fetch user specific data
+                    const notifResponse = await notificationService.getNotifications(user.id, user.role);
+                    if (notifResponse.success) {
+                        setNotifications(notifResponse.data);
+                    }
+
+                    logAction('Authentication', `User ${user.email} logged in successfully`);
+                    showSuccess({ title: 'Login Successful', message: `Welcome, ${user.name}!` });
+                    return { role: user.role };
+                }
+            }
+            showError({ title: 'Login Failed', message: res.error || 'Invalid credentials' });
+            return {};
+        } catch (error) {
+            console.error('Login error:', error);
+            showError({ title: 'Login Error', message: 'An unexpected error occurred.' });
+            return {};
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const verifyOTP = async (email: string, otp: string): Promise<AdminRole | undefined> => {
+        setIsLoading(true);
+        try {
+            const res = await authService.verifyOTP(email, otp);
+            if (res.success && res.data && 'user' in res.data) {
+                const user = res.data.user;
                 setIsAuthenticated(true);
                 setCurrentUserRole(user.role);
                 setCurrentUserId(user.id);
@@ -1792,16 +1837,16 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     setNotifications(notifResponse.data);
                 }
 
-                logAction('Login', `User ${user.email} logged in successfully`);
+                logAction('Authentication', `User ${user.email} verified OTP and logged in`);
+                showSuccess({ title: 'OTP Verified', message: `Welcome, ${user.name}!` });
                 return user.role;
-            } else {
-                showError({ title: 'Login Failed', message: response.error || 'Invalid credentials' });
-                return false;
             }
-        } catch (err) {
-            console.error(err);
-            showError({ title: 'Login Error', message: 'An unexpected error occurred.' });
-            return false;
+            showError({ title: 'OTP Verification Failed', message: res.error || 'Invalid OTP' });
+            return undefined;
+        } catch (error) {
+            console.error('OTP Verification Error:', error);
+            showError({ title: 'OTP Error', message: 'An unexpected error occurred during OTP verification.' });
+            return undefined;
         } finally {
             setIsLoading(false);
         }
@@ -1813,6 +1858,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsAuthenticated(false);
         setCurrentUserRole('USER'); // Default fallback
         setCurrentUserId(null);
+        setNotifications([]); // Clear notifications on logout
+        showInfo({ title: 'Logged Out', message: 'You have been successfully logged out.' });
         setIsLoading(false);
     };
     const visibleEmployees = React.useMemo(() => {
@@ -2234,6 +2281,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             requestRevision,
             isAuthenticated,
             login,
+            verifyOTP,
             logout,
             generateSystemPassword,
             sendEmail,

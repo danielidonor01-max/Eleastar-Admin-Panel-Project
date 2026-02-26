@@ -1,7 +1,16 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { SetMetadata } from '@nestjs/common';
-import { Role } from '@prisma/client';
+
+export enum Role {
+    SUPER_ADMIN = 'SUPER_ADMIN',
+    COO = 'COO',
+    HR_ADMIN = 'HR_ADMIN',
+    FINANCE_ADMIN = 'FINANCE_ADMIN',
+    PAYROLL_ADMIN = 'PAYROLL_ADMIN',
+    CHIEF_RISK_OFFICER = 'CHIEF_RISK_OFFICER',
+    USER = 'USER'
+}
 
 export const ROLES_KEY = 'roles';
 export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);

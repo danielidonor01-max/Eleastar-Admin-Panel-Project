@@ -1,6 +1,6 @@
-import { type ApiResponse, mockSuccess, mockError, delay } from './api';
+import { type ApiResponse, delay } from './api';
 import type { AdminRole } from '../data/mockData';
-import { employees } from '../data/mockData';
+import { API_BASE_URL } from '../config';
 import Cookies from 'js-cookie';
 
 export interface User {
@@ -18,105 +18,174 @@ export interface LoginResponse {
     refreshToken: string;
 }
 
-// Mock Token Generator
-const generateToken = () => `mock-jwt-token-${Date.now()}`;
 
 export const authService = {
     /**
      * Login with Email and Password
-     * Currently mocks validation against the employees array.
+     * Calls POST /auth/login
      */
-    login: async (email: string, password: string): Promise<ApiResponse<LoginResponse>> => {
-        await delay(800); // Simulate network request
+    login: async (email: string, password: string): Promise<ApiResponse<LoginResponse | { requires_otp: boolean, email: string }>> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await response.json();
 
-        // Find user in mock data
-        // In a real app, this would be a POST request to /api/auth/login
-        const user = employees.find(e => e.email.toLowerCase() === email.toLowerCase());
+            // Support both Postman format and simpler local template format
+            if (response.ok && (data.success || data.access_token)) {
+                // Check if OTP is required
+                if (data.data?.requires_otp) {
+                    return { success: true, data: data.data, message: data.message };
+                }
 
-        if (!user) {
-            return mockError('Invalid credentials');
+                // Normal Login Success
+                const token = data.data?.token || data.access_token;
+                const user = data.data?.user || data.user;
+
+                const loggedInUser: User = {
+                    id: String(user.id),
+                    email: user.email,
+                    name: user.firstName ? `${user.firstName} ${user.lastName}` : user.name,
+                    role: typeof user.role_id === 'number' ? (user.role_id === 1 ? 'SUPER_ADMIN' : (user.role_id === 2 ? 'HR_ADMIN' : 'USER')) : (user.role || 'SUPER_ADMIN'),
+                    permissions: [],
+                    token
+                };
+
+                Cookies.set('admin_token', token, { expires: 1, secure: true, sameSite: 'strict' });
+                localStorage.setItem('user_id', loggedInUser.id);
+
+                return { success: true, data: { user: loggedInUser, token, refreshToken: data.refresh_token || token }, message: data.message || 'Login successful' };
+            } else {
+                return { success: false, data: null as any, error: data.message || 'Invalid credentials' };
+            }
+        } catch (error: any) {
+            return { success: false, data: null as any, error: error.message };
         }
+    },
 
-        // Mock Password Check (Accept any password for now, or specific one)
-        // In production, NEVER handle passwords on the frontend like this.
-        if (password.length < 3) {
-            return mockError('Password is too short');
+    /**
+     * Verify OTP
+     * Calls POST /auth/verify-otp
+     */
+    verifyOTP: async (email: string, otp: string): Promise<ApiResponse<LoginResponse>> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ email, otp })
+            });
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                const token = data.data.token;
+                const user = data.data.user;
+
+                const loggedInUser: User = {
+                    id: String(user.id),
+                    email: user.email,
+                    name: user.name,
+                    role: user.role_id === 1 ? 'SUPER_ADMIN' : (user.role_id === 2 ? 'HR_ADMIN' : 'USER'),
+                    permissions: [],
+                    token
+                };
+
+                Cookies.set('admin_token', token, { expires: 1, secure: true, sameSite: 'strict' });
+                localStorage.setItem('user_id', loggedInUser.id);
+
+                return { success: true, data: { user: loggedInUser, token, refreshToken: token }, message: data.message };
+            } else {
+                return { success: false, data: null as any, error: data.message || 'Invalid OTP' };
+            }
+        } catch (error: any) {
+            return { success: false, data: null as any, error: error.message };
         }
-
-        // Return User Object
-        const token = generateToken();
-        const refreshToken = `mock-refresh-token-${Date.now()}`;
-
-        const loggedInUser: User = {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.systemRole as AdminRole,
-            permissions: [],
-            token
-        };
-
-        // Save to Cookies (Secure Session)
-        Cookies.set('admin_token', token, { expires: 1, secure: true, sameSite: 'strict' });
-        Cookies.set('admin_refresh_token', refreshToken, { expires: 7, secure: true, sameSite: 'strict' });
-        localStorage.setItem('user_id', loggedInUser.id);
-
-        return mockSuccess({ user: loggedInUser, token, refreshToken });
     },
 
     /**
      * Logout
-     * Clears local storage and session data.
+     * Calls POST /auth/logout
      */
     logout: async (): Promise<ApiResponse<void>> => {
-        await delay(300);
-        Cookies.remove('admin_token');
-        Cookies.remove('admin_refresh_token');
-        localStorage.removeItem('user_id');
-        return mockSuccess<void>(undefined);
+        try {
+            const token = Cookies.get('admin_token');
+            if (token) {
+                await fetch(`${API_BASE_URL}/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            Cookies.remove('admin_token');
+            Cookies.remove('admin_refresh_token');
+            localStorage.removeItem('user_id');
+        }
+        return { success: true, data: undefined };
     },
 
     /**
      * Get Current User
-     * Rehydrates user session from local storage or validates token.
+     * Calls GET /auth/me
      */
     getCurrentUser: async (): Promise<ApiResponse<User | null>> => {
-        await delay(200);
         const token = Cookies.get('admin_token');
-        const userId = localStorage.getItem('user_id');
+        if (!token) return { success: true, data: null };
 
-        if (!token || !userId) {
-            return mockSuccess(null);
+        try {
+            // Support both Postman /auth/me and boilerplate /users/me endpoints
+            const response = await fetch(`${API_BASE_URL}/users/me`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+            const data = await response.json();
+
+            // Local boilerplate returns user object directly, Postman returns success wrap
+            if (response.ok && (data.email || data.success)) {
+                const user = data.data || data;
+                const loggedInUser: User = {
+                    id: String(user.id),
+                    email: user.email,
+                    name: user.firstName ? `${user.firstName} ${user.lastName}` : user.name,
+                    role: typeof user.role_id === 'number' ? (user.role_id === 1 ? 'SUPER_ADMIN' : (user.role_id === 2 ? 'HR_ADMIN' : 'USER')) : (user.role || 'SUPER_ADMIN'),
+                    permissions: [],
+                    token
+                };
+                return { success: true, data: loggedInUser };
+            } else {
+                // Token invalid
+                Cookies.remove('admin_token');
+                return { success: true, data: null };
+            }
+        } catch (error: any) {
+            console.error('GetCurrentUser error:', error);
+            return { success: true, data: null };
         }
-
-        const user = employees.find(e => e.id === userId);
-        if (!user) {
-            return mockSuccess(null);
-        }
-
-        return mockSuccess({
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.systemRole as AdminRole,
-            permissions: [],
-            token
-        });
     },
 
     /**
      * Refresh Token
-     * Exchanges refresh token for new access token.
+     * Currently a mock implementation until refresh route exists
      */
     refreshToken: async (): Promise<ApiResponse<string>> => {
         const refreshToken = Cookies.get('admin_refresh_token');
-        if (!refreshToken) return mockError('No refresh token');
-
-        await delay(500);
-        // In reality: const response = await api.post('/auth/refresh', { refreshToken });
-        const newToken = generateToken();
-        Cookies.set('admin_token', newToken, { expires: 1, secure: true, sameSite: 'strict' });
-        return mockSuccess(newToken);
+        if (!refreshToken) return { success: false, data: null as any, error: 'No refresh token' };
+        // Placeholder for real refresh logic
+        return { success: true, data: refreshToken };
     },
 
     /**
