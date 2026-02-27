@@ -36,21 +36,21 @@ export const authService = {
             });
             const data = await response.json();
 
-            // Support both Postman format and simpler local template format
-            if (response.ok && (data.success || data.access_token)) {
+            // Support both Postman format and simpler local template format, and the live API format
+            if (response.ok && (data.success || data.status || data.access_token)) {
                 // Check if OTP is required
                 if (data.data?.requires_otp) {
                     return { success: true, data: data.data, message: data.message };
                 }
 
                 // Normal Login Success
-                const token = data.data?.token || data.access_token;
+                const token = data.data?.token || data.access_token || data.token;
                 const user = data.data?.user || data.user;
 
                 const loggedInUser: User = {
                     id: String(user.id),
                     email: user.email,
-                    name: user.firstName ? `${user.firstName} ${user.lastName}` : user.name,
+                    name: user.firstName ? `${user.firstName} ${user.lastName}` : (user.name || ''),
                     role: typeof user.role_id === 'number' ? (user.role_id === 1 ? 'SUPER_ADMIN' : (user.role_id === 2 ? 'HR_ADMIN' : 'USER')) : (user.role || 'SUPER_ADMIN'),
                     permissions: [],
                     token
@@ -59,7 +59,7 @@ export const authService = {
                 Cookies.set('admin_token', token, { expires: 1, secure: true, sameSite: 'strict' });
                 localStorage.setItem('user_id', loggedInUser.id);
 
-                return { success: true, data: { user: loggedInUser, token, refreshToken: data.refresh_token || token }, message: data.message || 'Login successful' };
+                return { success: true, data: { user: loggedInUser, token, refreshToken: data.data?.refresh_token || data.refresh_token || token }, message: data.message || 'Login successful' };
             } else {
                 console.error("Login failed. Server returned:", response.status, data);
                 return { success: false, data: null as any, error: data.message || 'Invalid credentials' };
@@ -156,13 +156,13 @@ export const authService = {
             });
             const data = await response.json();
 
-            // Local boilerplate returns user object directly, Postman returns success wrap
-            if (response.ok && (data.email || data.success)) {
-                const user = data.data || data;
+            // Local boilerplate returns user object directly, Postman returns success wrap, Live API returns status wrap
+            if (response.ok && (data.email || data.success || data.status)) {
+                const user = data.data?.user || data.data || data;
                 const loggedInUser: User = {
                     id: String(user.id),
                     email: user.email,
-                    name: user.firstName ? `${user.firstName} ${user.lastName}` : user.name,
+                    name: user.firstName ? `${user.firstName} ${user.lastName}` : (user.name || ''),
                     role: typeof user.role_id === 'number' ? (user.role_id === 1 ? 'SUPER_ADMIN' : (user.role_id === 2 ? 'HR_ADMIN' : 'USER')) : (user.role || 'SUPER_ADMIN'),
                     permissions: [],
                     token
