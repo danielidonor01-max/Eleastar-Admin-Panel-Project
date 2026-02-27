@@ -4,6 +4,8 @@ import { useAdmin } from '../../context/AdminContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import QRCode from 'react-qr-code';
+import { PUBLIC_LINK } from '../../config';
 
 export const QRPage: React.FC = () => {
     const { employees, regenerateQR, ceoSignature, logAction } = useAdmin();
@@ -181,7 +183,11 @@ export const QRPage: React.FC = () => {
                 {/* QR Code Area */}
                 {templateConfig.showQRC && (
                     <div className="mt-auto mb-2 p-3 bg-white rounded-xl border border-slate-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
-                        <QrCode size={80} className="text-slate-900" />
+                        <QRCode
+                            value={`${PUBLIC_LINK}/verify/${selectedEmployee.id}`}
+                            size={80}
+                            level="M"
+                        />
                     </div>
                 )}
 

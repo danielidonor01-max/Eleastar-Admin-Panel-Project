@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Employee } from '../data/mockData';
 import { useAdmin } from '../context/AdminContext';
 import { PUBLIC_LINK } from '../config';
+import QRCode from 'react-qr-code';
 
 interface EmployeeProfileModalProps {
     employee: Employee;
@@ -312,8 +313,12 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                         <div className="grid md:grid-cols-2 gap-8">
                             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
                                 <h3 className="font-bold text-slate-900 mb-4">Current QR Code</h3>
-                                <div className="p-4 bg-white border-2 border-slate-100 rounded-xl shadow-sm mb-4">
-                                    <QrCode size={160} className={employee.status === 'active' ? 'text-slate-900' : 'text-slate-300'} />
+                                <div className={`p-4 bg-white border-2 rounded-xl shadow-sm mb-4 transition-all ${employee.status === 'active' ? 'border-brand-500 ring-4 ring-brand-50' : 'border-slate-200 opacity-50 grayscale'}`}>
+                                    <QRCode
+                                        value={`${PUBLIC_LINK}/verify/${employee.id}`}
+                                        size={160}
+                                        level="H"
+                                    />
                                 </div>
                                 <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold ${employee.status === 'active' || employee.status === 'probation' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
                                     <div className={`w-2 h-2 rounded-full ${employee.status === 'active' || employee.status === 'probation' ? 'bg-emerald-500' : 'bg-red-500'}`} />
