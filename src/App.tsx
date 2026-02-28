@@ -9,6 +9,7 @@ import { VerificationPage } from './pages/VerificationPage';
 import { CareersPage } from './pages/CareersPage';
 import { Contact } from './pages/Contact';
 import { LoginPage } from './pages/LoginPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Admin Imports
 import { AdminLayout } from './layouts/AdminLayout';
@@ -64,7 +65,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
 
           {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route path="/admin" element={<ErrorBoundary><AdminLayout /></ErrorBoundary>}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="notifications" element={<NotificationsPage />} />
