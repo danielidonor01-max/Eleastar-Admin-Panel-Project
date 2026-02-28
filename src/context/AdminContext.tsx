@@ -340,7 +340,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 // 2. Load Employees (Required for everyone to see names etc)
                 const empResponse = await employeeService.getAllEmployees();
                 if (empResponse.success) {
-                    setEmployees(empResponse.data);
+                    const empData = Array.isArray(empResponse.data) ? empResponse.data : (empResponse.data?.data || []);
+                    setEmployees(empData);
                 }
 
                 // 3. Load Notifications (if auth)
@@ -361,36 +362,39 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                         payrollService.getPayrollStatus()
                     ]);
 
-                    if (notifResponse.success) setNotifications(notifResponse.data);
-                    if (leaveResponse.success) setLeaveRequests(leaveResponse.data);
-                    if (cycleResponse.success) setReviewCycles(cycleResponse.data);
+                    const safeArr = (d: any) => Array.isArray(d) ? d : (d?.data || []);
+
+                    if (notifResponse.success) setNotifications(safeArr(notifResponse.data));
+                    if (leaveResponse.success) setLeaveRequests(safeArr(leaveResponse.data));
+                    if (cycleResponse.success) setReviewCycles(safeArr(cycleResponse.data));
                     if (settingsResponse.success) setGlobalContent(settingsResponse.data);
-                    if (jobsResponse.success) setJobs(jobsResponse.data);
-                    if (payrollStatusResponse.success && payrollStatusResponse.data && payrollStatusResponse.data.length > 0) {
-                        // Assuming the backend returns an array of cycles, pick the latest or active one. For now, take the first.
-                        setPayrollStatus(payrollStatusResponse.data[0]);
+                    if (jobsResponse.success) setJobs(safeArr(jobsResponse.data));
+
+                    const pStatusData = safeArr(payrollStatusResponse.data);
+                    if (payrollStatusResponse.success && pStatusData.length > 0) {
+                        setPayrollStatus(pStatusData[0]);
                     }
 
                     // Fetch real CMS content layout
                     const pagesResponse = await cmsService.getCMSPages();
-                    if (pagesResponse.success && pagesResponse.data && pagesResponse.data.length > 0) {
-                        // Store the whole page structure, or specifically extract sections depending on how CMSPage relies on them
-                        setCmsContent(pagesResponse.data);
+                    const pagesData = pagesResponse.success ? safeArr(pagesResponse.data) : [];
+                    if (pagesData.length > 0) {
+                        setCmsContent(pagesData);
                     } else {
                         // fallback to local seeded mock data if live API has no pages yet
-                        if (cmsResponse.success) setCmsContent(cmsResponse.data);
+                        if (cmsResponse.success) setCmsContent(safeArr(cmsResponse.data));
                     }
 
                     if (servicesResponse.success) setServicesCollection(servicesResponse.data);
-                    if (ledgerResponse.success) setLedgerEntries(ledgerResponse.data);
-                    if (salaryResponse.success) setSalaryStructures(salaryResponse.data);
-                    if (promotionResponse.success) setPromotionRequests(promotionResponse.data);
-                    if (bonusTypeResponse.success) setBonusTypes(bonusTypeResponse.data);
-                    if (bonusRequestResponse.success) setBonusRequests(bonusRequestResponse.data);
+                    if (ledgerResponse.success) setLedgerEntries(safeArr(ledgerResponse.data));
+                    if (salaryResponse.success) setSalaryStructures(safeArr(salaryResponse.data));
+                    if (promotionResponse.success) setPromotionRequests(safeArr(promotionResponse.data));
+                    if (bonusTypeResponse.success) setBonusTypes(safeArr(bonusTypeResponse.data));
+                    if (bonusRequestResponse.success) setBonusRequests(safeArr(bonusRequestResponse.data));
 
                     // Also fetch eligibility rules
                     const eligibilityResponse = await promotionService.getEligibilityRules();
-                    if (eligibilityResponse.success) setEligibilityRules(eligibilityResponse.data);
+                    if (eligibilityResponse.success) setEligibilityRules(safeArr(eligibilityResponse.data));
                 }
 
             } catch (error) {
