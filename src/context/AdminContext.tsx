@@ -1863,12 +1863,13 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsLoading(false);
     };
     const visibleEmployees = React.useMemo(() => {
+        const safeEmployees = employees || [];
         const sensitiveRoles: AdminRole[] = ['SUPER_ADMIN', 'FINANCE_ADMIN', 'PAYROLL_ADMIN', 'COO'];
         const canViewSalary = sensitiveRoles.includes(currentUserRole);
 
-        if (canViewSalary) return employees;
+        if (canViewSalary) return safeEmployees;
 
-        return employees.map(emp => ({
+        return safeEmployees.map(emp => ({
             ...emp,
             // Mask Salary if not viewing own profile (optional: allow viewing own salary)
             salary: emp.id === currentUserId ? emp.salary : 0

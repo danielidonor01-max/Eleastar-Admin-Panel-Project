@@ -34,6 +34,14 @@ export const QRPage: React.FC = () => {
     const activeCodeCount = employees.filter(e => e.status === 'active').length;
     const suspendedCount = employees.filter(e => e.status !== 'active').length;
 
+    if (!employees || employees.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 text-slate-500">
+                <p>Loading employees...</p>
+            </div>
+        );
+    }
+
     const handleBulkRegenerate = () => {
         const allIds = employees.map(e => e.id);
         regenerateQR(allIds);
