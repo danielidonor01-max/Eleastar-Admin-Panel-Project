@@ -10,6 +10,7 @@ import { payrollService } from '../services/payrollService';
 import { jobService } from '../services/jobService';
 import { leaveService } from '../services/leaveService';
 import { performanceService } from '../services/performanceService';
+import { fallbackCMSData } from '../data/fallbackCMS';
 import { cmsService } from '../services/cmsService';
 import { settingsService } from '../services/settingsService';
 import { financeService } from '../services/financeService';
@@ -387,11 +388,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                             setCmsContent(cmsResponse.data as any);
                         } else {
                             // Extreme fallback so CMS never infinite spins
-                            const { fallbackCMSData } = await import('../data/fallbackCMS');
                             setCmsContent(fallbackCMSData);
                         }
                     } catch (cmsErr) {
-                        const { fallbackCMSData } = await import('../data/fallbackCMS');
                         setCmsContent(fallbackCMSData);
                     }
 
@@ -421,8 +420,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Listen for CMS preview data from parent window (for iframe preview)
     React.useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
-            if (event.data?.type === 'CMS_PREVIEW_DATA' && event.data?.payload) {
-                const { cmsContent: newCms, globalContent: newGlobal, footerContent: newFooter, servicesCollection: newServices } = event.data.payload;
+            if (event.data?.type === 'live-preview-update' && event.data?.data) {
+                const { cmsContent: newCms, globalContent: newGlobal, footerContent: newFooter, servicesCollection: newServices } = event.data.data;
                 if (newCms) setCmsContent(newCms);
                 if (newGlobal) setGlobalContent(newGlobal);
                 if (newFooter) setFooterContent(newFooter);

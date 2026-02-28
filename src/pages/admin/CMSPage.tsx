@@ -2,17 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import { useFeedback } from '../../context/FeedbackContext';
-import { Save, AlertCircle, FileJson, CheckCircle } from 'lucide-react';
+import { Save, AlertCircle, CheckCircle, Eye, Layout, FileCode } from 'lucide-react';
+import { DynamicJsonEditor } from '../../components/DynamicJsonEditor';
+import { CMSPreviewPane } from '../../components/CMSPreviewPane';
+import { PUBLIC_LINK } from '../../config';
 
 export const CMSPage: React.FC = () => {
-    const { cmsContent, updatePMSContent } = useAdmin();
+    const { cmsContent, globalContent, updatePMSContent } = useAdmin();
     const { showSuccess, showError } = useFeedback();
 
     const [activeTab, setActiveTab] = useState<'metaData' | 'navData' | 'footerNavData' | 'contactUsCardData' | 'pages'>('pages');
+    const [activeView, setActiveView] = useState<'editor' | 'preview' | 'json'>('editor');
+    const [activePageObjectRoute, setActivePageObjectRoute] = useState<string>('Home');
     const [jsonInput, setJsonInput] = useState<string>('');
+    const [parsedData, setParsedData] = useState<any>(null); // For Dynamic Form Edit state
     const [isDirty, setIsDirty] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const location = useLocation();
+
+    const PREVIEW_URL = PUBLIC_LINK || window.location.origin;
 
     // Map Sidebar URL Params to the correct JSON Topology Tab
     useEffect(() => {
@@ -26,47 +34,74 @@ export const CMSPage: React.FC = () => {
         else if (page === 'Contact') targetTab = 'contactUsCardData';
 
         setActiveTab(targetTab);
+        setActivePageObjectRoute(page || 'Home');
     }, [location.search]);
 
+    // Load CMS Content from State -> JSON Text + Parsed Data for Visual Editor
     useEffect(() => {
         if (cmsContent && cmsContent[activeTab]) {
-            setJsonInput(JSON.stringify(cmsContent[activeTab], null, 4));
+            let rawData = cmsContent[activeTab];
+
+            // Isolate further if it's a specific page in the 'pages' tab
+            if (activeTab === 'pages' && activePageObjectRoute) {
+                const pageKey = activePageObjectRoute.toLowerCase();
+                // Check if the page exists in the pages object
+                if ((rawData as any)[pageKey]) {
+                    rawData = (rawData as any)[pageKey];
+                }
+            }
+
+            setJsonInput(JSON.stringify(rawData, null, 4));
+            setParsedData(JSON.parse(JSON.stringify(rawData))); // deep copy isolate
             setIsDirty(false);
             setError(null);
         } else {
             setJsonInput('{}');
+            setParsedData({});
         }
-    }, [activeTab, cmsContent]);
+    }, [activeTab, activePageObjectRoute, cmsContent]);
 
+    // Handle RAW JSON Text Change
     const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setJsonInput(e.target.value);
         setIsDirty(true);
         setError(null);
         try {
-            JSON.parse(e.target.value);
+            const parsed = JSON.parse(e.target.value);
+            setParsedData(parsed); // Sync the visual editor tree under the hood
         } catch (err: any) {
             setError(err.message);
         }
     };
 
-    const handleSave = async () => {
-        try {
-            const parsed = JSON.parse(jsonInput);
-            await updatePMSContent(activeTab, parsed);
-            showSuccess({ title: 'Success', message: `${activeTab} updated successfully!` });
-            setIsDirty(false);
-        } catch (err: any) {
-            showError({ title: 'Error', message: `Invalid JSON: ${err.message}` });
-        }
+    // Handle VISUAL Form Change
+    const handleDynamicDataChange = (newData: any) => {
+        setParsedData(newData);
+        setJsonInput(JSON.stringify(newData, null, 4));
+        setIsDirty(true);
+        setError(null);
     };
 
-    const tabs = [
-        { id: 'pages', label: 'Pages (Content)' },
-        { id: 'contactUsCardData', label: 'Global Contact Card' },
-        { id: 'navData', label: 'Main Navigation' },
-        { id: 'footerNavData', label: 'Footer Layout' },
-        { id: 'metaData', label: 'SEO & Metadata' }
-    ] as const;
+    const handleSave = async () => {
+        try {
+            let payloadToSave = parsedData;
+
+            // If we are editing a specific page, merge it back into the full 'pages' object
+            if (activeTab === 'pages' && activePageObjectRoute) {
+                const pageKey = activePageObjectRoute.toLowerCase();
+                payloadToSave = {
+                    ...(cmsContent?.pages || {}),
+                    [pageKey]: parsedData
+                };
+            }
+
+            await updatePMSContent(activeTab, payloadToSave);
+            showSuccess({ title: 'Success', message: `${activePageObjectRoute || activeTab} updated successfully!` });
+            setIsDirty(false);
+        } catch (err: any) {
+            showError({ title: 'Error', message: `Save failed: ${err.message}` });
+        }
+    };
 
     if (!cmsContent) {
         return (
@@ -76,12 +111,27 @@ export const CMSPage: React.FC = () => {
         );
     }
 
+    // Determine the exact URL to preview
+    const extractClientRoute = () => {
+        if (activePageObjectRoute === 'About') return `${PREVIEW_URL}/about`;
+        if (activePageObjectRoute === 'Services') return `${PREVIEW_URL}/services`;
+        if (activePageObjectRoute === 'Contact') return `${PREVIEW_URL}/contact`;
+        if (activePageObjectRoute === 'Careers') return `${PREVIEW_URL}/careers`;
+        if (activePageObjectRoute.includes('ServiceDetail')) return `${PREVIEW_URL}/services/industrial-solutions`; // fallback child
+        return PREVIEW_URL; // Home or Global components fallback to Index
+    }
+
     return (
-        <div className="p-8 max-w-7xl mx-auto flex flex-col h-[calc(100vh-80px)]">
+        <div className="p-8 max-w-[1600px] mx-auto flex flex-col h-[calc(100vh-80px)]">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Advanced CMS Object Editor</h1>
-                    <p className="text-slate-500 mt-1">Directly manage the strict nested JSON topology powering the website.</p>
+                    <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center gap-3">
+                        CMS Editor
+                        <span className="px-2 py-0.5 rounded bg-brand-100 text-brand-700 text-xs font-bold font-mono border border-brand-200 uppercase tracking-widest">
+                            {activeTab} • {activePageObjectRoute}
+                        </span>
+                    </h1>
+                    <p className="text-slate-500 mt-1">Manage the core JSON data powering the Eleastar website application.</p>
                 </div>
                 <button
                     onClick={handleSave}
@@ -92,66 +142,96 @@ export const CMSPage: React.FC = () => {
                             : 'bg-brand-600 text-white hover:bg-brand-700 hover:shadow-md'}`}
                 >
                     <Save size={18} />
-                    Save Configuration
+                    {isDirty ? 'Save Unsaved Changes' : 'Saved'}
                 </button>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-6 flex-grow overflow-hidden">
-                {/* Sidebar */}
-                <div className="w-full md:w-64 flex flex-col gap-2 overflow-y-auto">
-                    {tabs.map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => {
-                                if (isDirty && !window.confirm('You have unsaved changes. Discard?')) return;
-                                setActiveTab(tab.id);
-                            }}
-                            className={`flex items-center gap-3 p-4 rounded-xl text-left transition-all border ${activeTab === tab.id
-                                ? 'bg-brand-50 border-brand-200 text-brand-700 shadow-sm'
-                                : 'bg-white border-transparent text-slate-600 hover:bg-slate-50 hover:border-slate-200'
-                                }`}
-                        >
-                            <FileJson size={18} className={activeTab === tab.id ? 'text-brand-500' : 'text-slate-400'} />
-                            <span className="font-semibold text-sm">{tab.label}</span>
-                        </button>
-                    ))}
-                    <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-                        <h4 className="flex items-center gap-2 font-bold text-yellow-800 text-sm mb-2">
-                            <AlertCircle size={16} /> Data Warning
-                        </h4>
-                        <p className="text-xs text-yellow-700 leading-relaxed">
-                            This is an advanced editor reflecting the live JSON topology. Invalid formatting will crash the public frontend. Only edit specific text or URLs.
-                        </p>
-                    </div>
-                </div>
+            <div className="flex flex-col xl:flex-row gap-6 flex-grow overflow-hidden">
+                {/* Main Hybrid Editor Workspace */}
+                <div className="flex-grow flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative min-w-0">
 
-                {/* Main Editor Area */}
-                <div className="flex-grow flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
-                    <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
-                        <div className="font-mono text-xs text-slate-500 font-bold bg-slate-200 px-2 py-1 rounded">
-                            cmsContent.{activeTab}
-                        </div>
+                    {/* View Switcher Tabs */}
+                    <div className="flex border-b border-slate-200 bg-slate-50 flex-shrink-0">
+                        <button
+                            onClick={() => setActiveView('preview')}
+                            className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeView === 'preview' ? 'bg-white text-brand-600 border-t-2 border-t-brand-600 shadow-sm z-10' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+                        >
+                            <Eye size={16} /> Live Iframe Preview
+                        </button>
+                        <button
+                            onClick={() => setActiveView('editor')}
+                            className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeView === 'editor' ? 'bg-white text-brand-600 border-t-2 border-t-brand-600 shadow-sm z-10' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+                        >
+                            <Layout size={16} /> Visual Form Builder
+                        </button>
+                        <button
+                            onClick={() => setActiveView('json')}
+                            className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeView === 'json' ? 'bg-white text-brand-600 border-t-2 border-t-brand-600 shadow-sm z-10' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+                        >
+                            <FileCode size={16} /> Raw JSON Syntax
+                        </button>
+                    </div>
+
+                    {/* Status Bar */}
+                    <div className="flex items-center justify-between px-4 py-2 bg-slate-50 border-b border-slate-200 flex-shrink-0 text-xs">
                         {error ? (
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-red-500 bg-red-50 px-2 py-1 rounded">
-                                <AlertCircle size={14} /> Syntax Error
+                            <div className="flex items-center gap-1.5 font-bold text-red-500 px-2 py-0.5 rounded">
+                                <AlertCircle size={14} /> Syntax Error (Cannot Save)
                             </div>
                         ) : isDirty ? (
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-500 bg-amber-50 px-2 py-1 rounded">
-                                <FileJson size={14} /> Unsaved Changes
+                            <div className="flex items-center gap-1.5 font-bold text-amber-500 animate-pulse px-2 py-0.5 rounded">
+                                <AlertCircle size={14} /> Unsaved Database Changes
                             </div>
                         ) : (
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-green-500 bg-green-50 px-2 py-1 rounded">
-                                <CheckCircle size={14} /> Valid JSON
+                            <div className="flex items-center gap-1.5 font-bold text-green-500 px-2 py-0.5 rounded">
+                                <CheckCircle size={14} /> Database Synchronized
                             </div>
                         )}
                     </div>
-                    <textarea
-                        value={jsonInput}
-                        onChange={handleJsonChange}
-                        className={`flex-grow p-6 font-mono text-sm leading-relaxed resize-none focus:outline-none transition-colors ${error ? 'bg-red-50/30' : 'bg-transparent'
-                            }`}
-                        spellCheck={false}
-                    />
+
+                    {/* Editor Content Box */}
+                    <div className="flex-grow overflow-auto bg-slate-50/30">
+                        {activeView === 'editor' && (
+                            <div className="max-w-4xl mx-auto p-6 animate-in fade-in duration-300">
+                                <div className="bg-white border text-left border-slate-200 rounded-xl p-6 shadow-sm">
+                                    <DynamicJsonEditor
+                                        data={parsedData}
+                                        onChange={handleDynamicDataChange}
+                                        label={activeTab} // Root label
+                                        level={0}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {activeView === 'json' && (
+                            <textarea
+                                value={jsonInput}
+                                onChange={handleJsonChange}
+                                className={`w-full h-full p-6 font-mono text-sm leading-relaxed resize-none focus:outline-none transition-colors ${error ? 'bg-red-50/30 text-red-900' : 'bg-transparent text-slate-800'
+                                    }`}
+                                spellCheck={false}
+                                placeholder="Paste or edit strict JSON configuration here..."
+                            />
+                        )}
+
+                        {activeView === 'preview' && (
+                            <div className="h-[95vh] animate-in fade-in duration-300 -mt-10 overflow-hidden relative">
+                                {/* -mt-10 trick to force full height iframe feeling inside flex */}
+                                <CMSPreviewPane
+                                    url={extractClientRoute()}
+                                    cmsContent={{
+                                        ...(cmsContent || {}),
+                                        [activeTab]: activeTab === 'pages' && activePageObjectRoute
+                                            ? { ...(cmsContent?.pages || {}), [activePageObjectRoute.toLowerCase()]: parsedData }
+                                            : parsedData
+                                    } as any}
+                                    globalContent={globalContent}
+                                    pageName={activePageObjectRoute}
+                                />
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
