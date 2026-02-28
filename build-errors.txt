@@ -1,0 +1,22 @@
+
+> eleastar-verification@0.0.0 build
+> tsc -b && vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 2074 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mindex.html                    [39m[1m[2m    0.49 kB[22m[1m[22m[2m │ gzip:   0.31 kB[22m
+[2mdist/[22m[35massets/App-CMOQOd41.css       [39m[1m[2m    0.62 kB[22m[1m[22m[2m │ gzip:   0.26 kB[22m
+[2mdist/[22m[35massets/index-DU0oj-SV.css     [39m[1m[2m   99.16 kB[22m[1m[22m[2m │ gzip:  14.69 kB[22m
+[2mdist/[22m[36massets/purify.es-Bzr520pe.js  [39m[1m[2m   22.45 kB[22m[1m[22m[2m │ gzip:   8.63 kB[22m
+[2mdist/[22m[36massets/index.es-DQNl_5pb.js   [39m[1m[2m  158.61 kB[22m[1m[22m[2m │ gzip:  52.94 kB[22m
+[2mdist/[22m[36massets/index-DIIh2aLi.js      [39m[1m[2m  201.48 kB[22m[1m[22m[2m │ gzip:  64.01 kB[22m
+[2mdist/[22m[36massets/App-C1mp4vIN.js        [39m[1m[33m1,194.47 kB[39m[22m[2m │ gzip: 316.02 kB[22m
+[33m
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 11.74s[39m

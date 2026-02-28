@@ -62,7 +62,7 @@ export interface AdminContextType {
     // Auth
     requestAuth: (level: 'CMS' | 'SENSITIVE', description: string, onConfirm: () => void) => void;
 
-    cmsContent: any[]; // Changed from CMSSection[] to handle live nested data structure
+    cmsContent: import('../types/cms').CMSData | null; // Changed to match backend nested JSON schema
     footerContent: FooterContent; // Global Footer Data
     globalContent: GlobalContent;
     servicesCollection: ServiceCollection; // or ServiceItem[]
@@ -270,7 +270,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [employees, setEmployees] = useState<Employee[]>([]); // Start empty, fetch on mount
     const [jobs, setJobs] = useState<Job[]>([]);
     const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-    const [cmsContent, setCmsContent] = useState<any[]>([]);
+    const [cmsContent, setCmsContent] = useState<import('../types/cms').CMSData | null>(null);
     const [footerContent, setFooterContent] = useState<FooterContent>(initialFooterContent);
     const [globalContent, setGlobalContent] = useState<GlobalContent>(initialGlobalContent);
     const [servicesCollection, setServicesCollection] = useState<ServiceCollection>(initialServicesCollection);
@@ -346,20 +346,23 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
                 // 3. Load Notifications (if auth)
                 if (authResponse.success && authResponse.data) {
+                    const safePromise = <T,>(p: Promise<T>, def: any = []): Promise<T> =>
+                        p.catch(e => ({ success: false, data: def, error: e.message } as unknown as T));
+
                     const [notifResponse, leaveResponse, cycleResponse, cmsResponse, settingsResponse, servicesResponse, ledgerResponse, salaryResponse, promotionResponse, bonusTypeResponse, bonusRequestResponse, jobsResponse, payrollStatusResponse] = await Promise.all([
-                        notificationService.getNotifications(authResponse.data.id, authResponse.data.role),
-                        leaveService.getAllLeaveRequests(),
-                        performanceService.getReviewCycles(),
-                        cmsService.getCMSContent(),
-                        settingsService.getGlobalSettings(),
-                        cmsService.getServices(),
-                        financeService.getLedgerEntries(),
-                        salaryService.getSalaryStructures(),
-                        promotionService.getPromotionRequests(),
-                        bonusService.getBonusTypes(),
-                        bonusService.getBonusRequests(),
-                        jobService.getAllJobs(),
-                        payrollService.getPayrollStatus()
+                        safePromise(notificationService.getNotifications(authResponse.data.id, authResponse.data.role)),
+                        safePromise(leaveService.getAllLeaveRequests()),
+                        safePromise(performanceService.getReviewCycles()),
+                        safePromise(cmsService.getCMSContent(), null),
+                        safePromise(settingsService.getGlobalSettings(), null),
+                        safePromise(cmsService.getServices()),
+                        safePromise(financeService.getLedgerEntries()),
+                        safePromise(salaryService.getSalaryStructures()),
+                        safePromise(promotionService.getPromotionRequests()),
+                        safePromise(bonusService.getBonusTypes()),
+                        safePromise(bonusService.getBonusRequests()),
+                        safePromise(jobService.getAllJobs()),
+                        safePromise(payrollService.getPayrollStatus())
                     ]);
 
                     const safeArr = (d: any) => Array.isArray(d) ? d : (d?.data || []);
@@ -376,13 +379,20 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     }
 
                     // Fetch real CMS content layout
-                    const pagesResponse = await cmsService.getCMSPages();
-                    const pagesData = pagesResponse.success ? safeArr(pagesResponse.data) : [];
-                    if (pagesData.length > 0) {
-                        setCmsContent(pagesData);
-                    } else {
-                        // fallback to local seeded mock data if live API has no pages yet
-                        if (cmsResponse.success) setCmsContent(safeArr(cmsResponse.data));
+                    try {
+                        const pagesResponse = await cmsService.getCMSPages();
+                        if (pagesResponse.success && pagesResponse.data) {
+                            setCmsContent(pagesResponse.data as any);
+                        } else if (cmsResponse.success && cmsResponse.data) {
+                            setCmsContent(cmsResponse.data as any);
+                        } else {
+                            // Extreme fallback so CMS never infinite spins
+                            const { fallbackCMSData } = await import('../data/fallbackCMS');
+                            setCmsContent(fallbackCMSData);
+                        }
+                    } catch (cmsErr) {
+                        const { fallbackCMSData } = await import('../data/fallbackCMS');
+                        setCmsContent(fallbackCMSData);
                     }
 
                     if (servicesResponse.success) setServicesCollection(servicesResponse.data);
@@ -413,7 +423,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const handleMessage = (event: MessageEvent) => {
             if (event.data?.type === 'CMS_PREVIEW_DATA' && event.data?.payload) {
                 const { cmsContent: newCms, globalContent: newGlobal, footerContent: newFooter, servicesCollection: newServices } = event.data.payload;
-                if (newCms && Array.isArray(newCms)) setCmsContent(newCms);
+                if (newCms) setCmsContent(newCms);
                 if (newGlobal) setGlobalContent(newGlobal);
                 if (newFooter) setFooterContent(newFooter);
                 if (newServices) setServicesCollection(newServices);
@@ -935,21 +945,19 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     // CMS & Content Actions
-    const updatePMSContent = async (id: string | number, content: any) => {
+    const updatePMSContent = async (path: string | number, content: any) => {
         setIsLoading(true);
         try {
-            const response = await cmsService.updateCMSSection(id, content);
+            const response = await cmsService.updateCMSSection(path, content);
             if (response.success) {
-                // Update local structure mapping. In the response, our updated node should live in response.data
-                setCmsContent(prev => {
-                    return prev.map(page => {
-                        return {
-                            ...page,
-                            sections: page.sections?.map((s: any) => s.id === id ? { ...s, ...response.data } : s) || []
-                        };
-                    });
-                });
-                logAction('CMS Edit', `Updated content for section ${id}`);
+                // For nested JSON, an update might mean completely replacing a subtree.
+                // Depending on how CMSPage.tsx is rebuilt, we may need to fetch the whole tree again or deep merge.
+                // For now, let's just trigger a re-fetch since the topology is complex.
+                const pagesResponse = await cmsService.getCMSPages();
+                if (pagesResponse.success && pagesResponse.data) {
+                    setCmsContent(pagesResponse.data as any);
+                }
+                logAction('CMS Edit', `Updated content path ${path}`);
                 showSuccess({ title: 'Section Saved', message: 'Changes have been saved successfully.' });
             } else {
                 showError({ title: 'Update Failed', message: response.error || 'Failed to update section' });
@@ -961,23 +969,14 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     };
 
-    const publishPMSContent = async (id: string | number) => {
+    const publishPMSContent = async (path: string | number) => {
         setIsLoading(true);
         try {
-            const response = await cmsService.updateCMSSectionStatus(id, 'published');
+            const response = await cmsService.updateCMSSectionStatus(path, 'published');
             if (response.success) {
-                setCmsContent(prev => {
-                    return prev.map(page => {
-                        return {
-                            ...page,
-                            sections: page.sections?.map((s: any) => s.id === id ? { ...s, status: 'published' } : s) || []
-                        };
-                    });
-                });
-                logAction('CMS Publish', `Published section ${id}`);
-
+                logAction('CMS Publish', `Published section ${path}`);
                 dispatchNotification(
-                    { title: 'Website Updated', message: `Section ${id} has been published successfully.`, type: 'System', link: '/' },
+                    { title: 'Website Updated', message: `Section ${path} has been published successfully.`, type: 'System', link: '/' },
                     { roles: ['SUPER_ADMIN', 'COO'] }
                 );
                 showSuccess({ title: 'Published', message: 'Content is now live on the website.' });
@@ -991,13 +990,16 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     };
 
-    const addCMSContent = async (section: CMSSection) => {
+    const addCMSContent = async (section: any) => {
         setIsLoading(true);
         try {
             const response = await cmsService.addCMSContent(section);
             if (response.success) {
-                setCmsContent(prev => [...prev, section]);
-                logAction('CMS Section Added', `Added new ${section.type} to ${section.page}`);
+                const pagesResponse = await cmsService.getCMSPages();
+                if (pagesResponse.success && pagesResponse.data) {
+                    setCmsContent(pagesResponse.data as any);
+                }
+                logAction('CMS Section Added', `Added new content`);
                 showSuccess({ title: 'Section Added', message: 'New content section has been created.' });
             } else {
                 showError({ title: 'Addition Failed', message: response.error });
@@ -1014,7 +1016,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         try {
             const response = await cmsService.deleteCMSContent(id);
             if (response.success) {
-                setCmsContent(prev => prev.filter(s => s.id !== id));
+                const pagesResponse = await cmsService.getCMSPages();
+                if (pagesResponse.success && pagesResponse.data) {
+                    setCmsContent(pagesResponse.data as any);
+                }
                 logAction('CMS Section Deleted', `Removed section ${id}`);
                 showSuccess({ title: 'Deleted', message: 'Section has been removed.' });
             } else {

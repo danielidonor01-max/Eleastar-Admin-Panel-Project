@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAdmin } from '../context/AdminContext';
-import type { CareersHeroSection } from '../data/mockData';
+
 import { BookOpen, Briefcase, ChevronRight, GraduationCap, Globe, Users, TrendingUp } from 'lucide-react';
 import { BrandFooter } from '../components/BrandFooter';
 
@@ -220,30 +219,9 @@ export const CareersPage: React.FC = () => {
 };
 
 const CMSCareersHero: React.FC = () => {
-    const { cmsContent } = useAdmin();
-    const heroContent = cmsContent.find(c => c.id === 'careers-hero') as CareersHeroSection | undefined;
-
-    if (!heroContent) return (
+    return (
         <header className="px-6 py-16 md:py-24 max-w-7xl mx-auto text-center md:text-left">
             <h1 className="text-4xl font-bold mb-4">Careers at Eleastar</h1>
-        </header>
-    );
-
-    return (
-        <header className="px-6 py-16 md:py-24 max-w-7xl mx-auto text-center md:text-left relative overflow-hidden">
-            {heroContent.imageUrl && (
-                <div className="absolute inset-0 z-0 opacity-10">
-                    <img src={heroContent.imageUrl} className="w-full h-full object-cover" alt="Hero Background" />
-                </div>
-            )}
-            <div className="max-w-3xl relative z-10">
-                <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-slate-900 mb-6 leading-tight">
-                    {heroContent.title}
-                </h1>
-                <p className="text-lg md:text-xl text-slate-600 mb-10 leading-relaxed max-w-2xl">
-                    {heroContent.body}
-                </p>
-            </div>
         </header>
     );
 };

@@ -6,16 +6,10 @@ import {
     type FooterSection,
     type FooterContent,
     type ServiceCollection,
-    initialCMSContent,
-    initialAboutContent,
-    initialServicesContent,
-    initialIndustrialSolutionsContent,
-    initialInformationTechnologyContent,
-    initialResearchAndDevelopmentContent,
-    initialElectronicsManufacturingContent,
-    initialSpecificITServicesContent,
     initialServicesCollection
 } from '../data/mockData';
+import { fallbackCMSData } from '../data/fallbackCMS';
+import type { CMSData } from '../types/cms';
 
 // Helper for fetching tokens securely. Assuming the app stores 'token' in localStorage
 const getAuthToken = () => localStorage.getItem('token') || '';
@@ -71,7 +65,7 @@ export const cmsService = {
     /**
      * Fetches all CMS pages (Admin)
      */
-    getCMSPages: async (): Promise<ApiResponse<any[]>> => {
+    getCMSPages: async (): Promise<ApiResponse<CMSData | null>> => {
         try {
             const token = getAuthToken();
             const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/pages`, {
@@ -82,12 +76,12 @@ export const cmsService = {
             });
             const data = await response.json();
             return {
-                data: data.data || [],
+                data: data.data || null,
                 success: true,
                 message: data.message
             };
         } catch (error: any) {
-            return { data: [] as any, success: false, error: error.message };
+            return { data: null, success: false, error: error.message };
         }
     },
 
@@ -177,20 +171,11 @@ export const cmsService = {
      * FALLBACK Methods - still using mockData temporarily depending on the context consumption.
      * Over time, these will be replaced by the Live endpoints above when fully integrated
      */
-    getCMSContent: async (): Promise<ApiResponse<CMSSection[]>> => {
+    getCMSContent: async (): Promise<ApiResponse<CMSData>> => {
         await delay();
         // Fallback for parts of the app that still expect the flat array of mock sections. 
         // AdminContext will now switch to getCMSPages()/getPublicPageSections() where possible.
-        return mockSuccess([
-            ...initialCMSContent,
-            ...initialAboutContent,
-            ...initialServicesContent,
-            ...initialIndustrialSolutionsContent,
-            ...initialInformationTechnologyContent,
-            ...initialResearchAndDevelopmentContent,
-            ...initialElectronicsManufacturingContent,
-            ...initialSpecificITServicesContent
-        ]);
+        return mockSuccess(fallbackCMSData);
     },
 
     updateCMSContent: async (_id: string, _updates: Partial<CMSSection>): Promise<ApiResponse<void>> => {

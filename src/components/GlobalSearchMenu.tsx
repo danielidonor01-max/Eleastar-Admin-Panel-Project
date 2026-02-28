@@ -5,7 +5,7 @@ import { useAdmin } from '../context/AdminContext';
 import { employees } from '../data/mockData';
 
 // Generate a searchable unified index of routes
-const generateSearchIndex = (rolePermissions: any, currentUserRole: string, cmsPages: any[]) => {
+const generateSearchIndex = (rolePermissions: any, currentUserRole: string, cmsData: import('../types/cms').CMSData | null) => {
     const index: { id: string; title: string; type: 'Page' | 'Employee' | 'CMS'; path: string; icon: any }[] = [];
     const hasAccess = (module: string) => rolePermissions[currentUserRole]?.includes(module);
 
@@ -19,22 +19,25 @@ const generateSearchIndex = (rolePermissions: any, currentUserRole: string, cmsP
     if (hasAccess('Compliance')) index.push({ id: 'page-compliance', title: 'Risk & Compliance', type: 'Page', path: '/admin/compliance', icon: <FileText size={16} /> });
 
     // CMS Pages mapped from Context
-    if (hasAccess('Website CMS')) {
-        index.push({ id: 'cms-global-nav', title: 'Global Navigation (CMS)', type: 'CMS', path: '/admin/cms?page=GlobalNav', icon: <Globe size={16} /> });
-        index.push({ id: 'cms-global-seo', title: 'SEO Defaults (CMS)', type: 'CMS', path: '/admin/cms?page=GlobalSEO', icon: <Globe size={16} /> });
-        index.push({ id: 'cms-services', title: 'Services Collection (CMS)', type: 'CMS', path: '/admin/cms?page=ServicesCollection', icon: <Globe size={16} /> });
-        index.push({ id: 'cms-footer', title: 'Footer Layout (CMS)', type: 'CMS', path: '/admin/cms?page=FooterLayout', icon: <Globe size={16} /> });
-        cmsPages.forEach(page => {
-            if (page.name) {
+    if (hasAccess('Website CMS') && cmsData) {
+        // Base structures
+        index.push({ id: 'cms-global-nav', title: 'Global Navigation (CMS)', type: 'CMS', path: '/admin/cms?page=navData', icon: <Globe size={16} /> });
+        index.push({ id: 'cms-global-seo', title: 'Global SEO/MetaData (CMS)', type: 'CMS', path: '/admin/cms?page=metaData', icon: <Globe size={16} /> });
+        index.push({ id: 'cms-footer', title: 'Footer Layout (CMS)', type: 'CMS', path: '/admin/cms?page=footerNavData', icon: <Globe size={16} /> });
+        index.push({ id: 'cms-contact', title: 'Contact Us Card (CMS)', type: 'CMS', path: '/admin/cms?page=contactUsCardData', icon: <Globe size={16} /> });
+
+        // Dynamic pages from backend schema
+        if (cmsData.pages) {
+            Object.keys(cmsData.pages).forEach(pageKey => {
                 index.push({
-                    id: `cms-page-${page.id || page.slug}`,
-                    title: `${page.name} Page Editor`,
+                    id: `cms-page-${pageKey}`,
+                    title: `${pageKey.charAt(0).toUpperCase() + pageKey.slice(1)} Page Editor`,
                     type: 'CMS',
-                    path: `/admin/cms?page=${page.name}`,
+                    path: `/admin/cms?page=${pageKey}`,
                     icon: <Globe size={16} />
                 });
-            }
-        });
+            });
+        }
     }
 
     // Employees mapped from MockData
