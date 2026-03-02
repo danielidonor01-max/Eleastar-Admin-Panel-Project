@@ -103,6 +103,49 @@ export const employeeService = {
     },
 
     /**
+     * Update Employee Status
+     */
+    updateEmployeeStatus: async (id: string | number, status: string): Promise<ApiResponse<Employee>> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/employees/${id}/status`, {
+                method: 'PATCH',
+                headers: getHeaders(),
+                body: JSON.stringify({ status })
+            });
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                return { success: true, data: data.data, message: data.message };
+            }
+            return { success: false, data: null as any, error: data.message || 'Failed to update employee status' };
+        } catch (error: any) {
+            return { success: false, data: null as any, error: error.message };
+        }
+    },
+
+    /**
+     * Delete Employee
+     */
+    deleteEmployee: async (id: string | number): Promise<ApiResponse<void>> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/employees/${id}`, {
+                method: 'DELETE',
+                headers: getHeaders()
+            });
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                return { success: true, data: undefined, message: data.message };
+            }
+            return { success: false, data: null as any, error: data.message || 'Failed to delete employee' };
+        } catch (error: any) {
+            return { success: false, data: null as any, error: error.message };
+        }
+    },
+
+
+
+    /**
      * Get Roles
      */
     getRoles: async (): Promise<ApiResponse<any>> => {

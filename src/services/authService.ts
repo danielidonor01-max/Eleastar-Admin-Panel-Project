@@ -112,6 +112,84 @@ export const authService = {
     },
 
     /**
+     * Resend OTP
+     * Calls POST /auth/resend-otp
+     */
+    resendOTP: async (email: string): Promise<ApiResponse<void>> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ email })
+            });
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                return { success: true, data: undefined, message: data.message };
+            } else {
+                return { success: false, data: null as any, error: data.message || 'Failed to resend OTP' };
+            }
+        } catch (error: any) {
+            return { success: false, data: null as any, error: error.message };
+        }
+    },
+
+    /**
+     * Forgot Password
+     * Calls POST /auth/forgot-password
+     */
+    forgotPassword: async (email: string): Promise<ApiResponse<void>> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ email })
+            });
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                return { success: true, data: undefined, message: data.message };
+            } else {
+                return { success: false, data: null as any, error: data.message || 'Failed to send password reset link' };
+            }
+        } catch (error: any) {
+            return { success: false, data: null as any, error: error.message };
+        }
+    },
+
+    /**
+     * Reset Password
+     * Calls POST /auth/reset-password
+     */
+    resetPassword: async (payload: { email: string; token: string; password: string; password_confirmation: string }): Promise<ApiResponse<void>> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                return { success: true, data: undefined, message: data.message };
+            } else {
+                return { success: false, data: null as any, error: data.message || 'Failed to reset password' };
+            }
+        } catch (error: any) {
+            return { success: false, data: null as any, error: error.message };
+        }
+    },
+
+    /**
      * Logout
      * Calls POST /auth/logout
      */
