@@ -4,12 +4,21 @@ import { Link } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 
 export const StickyHeader: React.FC = () => {
-    const { globalContent } = useAdmin();
+    const { globalContent, cmsContent } = useAdmin();
     const [isServicesOpen, setIsServicesOpen] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+    // Map custom pages from CMS
+    const customNavItems = (cmsContent?.navData || []).map((item: any, i: number) => ({
+        id: `cms-nav-${item.slug || i}`,
+        label: item.label,
+        path: item.href || `/${item.slug}`,
+        isVisible: true,
+        order: 99 + i // Append to the end
+    }));
+
     // Filter visible items and sort by order
-    const navItems = globalContent.navigation
+    const navItems = [...globalContent.navigation, ...customNavItems]
         .filter(item => item.isVisible)
         .sort((a, b) => a.order - b.order);
 

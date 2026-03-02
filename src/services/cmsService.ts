@@ -63,6 +63,28 @@ export const cmsService = {
     },
 
     /**
+     * Gets public global navigation menus
+     */
+    getPublicMenus: async (): Promise<ApiResponse<any>> => {
+        try {
+            const response = await fetch(`${CMS_API_BASE_URL}/cms/menus`, {
+                headers: {
+                    'X-CMS-API-Key': CMS_PUBLIC_API_KEY,
+                    'Accept': 'application/json',
+                }
+            });
+            const data = await response.json();
+            return {
+                data: data.data || [],
+                success: true,
+                message: data.message
+            };
+        } catch (error: any) {
+            return { data: [] as any, success: false, error: error.message };
+        }
+    },
+
+    /**
      * Fetches all CMS pages (Admin)
      */
     getCMSPages: async (): Promise<ApiResponse<CMSData | null>> => {
@@ -186,6 +208,12 @@ export const cmsService = {
     publishCMSContent: async (_id: string): Promise<ApiResponse<void>> => {
         await delay();
         return mockSuccess(undefined, 'Content published live');
+    },
+
+    // Temp proxy for creating a page until backend endpoint exists
+    addCMSPage: async (_pageName: string, _slug: string): Promise<ApiResponse<void>> => {
+        await delay();
+        return mockSuccess(undefined, 'New dynamic page layout formulated');
     },
 
     addCMSContent: async (_section: CMSSection): Promise<ApiResponse<void>> => {

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
-import { initialReviewCycles, initialPerformanceReviews, initialFooterContent, initialGlobalContent, initialServicesCollection, initialLedgerEntries, initialSalaryStructures, initialPromotionRequests, initialEligibilityRules, initialTasks, initialApiKeys } from '../data/mockData';
-import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, CMSSection, FooterContent, FooterSection, GlobalContent, ServiceItem, ServiceCollection, BonusType, BonusRequest, LedgerEntry, SalaryStructure, PromotionRequest, PromotionEligibilityRule, PayrollCycle, AdminRole, Task, SystemApiKey } from '../data/mockData';
+import { initialReviewCycles, initialPerformanceReviews, initialFooterContent, initialGlobalContent, initialServicesCollection, initialLedgerEntries, initialDepartments, initialPromotionRequests, initialEligibilityRules, initialTasks, initialApiKeys } from '../data/mockData';
+import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, CMSSection, FooterContent, FooterSection, GlobalContent, ServiceItem, ServiceCollection, BonusType, BonusRequest, LedgerEntry, Department, PromotionRequest, PromotionEligibilityRule, PayrollCycle, AdminRole, Task, SystemApiKey } from '../data/mockData';
 
 import * as reportService from '../services/reportService';
 import { authService } from '../services/authService';
@@ -14,7 +14,7 @@ import { fallbackCMSData } from '../data/fallbackCMS';
 import { cmsService } from '../services/cmsService';
 import { settingsService } from '../services/settingsService';
 import { financeService } from '../services/financeService';
-import { salaryService } from '../services/salaryService';
+import { departmentService } from '../services/departmentService';
 import { promotionService } from '../services/promotionService';
 import { bonusService } from '../services/bonusService';
 
@@ -127,6 +127,7 @@ export interface AdminContextType {
     updatePMSContent: (id: string, content: any) => Promise<void>; // Using any for flexible updates across union types
     publishPMSContent: (id: string) => Promise<void>;
     addCMSContent: (section: CMSSection) => Promise<void>;
+    createCMSPage: (pageName: string, slug: string) => Promise<void>;
     deleteCMSContent: (id: string) => Promise<void>;
     updateFooterContent: (section: keyof FooterContent, data: Partial<FooterSection>) => Promise<void>;
 
@@ -183,9 +184,10 @@ export interface AdminContextType {
     approveLedgerFunding: (cycleId: string, pin: string) => Promise<{ success: boolean; error?: string }>;
     executeLedgerBatch: (cycleId: string) => Promise<{ success: boolean; error?: string }>;
 
-    // Salary Structures
-    salaryStructures: SalaryStructure[];
-    saveSalaryStructure: (structure: SalaryStructure) => Promise<void>;
+    // Departments (Role/Salary Bands)
+    departments: Department[];
+    saveDepartment: (dept: Department) => Promise<void>;
+    deleteDepartment: (id: string) => Promise<void>;
 
     // Promotions
     promotionRequests: PromotionRequest[];
@@ -278,6 +280,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [ceoSignature, setCeoSignature] = useState<string | null>(null);
     const [notifications, setNotifications] = useState<AdminNotification[]>(INITIAL_NOTIFICATIONS);
     const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
+    const [departments, setDepartments] = useState<Department[]>(initialDepartments);
     const [currentTenantId] = useState('tenant-default');
 
 
@@ -314,7 +317,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     // New State for Modules
     const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>(initialLedgerEntries);
-    const [salaryStructures, setSalaryStructures] = useState<SalaryStructure[]>(initialSalaryStructures);
     const [promotionRequests, setPromotionRequests] = useState<PromotionRequest[]>(initialPromotionRequests);
     const [eligibilityRules, setEligibilityRules] = useState<PromotionEligibilityRule[]>(initialEligibilityRules);
     const [apiKeys, setApiKeys] = useState<SystemApiKey[]>(initialApiKeys);
@@ -358,7 +360,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                         safePromise(settingsService.getGlobalSettings(), null),
                         safePromise(cmsService.getServices()),
                         safePromise(financeService.getLedgerEntries()),
-                        safePromise(salaryService.getSalaryStructures()),
+                        safePromise(departmentService.getDepartments()),
                         safePromise(promotionService.getPromotionRequests()),
                         safePromise(bonusService.getBonusTypes()),
                         safePromise(bonusService.getBonusRequests()),
@@ -396,7 +398,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
                     if (servicesResponse.success) setServicesCollection(servicesResponse.data);
                     if (ledgerResponse.success) setLedgerEntries(safeArr(ledgerResponse.data));
-                    if (salaryResponse.success) setSalaryStructures(safeArr(salaryResponse.data));
+                    if (salaryResponse.success) setDepartments(safeArr(salaryResponse.data));
                     if (promotionResponse.success) setPromotionRequests(safeArr(promotionResponse.data));
                     if (bonusTypeResponse.success) setBonusTypes(safeArr(bonusTypeResponse.data));
                     if (bonusRequestResponse.success) setBonusRequests(safeArr(bonusRequestResponse.data));
@@ -569,23 +571,23 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                         (emp.title && /Compliance|Audit/i.test(emp.title));
 
                     if (!isExcluded) {
-                        const band = initialSalaryStructures.find(s => s.role === updates.systemRole);
-                        if (band) {
+                        const dept = departments.find(d => d.name === updates.department);
+                        if (dept) {
                             // Ensure salary respects the band of the NEW role
                             let newSalary = updates.salary !== undefined ? updates.salary : emp.salary;
                             let adjusted = false;
 
-                            if (newSalary < band.minSalary) {
-                                newSalary = band.minSalary;
+                            if (newSalary < dept.minSalary) {
+                                newSalary = dept.minSalary;
                                 adjusted = true;
-                            } else if (newSalary > band.maxSalary) {
-                                newSalary = band.maxSalary;
+                            } else if (newSalary > dept.maxSalary) {
+                                newSalary = dept.maxSalary;
                                 adjusted = true;
                             }
 
                             if (adjusted) {
                                 updates.salary = newSalary;
-                                logAction('Salary Auto-Adjustment', `Salary adjusted to ₦${newSalary.toLocaleString()} to match ${updates.systemRole} band.`);
+                                logAction('Salary Auto-Adjustment', `Salary adjusted to ₦${newSalary.toLocaleString()} to match ${updates.department} band.`);
                             }
                         }
                     }
@@ -1005,6 +1007,78 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
         } catch (err) {
             showError({ title: 'Addition Error', message: 'Failed to add content section.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const createCMSPage = async (pageName: string, slug: string) => {
+        setIsLoading(true);
+        try {
+            const response = await cmsService.addCMSPage(pageName, slug);
+            if (response.success) {
+                if (cmsContent) {
+                    const newCmsContent = { ...cmsContent };
+                    const safeSlug = slug.toLowerCase().replace(/\s+/g, '-');
+
+                    // 1. Add to pages
+                    newCmsContent.pages = {
+                        ...newCmsContent.pages,
+                        [safeSlug]: {
+                            heroCardData: []
+                        }
+                    };
+
+                    // 2. Add to metaData
+                    const existingMetaIndex = newCmsContent.metaData.findIndex((m: any) => m.slug === safeSlug);
+                    if (existingMetaIndex === -1) {
+                        newCmsContent.metaData = [
+                            ...newCmsContent.metaData,
+                            {
+                                slug: safeSlug,
+                                title: `${pageName} | Eleastar Technologies Ltd.`,
+                                description: `Learn more about ${pageName}`,
+                                keywords: `${safeSlug}, eleastar`,
+                                author: "Eleastar Technologies Ltd.",
+                                ogTags: {
+                                    ogTitle: `${pageName} | Eleastar Technologies Ltd.`,
+                                    ogDescription: `Learn more about ${pageName}`,
+                                    ogKeywords: `${safeSlug}, eleastar`,
+                                    ogUrl: `https://eleastar.com/${safeSlug}`,
+                                    ogType: "website",
+                                    ogLocale: "en_US",
+                                    ogSiteName: "Eleastar Technologies Ltd.",
+                                    ogImage: {
+                                        url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80',
+                                        alt: 'Eleastar Tech'
+                                    }
+                                }
+                            }
+                        ];
+                    }
+
+                    // 3. Add to navData
+                    const existingNavIndex = newCmsContent.navData.findIndex((n: any) => n.slug === safeSlug);
+                    if (existingNavIndex === -1) {
+                        newCmsContent.navData = [
+                            ...newCmsContent.navData,
+                            {
+                                label: pageName,
+                                slug: safeSlug,
+                                href: `/${safeSlug}`
+                            }
+                        ];
+                    }
+
+                    setCmsContent(newCmsContent);
+                }
+                logAction('CMS Page Created', `Created dynamic page ${pageName}`);
+                showSuccess({ title: 'Page Created', message: `${pageName} page has been created successfully.` });
+            } else {
+                showError({ title: 'Creation Failed', message: response.error || 'Failed to create page' });
+            }
+        } catch (err) {
+            showError({ title: 'Creation Error', message: 'Failed to create new CMS page.' });
         } finally {
             setIsLoading(false);
         }
@@ -1997,24 +2071,42 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     };
 
-    // Salary Structures
-    const saveSalaryStructure = async (structure: SalaryStructure) => {
+    // Departments
+    const saveDepartment = async (dept: Department) => {
         setIsLoading(true);
         try {
-            const response = await salaryService.saveSalaryStructure(structure);
+            const response = await departmentService.saveDepartment(dept);
             if (response.success) {
-                setSalaryStructures(prev => {
-                    const exists = prev.find(s => s.role === structure.role);
-                    if (exists) return prev.map(s => s.role === structure.role ? structure : s);
-                    return [...prev, structure];
+                setDepartments(prev => {
+                    const exists = prev.find(d => d.id === dept.id);
+                    if (exists) return prev.map(d => d.id === dept.id ? dept : d);
+                    return [...prev, dept];
                 });
-                logAction('Salary Structure Update', `Updated structure for ${structure.role}`);
-                showSuccess({ title: 'Structure Saved', message: `Salary structure for ${structure.role} updated successfully.` });
+                logAction('Department Update', `Updated department ${dept.name}`);
+                showSuccess({ title: 'Department Saved', message: `${dept.name} updated successfully.` });
             } else {
                 showError({ title: 'Save Failed', message: response.error });
             }
         } catch (err) {
-            showError({ title: 'Save Error', message: 'Failed to save salary structure.' });
+            showError({ title: 'Save Error', message: 'Failed to save department.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const deleteDepartment = async (id: string) => {
+        setIsLoading(true);
+        try {
+            const response = await departmentService.deleteDepartment(id);
+            if (response.success) {
+                setDepartments(prev => prev.filter(d => d.id !== id));
+                logAction('Department Update', `Deleted department ${id}`);
+                showSuccess({ title: 'Department Deleted', message: `Department removed.` });
+            } else {
+                showError({ title: 'Delete Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Delete Error', message: 'Failed to delete department.' });
         } finally {
             setIsLoading(false);
         }
@@ -2258,9 +2350,11 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             addJob,
             updateJob,
             deleteJob,
+            // CMS & Content Actions
             updatePMSContent,
             publishPMSContent,
             addCMSContent,
+            createCMSPage,
             deleteCMSContent,
             footerContent,
             updateFooterContent,
@@ -2309,9 +2403,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             ledgerEntries,
             approveLedgerFunding,
             executeLedgerBatch,
-            // Salary
-            salaryStructures,
-            saveSalaryStructure,
+            // Departments
+            departments,
+            saveDepartment,
+            deleteDepartment,
             // Promotions
             promotionRequests,
             eligibilityRules,

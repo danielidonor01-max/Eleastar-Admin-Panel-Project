@@ -2,6 +2,16 @@ export type EmployeeStatus = 'onboarding' | 'probation' | 'active' | 'suspended'
 
 export type AdminRole = 'SUPER_ADMIN' | 'COO' | 'HR_ADMIN' | 'MANAGEMENT_ADMIN' | 'FINANCE_ADMIN' | 'PAYROLL_ADMIN' | 'TECHNICIAN' | 'USER' | 'CHIEF_RISK_OFFICER' | 'WEB_ADMIN' | 'VIEWER';
 
+export interface Department {
+    id: string;
+    tenantId: string;
+    name: string;
+    description: string;
+    minSalary: number;
+    maxSalary: number;
+    currency: string;
+}
+
 export interface BankDetails {
     bankName: string;
     accountNumber: string;
@@ -41,15 +51,7 @@ export interface ContractInfo {
     documents: ContractDocument[];
 }
 
-export interface SalaryStructure {
-    id: string;
-    tenantId: string;
-    role: AdminRole;
-    grade: string;
-    minSalary: number;
-    maxSalary: number;
-    currency: string;
-}
+
 
 export interface PromotionRequest {
     id: string;
@@ -473,58 +475,67 @@ export const employees: Employee[] = [
     }
 ];
 
-export const salaryStructures: SalaryStructure[] = [
+export const initialDepartments: Department[] = [
     {
-        id: 'SS-001',
+        id: 'DEPT-001',
         tenantId: 'tenant-default',
-        role: 'USER',
-        grade: 'L1 - Entry',
-        minSalary: 100000,
-        maxSalary: 250000,
-        currency: 'NGN'
-    },
-    {
-        id: 'SS-002',
-        tenantId: 'tenant-default',
-        role: 'USER',
-        grade: 'T1 - Junior',
-        minSalary: 80000,
-        maxSalary: 180000,
-        currency: 'NGN'
-    },
-    {
-        id: 'SS-003',
-        tenantId: 'tenant-default',
-        role: 'COO',
-        grade: 'M1 - Lead',
-        minSalary: 300000,
-        maxSalary: 800000,
-        currency: 'NGN'
-    },
-    {
-        id: 'SS-004',
-        tenantId: 'tenant-default',
-        role: 'COO',
-        grade: 'C-Suite',
-        minSalary: 1000000,
+        name: 'Management',
+        description: 'Executive Management Team',
+        minSalary: 500000,
         maxSalary: 5000000,
         currency: 'NGN'
     },
     {
-        id: 'SS-005',
+        id: 'DEPT-002',
         tenantId: 'tenant-default',
-        role: 'USER',
-        grade: 'I1 - Intern',
-        minSalary: 50000,
-        maxSalary: 100000,
+        name: 'Engineering',
+        description: 'Software Development and IT Operations',
+        minSalary: 150000,
+        maxSalary: 800000,
         currency: 'NGN'
     },
     {
-        id: 'SS-006',
+        id: 'DEPT-003',
         tenantId: 'tenant-default',
-        role: 'USER',
-        grade: 'JT1 - Junior Tech',
-        minSalary: 70000,
+        name: 'Operations',
+        description: 'Day to day company operations',
+        minSalary: 100000,
+        maxSalary: 400000,
+        currency: 'NGN'
+    },
+    {
+        id: 'DEPT-004',
+        tenantId: 'tenant-default',
+        name: 'Product',
+        description: 'Product Managers and Designers',
+        minSalary: 150000,
+        maxSalary: 600000,
+        currency: 'NGN'
+    },
+    {
+        id: 'DEPT-005',
+        tenantId: 'tenant-default',
+        name: 'Marketing',
+        description: 'Marketing and Sales',
+        minSalary: 100000,
+        maxSalary: 350000,
+        currency: 'NGN'
+    },
+    {
+        id: 'DEPT-006',
+        tenantId: 'tenant-default',
+        name: 'Compliance',
+        description: 'Auditing and compliance tracking',
+        minSalary: 200000,
+        maxSalary: 500000,
+        currency: 'NGN'
+    },
+    {
+        id: 'DEPT-007',
+        tenantId: 'tenant-default',
+        name: 'General',
+        description: 'General Staff and Interns',
+        minSalary: 50000,
         maxSalary: 150000,
         currency: 'NGN'
     }
@@ -2256,37 +2267,6 @@ export const initialPages: Record<string, CMSPage> = {
 
 // --- Finance & Ledger Data ---
 export const initialLedgerEntries: LedgerEntry[] = [];
-
-// --- Salary Structures ---
-export const initialSalaryStructures: SalaryStructure[] = [
-    {
-        id: 'SS-001',
-        tenantId: 'tenant-default',
-        role: 'USER',
-        grade: 'Associate',
-        minSalary: 150000,
-        maxSalary: 300000,
-        currency: 'NGN'
-    },
-    {
-        id: 'SS-002',
-        tenantId: 'tenant-default',
-        role: 'USER',
-        grade: 'Senior Tech',
-        minSalary: 250000,
-        maxSalary: 450000,
-        currency: 'NGN'
-    },
-    {
-        id: 'SS-003',
-        tenantId: 'tenant-default',
-        role: 'SUPER_ADMIN',
-        grade: 'Executive',
-        minSalary: 800000,
-        maxSalary: 1500000,
-        currency: 'NGN'
-    }
-];
 
 // --- Promotion Requests ---
 export const initialPromotionRequests: PromotionRequest[] = [];

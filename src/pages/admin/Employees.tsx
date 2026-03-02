@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Search, MoreVertical, Plus, Download, UserPlus, FileText, Trash2, QrCode } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
+import { useFeedback } from '../../context/FeedbackContext';
 import type { Employee } from '../../data/mockData';
 import { EmployeeProfileModal } from '../../components/EmployeeProfileModal';
 import { ContractManagementModal } from '../../components/ContractManagementModal';
 
 export const Employees: React.FC = () => {
-    const { employees, addEmployee, updateEmployee, toggleQRStatus, updateEmployeeContract, uploadContractDocument, logAction, requestAuth } = useAdmin();
+    const { employees, addEmployee, updateEmployee, toggleQRStatus, updateEmployeeContract, uploadContractDocument, logAction, requestAuth, departments } = useAdmin();
+    const { showSuccess, showError, showConfirm } = useFeedback();
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
     const [contractEmployee, setContractEmployee] = useState<Employee | null>(null);
@@ -16,18 +18,37 @@ export const Employees: React.FC = () => {
     // Form State
     const [newEmp, setNewEmp] = useState<Partial<Employee>>({
         status: 'active',
-        employmentType: 'Full-time'
+        employmentType: 'Full-time',
+        department: departments.length > 0 ? departments[0].name : 'General', // Default to first department or 'General'
+        salary: 0
     });
 
     const handleAddSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newEmp.name || !newEmp.email) return;
 
-        const emp: Omit<Employee, 'tenantId'> = {
-            id: `EMP-${Math.floor(Math.random() * 1000)}`,
+        if (!newEmp.name || !newEmp.email || !newEmp.department || !newEmp.salary) {
+            showError({ title: 'Validation Error', message: 'Please fill in all required fields: Name, Email, Department, and Salary.' });
+            return;
+        }
+
+        // Find selected department to validate bounds
+        const dept = departments.find(d => d.name === newEmp.department);
+        if (dept) {
+            if (newEmp.salary! < dept.minSalary || newEmp.salary! > dept.maxSalary) {
+                showError({ title: 'Validation Error', message: `Salary must be between ₦${dept.minSalary.toLocaleString()} and ₦${dept.maxSalary.toLocaleString()} for the ${dept.name} department.` });
+                return; // Stop submission
+            }
+        } else {
+            showError({ title: 'Validation Error', message: 'Selected department is invalid.' });
+            return;
+        }
+
+        const emp = {
+            id: `EMP-${Date.now().toString().slice(-4)}`,
+            tenantId: 'tenant-default',
             name: newEmp.name!,
             title: newEmp.title || 'Staff',
-            department: newEmp.department || 'General',
+            department: newEmp.department!,
             email: newEmp.email!,
             photoUrl: `https://ui-avatars.com/api/?name=${newEmp.name}`,
             status: newEmp.status as any || 'active',
@@ -37,8 +58,9 @@ export const Employees: React.FC = () => {
             salary: newEmp.salary || 100000,
             systemRole: 'USER',
             accessGranted: newEmp.status === 'active'
-        };
+        } as Employee;
         addEmployee(emp);
+        showSuccess({ title: 'Employee Added', message: `${emp.name} has been successfully onboarded.` });
         setShowAddModal(false);
         setNewEmp({ status: 'active', employmentType: 'Full-time' });
     };
@@ -48,24 +70,28 @@ export const Employees: React.FC = () => {
         if (action === 'suspend_qr') {
             requestAuth('SENSITIVE', `Suspend QR Access for ${emp.name}`, () => {
                 toggleQRStatus(emp.id, 'suspended');
+                showSuccess({ title: 'Access Suspended', message: `${emp.name}'s QR access has been suspended.` });
             });
         } else if (action === 'enable_qr') {
-            // Enabling is less critical but let's consistency check? No, constraint says Termination/Deactivation.
-            // "Employee status updates" -> SENSITIVE.
             requestAuth('SENSITIVE', `Re-activate QR Access for ${emp.name}`, () => {
                 toggleQRStatus(emp.id, 'active');
+                showSuccess({ title: 'Access Restored', message: `${emp.name}'s QR access has been restored.` });
             });
         } else if (action === 'view_profile') {
             setSelectedEmployee(emp);
         } else if (action === 'manage_contract') {
             setContractEmployee(emp);
         } else if (action === 'terminate') {
-            requestAuth('SENSITIVE', `PERMANENTLY TERMINATE ${emp.name}`, () => {
-                requestAuth('SENSITIVE', `PERMANENTLY TERMINATE ${emp.name}`, () => {
-                    updateEmployee(emp.id, { status: 'exited', accessGranted: false });
-                    logAction('Employee Termination', `Terminated ${emp.name} (${emp.id})`);
-                });
-                logAction('Employee Termination', `Terminated ${emp.name} (${emp.id})`);
+            showConfirm({
+                title: 'Terminate Employee',
+                message: `Are you sure you want to completely terminate ${emp.name}? This cannot be easily undone.`,
+                onConfirm: () => {
+                    requestAuth('SENSITIVE', `PERMANENTLY TERMINATE ${emp.name}`, () => {
+                        updateEmployee(emp.id, { status: 'exited', accessGranted: false });
+                        logAction('Employee Termination', `Terminated ${emp.name} (${emp.id})`);
+                        showSuccess({ title: 'Employee Terminated', message: `${emp.name} has been marked as exited.` });
+                    });
+                }
             });
         }
     };
@@ -302,14 +328,17 @@ export const Employees: React.FC = () => {
                                     <select
                                         id="emp-dept"
                                         className="w-full p-2 border border-slate-200 rounded-lg"
-                                        value={newEmp.department || 'Engineering'}
+                                        value={newEmp.department || (departments[0]?.name || 'General')}
                                         onChange={e => setNewEmp({ ...newEmp, department: e.target.value })}
+                                        required
                                     >
-                                        <option>Management</option>
-                                        <option>Engineering</option>
-                                        <option>Operations</option>
-                                        <option>Product</option>
-                                        <option>Marketing</option>
+                                        {departments.length > 0 ? (
+                                            departments.map(d => (
+                                                <option key={d.id} value={d.name}>{d.name}</option>
+                                            ))
+                                        ) : (
+                                            <option value="General">General</option>
+                                        )}
                                     </select>
                                 </div>
                                 <div>
@@ -320,7 +349,14 @@ export const Employees: React.FC = () => {
                                         className="w-full p-2 border border-slate-200 rounded-lg"
                                         value={newEmp.salary || ''}
                                         onChange={e => setNewEmp({ ...newEmp, salary: Number(e.target.value) })}
+                                        required
                                     />
+                                    {/* Subtext suggestion for salary band */}
+                                    {newEmp.department && departments.find(d => d.name === newEmp.department) && (
+                                        <p className="text-xs text-brand-600 mt-1">
+                                            Band: ₦{departments.find(d => d.name === newEmp.department)?.minSalary.toLocaleString()} - ₦{departments.find(d => d.name === newEmp.department)?.maxSalary.toLocaleString()}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 

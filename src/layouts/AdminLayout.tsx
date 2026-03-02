@@ -14,7 +14,8 @@ export const AdminLayout: React.FC = () => {
         currentUserRole,
         switchRole,
         rolePermissions,
-        isAuthenticated
+        isAuthenticated,
+        cmsContent
     } = useAdmin();
 
     const { showSuccess } = useFeedback();
@@ -136,6 +137,13 @@ export const AdminLayout: React.FC = () => {
                                 <NavLink to="/admin/recruitment" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
                                     <FileText size={20} />
                                     Recruitment
+                                </NavLink>
+                            )}
+                            {/* Salary Bands */}
+                            {hasAccess('Employees') && (
+                                <NavLink to="/admin/salary-structures" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                    <TrendingUp size={20} />
+                                    Department Salary
                                 </NavLink>
                             )}
                             {hasAccess('Employees') && (
@@ -280,34 +288,24 @@ export const AdminLayout: React.FC = () => {
 
                                                 {cmsSectionState.pages && (
                                                     <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
-                                                        <NavLink to="/admin/cms?page=Home" className={() => {
-                                                            const search = location.search;
-                                                            const active = (!search || search.includes('page=Home'));
-                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                                        }}>
-                                                            Home
-                                                        </NavLink>
-                                                        <NavLink to="/admin/cms?page=About" className={() => {
-                                                            const search = location.search;
-                                                            const active = search.includes('page=About');
-                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                                        }}>
-                                                            About
-                                                        </NavLink>
-                                                        <NavLink to="/admin/cms?page=Services" className={() => {
-                                                            const search = location.search;
-                                                            const active = search.includes('page=Services');
-                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                                        }}>
-                                                            Services (Main)
-                                                        </NavLink>
-                                                        <NavLink to="/admin/cms?page=Contact" className={() => {
-                                                            const search = location.search;
-                                                            const active = search.includes('page=Contact');
-                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                                        }}>
-                                                            Contact
-                                                        </NavLink>
+                                                        {Object.keys(cmsContent?.pages || {}).map((pageSlug) => {
+                                                            const isHome = pageSlug.toLowerCase() === 'home';
+                                                            const displayLabel = isHome ? 'Home' : pageSlug.charAt(0).toUpperCase() + pageSlug.slice(1).replace(/-/g, ' ');
+
+                                                            return (
+                                                                <NavLink
+                                                                    key={pageSlug}
+                                                                    to={`/admin/cms?page=${pageSlug}`}
+                                                                    className={() => {
+                                                                        const search = location.search;
+                                                                        const active = isHome ? (!search || search.includes(`page=${pageSlug}`)) : search.includes(`page=${pageSlug}`);
+                                                                        return `block px-2 py-1.5 text-xs rounded-md capitalize transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                                    }}
+                                                                >
+                                                                    {displayLabel}
+                                                                </NavLink>
+                                                            );
+                                                        })}
                                                     </div>
                                                 )}
                                             </div>

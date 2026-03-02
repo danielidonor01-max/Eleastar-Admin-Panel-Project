@@ -86,7 +86,7 @@ export const authService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && data.status) {
                 const token = data.data.token;
                 const user = data.data.user;
 
@@ -127,7 +127,7 @@ export const authService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && data.status) {
                 return { success: true, data: undefined, message: data.message };
             } else {
                 return { success: false, data: null as any, error: data.message || 'Failed to resend OTP' };
@@ -153,7 +153,7 @@ export const authService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && data.status) {
                 return { success: true, data: undefined, message: data.message };
             } else {
                 return { success: false, data: null as any, error: data.message || 'Failed to send password reset link' };
@@ -179,7 +179,7 @@ export const authService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && data.status) {
                 return { success: true, data: undefined, message: data.message };
             } else {
                 return { success: false, data: null as any, error: data.message || 'Failed to reset password' };

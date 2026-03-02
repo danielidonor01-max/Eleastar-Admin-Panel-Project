@@ -9,6 +9,7 @@ import { VerificationPage } from './pages/VerificationPage';
 import { CareersPage } from './pages/CareersPage';
 import { Contact } from './pages/Contact';
 import { LoginPage } from './pages/LoginPage';
+import { DynamicPage } from './pages/DynamicPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Admin Imports
@@ -26,7 +27,7 @@ import { NotificationsPage } from './pages/admin/NotificationsPage';
 import CompliancePage from './pages/admin/CompliancePage';
 import { ActivityLogPage } from './pages/admin/ActivityLogPage';
 import { PromotionsPage } from './pages/admin/PromotionsPage';
-import { SalarySettings } from './pages/admin/SalarySettings';
+import { DepartmentSettings } from './pages/admin/DepartmentSettings';
 import { BonusPage } from './pages/admin/BonusPage';
 import { AnalyticsDashboard } from './pages/admin/AnalyticsDashboard';
 import { AdminTasksPage } from './pages/admin/AdminTasksPage';
@@ -63,6 +64,7 @@ function App() {
           <Route path="/careers" element={<CareersPage />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/:slug" element={<DynamicPage />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<ErrorBoundary><AdminLayout /></ErrorBoundary>}>
@@ -82,7 +84,7 @@ function App() {
             <Route path="compliance" element={<CompliancePage />} />
             <Route path="activity" element={<ActivityLogPage />} />
             <Route path="promotions" element={<PromotionsPage />} />
-            <Route path="salary-structures" element={<SalarySettings />} />
+            <Route path="salary-structures" element={<DepartmentSettings />} />
             <Route path="bonuses" element={<BonusPage />} />
             <Route path="analytics" element={<AnalyticsDashboard />} />
 

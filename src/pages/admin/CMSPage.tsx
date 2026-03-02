@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import { useFeedback } from '../../context/FeedbackContext';
-import { Save, AlertCircle, CheckCircle, Eye, Layout, FileCode } from 'lucide-react';
+import { Save, AlertCircle, CheckCircle, Eye, Layout, FileCode, Plus, X } from 'lucide-react';
 import { DynamicJsonEditor } from '../../components/DynamicJsonEditor';
 import { CMSPreviewPane } from '../../components/CMSPreviewPane';
 import { PUBLIC_LINK } from '../../config';
 
 export const CMSPage: React.FC = () => {
-    const { cmsContent, globalContent, updatePMSContent } = useAdmin();
+    const { cmsContent, globalContent, updatePMSContent, createCMSPage } = useAdmin();
     const { showSuccess, showError } = useFeedback();
 
     const [activeTab, setActiveTab] = useState<'metaData' | 'navData' | 'footerNavData' | 'contactUsCardData' | 'pages'>('pages');
@@ -18,7 +18,14 @@ export const CMSPage: React.FC = () => {
     const [parsedData, setParsedData] = useState<any>(null); // For Dynamic Form Edit state
     const [isDirty, setIsDirty] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // New Page Modal State
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [newPageTitle, setNewPageTitle] = useState('');
+    const [newPageSlug, setNewPageSlug] = useState('');
+
     const location = useLocation();
+    const navigate = useNavigate();
 
     const PREVIEW_URL = PUBLIC_LINK || window.location.origin;
 
@@ -103,6 +110,20 @@ export const CMSPage: React.FC = () => {
         }
     };
 
+    const handleCreatePage = async () => {
+        if (!newPageTitle || !newPageSlug) return;
+        try {
+            await createCMSPage(newPageTitle, newPageSlug);
+            setShowCreateModal(false);
+            setNewPageTitle('');
+            setNewPageSlug('');
+            // Navigate to the newly created page within CMS
+            navigate(`/admin/cms?page=${newPageSlug}`);
+        } catch (err: any) {
+            // Error is handled in context, but catch prevents UI freeze
+        }
+    };
+
     if (!cmsContent) {
         return (
             <div className="p-8 flex items-center justify-center min-h-[60vh]">
@@ -133,17 +154,26 @@ export const CMSPage: React.FC = () => {
                     </h1>
                     <p className="text-slate-500 mt-1">Manage the core JSON data powering the Eleastar website application.</p>
                 </div>
-                <button
-                    onClick={handleSave}
-                    disabled={!isDirty || !!error}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all shadow-sm
-                        ${!isDirty || !!error
-                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                            : 'bg-brand-600 text-white hover:bg-brand-700 hover:shadow-md'}`}
-                >
-                    <Save size={18} />
-                    {isDirty ? 'Save Unsaved Changes' : 'Saved'}
-                </button>
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="flex items-center gap-2 px-4 py-3 rounded-lg font-bold transition-all shadow-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+                    >
+                        <Plus size={18} />
+                        Create Page
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={!isDirty || !!error}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all shadow-sm
+                            ${!isDirty || !!error
+                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                : 'bg-brand-600 text-white hover:bg-brand-700 hover:shadow-md'}`}
+                    >
+                        <Save size={18} />
+                        {isDirty ? 'Save Unsaved Changes' : 'Saved'}
+                    </button>
+                </div>
             </div>
 
             <div className="flex flex-col xl:flex-row gap-6 flex-grow overflow-hidden">
@@ -234,6 +264,65 @@ export const CMSPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Create Page Modal */}
+            {showCreateModal && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="font-bold text-lg text-slate-800">Create Dynamic Page</h3>
+                            <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-slate-600" aria-label="Close modal">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">Page Title</label>
+                                <input
+                                    type="text"
+                                    value={newPageTitle}
+                                    onChange={e => {
+                                        setNewPageTitle(e.target.value);
+                                        if (!newPageSlug || newPageSlug === newPageTitle.slice(0, -1).toLowerCase().replace(/\s+/g, '-')) {
+                                            setNewPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
+                                        }
+                                    }}
+                                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                                    placeholder="e.g. Products"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1">URL Slug</label>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-sm">/</span>
+                                    <input
+                                        type="text"
+                                        value={newPageSlug}
+                                        onChange={e => setNewPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                        className="w-full pl-8 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-mono text-sm"
+                                        placeholder="products"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowCreateModal(false)}
+                                className="px-4 py-2 text-slate-600 font-bold hover:bg-slate-200 rounded-lg transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleCreatePage}
+                                disabled={!newPageTitle || !newPageSlug}
+                                className="px-4 py-2 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Create Page
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -7,14 +7,14 @@ import { generatePastCycles } from '../../utils/payrollUtils';
 import { useFeedback } from '../../context/FeedbackContext';
 import { Select } from '../../components/Select';
 import type { Employee } from '../../data/mockData';
-import { SalarySettings } from './SalarySettings';
+import { DepartmentSettings } from './DepartmentSettings';
 
 export const PayrollPage: React.FC = () => {
     const { employees, payrollStatus, bulkPayrollAdjustment, cooReviewPayroll, cfoApprovePayroll, updateEmployeeSalary, rolePermissions, currentUserRole } = useAdmin();
     const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
     const [editingSalaryEmployee, setEditingSalaryEmployee] = useState<Employee | null>(null);
     const { showConfirm } = useFeedback();
-    const [activeTab, setActiveTab] = useState<'payment' | 'structure'>('payment');
+    const [activeTab, setActiveTab] = useState<'payment' | 'structures'>('payment');
 
     // --- Cycle Selection State ---
     const initialYear = useMemo(() => new Date().getFullYear(), []);
@@ -202,13 +202,13 @@ export const PayrollPage: React.FC = () => {
                             Payment Execution
                         </button>
                         <button
-                            onClick={() => setActiveTab('structure')}
-                            className={`pb-2 px-1 text-sm font-medium transition-colors relative ${activeTab === 'structure'
+                            onClick={() => setActiveTab('structures')}
+                            className={`pb-2 px-1 text-sm font-medium transition-colors relative ${activeTab === 'structures'
                                 ? 'text-brand-600 border-b-2 border-brand-600'
                                 : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
-                            Salary Structures
+                            Departments & Salary Bands
                         </button>
                     </div>
 
@@ -244,7 +244,7 @@ export const PayrollPage: React.FC = () => {
                         </>
                     ) : (
                         <div className="mt-6">
-                            <SalarySettings />
+                            <DepartmentSettings />
                         </div>
                     )}
                 </div>
