@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MoreVertical, Plus, Download, UserPlus, FileText, Trash2, QrCode } from 'lucide-react';
+import { Search, MoreVertical, Plus, Download, UserPlus, FileText, Trash2, QrCode, Eye, EyeOff } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import type { Employee } from '../../data/mockData';
@@ -14,6 +14,8 @@ export const Employees: React.FC = () => {
     const [contractEmployee, setContractEmployee] = useState<Employee | null>(null);
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Form State
     // Form State
@@ -194,14 +196,14 @@ export const Employees: React.FC = () => {
                                 <th className="px-6 py-4 border-b border-slate-200">Employee</th>
                                 <th className="px-6 py-4 border-b border-slate-200">ID</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Job Title & Dept</th>
-                                <th className="px-6 py-4 border-b border-slate-200">Type</th>
+                                <th className="px-6 py-4 border-b border-slate-200">Employment Type</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Status</th>
                                 <th className="px-6 py-4 border-b border-slate-200 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {filteredEmployees.map((emp) => (
-                                <tr key={emp.id} className="hover:bg-slate-50 transition-colors group relative">
+                                <tr key={emp.id} className="hover:bg-slate-50 transition-colors group relative cursor-pointer" onClick={() => setSelectedEmployee(emp)}>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-full bg-slate-200 overflow-hidden">
@@ -335,7 +337,7 @@ export const Employees: React.FC = () => {
                                     <label htmlFor="emp-dept" className="block text-sm font-medium text-slate-700 mb-1">Department</label>
                                     <select
                                         id="emp-dept"
-                                        className="w-full p-2 border border-slate-200 rounded-lg"
+                                        className="w-full p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                                         value={newEmp.department || (departments[0]?.name || 'General')}
                                         onChange={e => setNewEmp({ ...newEmp, department: e.target.value })}
                                         required
@@ -373,7 +375,7 @@ export const Employees: React.FC = () => {
                                     <label htmlFor="emp-role" className="block text-sm font-medium text-slate-700 mb-1">System Role</label>
                                     <select
                                         id="emp-role"
-                                        className="w-full p-2 border border-slate-200 rounded-lg"
+                                        className="w-full p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                                         value={newEmp.role_id || 3}
                                         onChange={e => setNewEmp({ ...newEmp, role_id: Number(e.target.value) })}
                                     >
@@ -386,7 +388,7 @@ export const Employees: React.FC = () => {
                                     <label htmlFor="emp-type" className="block text-sm font-medium text-slate-700 mb-1">Employment Type</label>
                                     <select
                                         id="emp-type"
-                                        className="w-full p-2 border border-slate-200 rounded-lg"
+                                        className="w-full p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                                         value={newEmp.employmentType || 'Full-time'}
                                         onChange={e => setNewEmp({ ...newEmp, employmentType: e.target.value as any })}
                                     >
@@ -401,27 +403,45 @@ export const Employees: React.FC = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label htmlFor="emp-password" className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                                    <input
-                                        id="emp-password"
-                                        type="password"
-                                        required
-                                        className="w-full p-2 border border-slate-200 rounded-lg"
-                                        value={newEmp.password || ''}
-                                        onChange={e => setNewEmp({ ...newEmp, password: e.target.value })}
-                                        minLength={6}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            id="emp-password"
+                                            type={showPassword ? 'text' : 'password'}
+                                            required
+                                            className="w-full p-2 pr-10 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                            value={newEmp.password || ''}
+                                            onChange={e => setNewEmp({ ...newEmp, password: e.target.value })}
+                                            minLength={6}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-600"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div>
                                     <label htmlFor="emp-password-conf" className="block text-sm font-medium text-slate-700 mb-1">Confirm Password</label>
-                                    <input
-                                        id="emp-password-conf"
-                                        type="password"
-                                        required
-                                        className="w-full p-2 border border-slate-200 rounded-lg"
-                                        value={newEmp.password_confirmation || ''}
-                                        onChange={e => setNewEmp({ ...newEmp, password_confirmation: e.target.value })}
-                                        minLength={6}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            id="emp-password-conf"
+                                            type={showConfirmPassword ? 'text' : 'password'}
+                                            required
+                                            className="w-full p-2 pr-10 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                            value={newEmp.password_confirmation || ''}
+                                            onChange={e => setNewEmp({ ...newEmp, password_confirmation: e.target.value })}
+                                            minLength={6}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-600"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        >
+                                            {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div>

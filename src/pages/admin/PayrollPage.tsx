@@ -364,7 +364,7 @@ export const PayrollPage: React.FC = () => {
                                         className="bg-transparent border-none text-xs font-bold text-slate-500 uppercase focus:ring-0 cursor-pointer p-0 w-full"
                                         title="Filter by Type"
                                     >
-                                        <option value="All">All Types</option>
+                                        <option value="All">All Emp. Types</option>
                                         <option value="Full-time">Full-time</option>
                                         <option value="Part-time">Part-time</option>
                                         <option value="Intern">Intern</option>
@@ -384,7 +384,7 @@ export const PayrollPage: React.FC = () => {
                                     const isSelected = selectedIds.includes(emp.id);
 
                                     return (
-                                        <tr key={emp.id} className={`hover:bg-slate-50 transition-colors ${isSelected ? 'bg-brand-50/30' : ''}`}>
+                                        <tr key={emp.id} className={`hover:bg-slate-50 cursor-pointer transition-colors ${isSelected ? 'bg-brand-50/30' : ''}`}>
                                             <td className="px-6 py-3">
                                                 <input
                                                     type="checkbox"
@@ -446,9 +446,10 @@ export const PayrollPage: React.FC = () => {
                         </tbody>
                         <tfoot className="bg-slate-50 border-t border-slate-200 font-bold">
                             <tr>
-                                <td colSpan={5} className="px-6 py-3 text-slate-900">Total (All Employees)</td>
+                                <td colSpan={4} className="px-6 py-3 text-slate-900">Total (All Employees)</td>
+                                <td className="px-6 py-3 text-right text-slate-900 font-mono text-sm">{formatNaira(totalBaseSalary)}</td>
                                 <td className="px-6 py-3 text-right text-slate-900">{totalAdjustments !== 0 ? formatNaira(totalAdjustments) : '-'}</td>
-                                <td className="px-6 py-3 text-right text-slate-900 text-lg">{formatNaira(totalPayout)}</td>
+                                <td className="px-6 py-3 text-right text-slate-900 text-lg font-mono">{formatNaira(totalPayout)}</td>
                             </tr>
                         </tfoot>
                     </table>
