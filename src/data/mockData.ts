@@ -104,28 +104,7 @@ export interface PromotionEligibilityRule {
     isActive: boolean;
 }
 
-export const initialEligibilityRules: PromotionEligibilityRule[] = [
-    {
-        id: 'RULE-001',
-        tenantId: 'tenant-123',
-        name: 'Standard Promotion Criteria',
-        targetRole: 'Global',
-        minTimeInRoleMonths: 6,
-        minPerformanceRating: 4.0,
-        requireCleanRecord: true,
-        isActive: true
-    },
-    {
-        id: 'RULE-002',
-        tenantId: 'tenant-123',
-        name: 'Senior Management Criteria',
-        targetRole: 'COO',
-        minTimeInRoleMonths: 12,
-        minPerformanceRating: 4.5,
-        requireCleanRecord: true,
-        isActive: true
-    }
-];
+export const initialEligibilityRules: PromotionEligibilityRule[] = [];
 
 export interface SalaryHistoryEntry {
     date: string;
@@ -310,236 +289,9 @@ export interface LedgerEntry {
     transactionReference?: string; // UTR
 }
 
-export const employees: Employee[] = [
-    {
-        tenantId: 'tenant-default',
-        id: "EMP-001",
-        name: "Stephen Omovwigho",
-        title: "CEO",
-        department: "Management",
-        photoUrl: "https://ui-avatars.com/api/?name=Stephen+Omovwigho&background=0D8ABC&color=fff",
-        status: 'active',
-        verifiedAt: new Date().toISOString(),
-        joinedAt: '2020-01-15T09:00:00Z', // > 5 years
-        salary: 500000,
-        employmentType: 'Full-time',
-        email: "stephen@eleastar.com",
-        systemRole: 'SUPER_ADMIN',
-        accessGranted: true,
-        contractInfo: {
-            contractType: 'Full-Time',
-            startDate: '2020-01-15T09:00:00Z',
-            noticePeriod: 90,
-            documents: [
-                {
-                    id: 'DOC-001',
-                    name: 'Employment Contract - CEO.pdf',
-                    type: 'Employment Contract',
-                    uploadedAt: '2020-01-10T10:00:00Z',
-                    uploadedBy: 'HR-SYSTEM',
-                    fileUrl: '/documents/contracts/ceo-contract.pdf',
-                    fileSize: 245000,
-                    status: 'active'
-                }
-            ]
-        },
-        socialLinks: {
-            linkedin: "https://linkedin.com",
-            twitter: "https://twitter.com",
-            instagram: "https://instagram.com"
-        }
-    },
-    {
-        tenantId: 'tenant-default',
-        id: "EMP-002",
-        name: "Glory Omokefe",
-        title: "COO", // Updated to COO
-        department: "Operations",
-        photoUrl: "https://ui-avatars.com/api/?name=Glory+Omokefe&background=random",
-        status: 'active',
-        verifiedAt: new Date().toISOString(),
-        joinedAt: '2021-03-10T09:00:00Z', // ~4 years
-        salary: 350000, // Bumped for C-level
-        employmentType: 'Full-time',
-        email: "glory@eleastar.com",
-        systemRole: 'COO', // Updated Role
-        accessGranted: true,
-        managerId: "EMP-001" // Reports to CEO
-    },
-    {
-        tenantId: 'tenant-default',
-        id: "EMP-CRO-01",
-        name: "Sarah Risk",
-        title: "CHIEF_RISK_OFFICER",
-        department: "Compliance",
-        photoUrl: "https://ui-avatars.com/api/?name=Sarah+Risk&background=random",
-        status: 'active',
-        verifiedAt: new Date().toISOString(),
-        joinedAt: '2022-01-10T09:00:00Z',
-        salary: 320000,
-        employmentType: 'Full-time',
-        email: "sarah@eleastar.com",
-        systemRole: 'CHIEF_RISK_OFFICER',
-        accessGranted: true,
-        managerId: "EMP-001" // Reports to CEO
-    },
-    {
-        tenantId: 'tenant-default',
-        id: "EMP-003",
-        name: "Odirin Success",
-        title: "Backend Developer",
-        department: "Engineering",
-        photoUrl: "https://ui-avatars.com/api/?name=Odirin+Success&background=random",
-        status: 'active',
-        verifiedAt: new Date().toISOString(),
-        joinedAt: '2023-06-01T09:00:00Z', // < 3 years
-        salary: 150000,
-        employmentType: 'Full-time',
-        email: "odirin@eleastar.com",
-        systemRole: 'USER',
-        accessGranted: true,
-        phoneNumber: "+234 812 345 6789",
-        socialLinks: {
-            linkedin: "https://linkedin.com/in/odirinsuccess",
-            twitter: "https://x.com/odirin_dev"
-        },
-        leaveBalance: {
-            annual: 20,
-            sick: 10,
-            used: 0
-        }
-    },
-    {
-        tenantId: 'tenant-default',
-        id: "EMP-004",
-        name: "Victor Ibanoson",
-        title: "Backend Developer",
-        department: "Engineering",
-        photoUrl: "https://ui-avatars.com/api/?name=Victor+Ibanoson&background=random",
-        status: 'active',
-        verifiedAt: new Date().toISOString(),
-        joinedAt: '2023-08-15T09:00:00Z',
-        salary: 200000,
-        employmentType: 'Full-time',
-        email: "victor@eleastar.com",
-        systemRole: 'USER',
-        accessGranted: true
-    },
-    {
-        tenantId: 'tenant-default',
-        id: "EMP-005",
-        name: "Fegor Idoro",
-        title: "Frontend Developer",
-        department: "Engineering",
-        photoUrl: "https://ui-avatars.com/api/?name=Fegor+Idoro&background=random",
-        status: 'active',
-        verifiedAt: new Date().toISOString(),
-        joinedAt: '2024-01-10T09:00:00Z', // ~1 year
-        salary: 200000,
-        employmentType: 'Full-time',
-        email: "fegor@eleastar.com",
-        systemRole: 'USER',
-        accessGranted: true
-    },
-    {
-        tenantId: 'tenant-default',
-        id: "EMP-006",
-        name: "Daniel Idonor",
-        title: "UI/UX Designer",
-        department: "Product",
-        photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-        status: 'active',
-        verifiedAt: new Date().toISOString(),
-        joinedAt: '2024-02-01T09:00:00Z',
-        salary: 150000,
-        employmentType: 'Full-time',
-        email: "daniel@eleastar.com",
-        systemRole: 'COO',
-        accessGranted: true
-    },
-    {
-        tenantId: 'tenant-default',
-        id: "EMP-007",
-        name: "Victory Inorko",
-        title: "Intern",
-        department: "Engineering",
-        photoUrl: "https://ui-avatars.com/api/?name=Victory+Inorko&background=random",
-        status: 'active', // Changed to active lifecycle, but USER type
-        verifiedAt: new Date().toISOString(),
-        joinedAt: '2024-11-01T09:00:00Z', // Recent
-        salary: 70000,
-        employmentType: 'Intern',
-        email: "victory@eleastar.com",
-        systemRole: 'USER', // Updated from USER
-        accessGranted: true
-    }
-];
+export const employees: Employee[] = [];
 
-export const initialDepartments: Department[] = [
-    {
-        id: 'DEPT-001',
-        tenantId: 'tenant-default',
-        name: 'Management',
-        description: 'Executive Management Team',
-        minSalary: 500000,
-        maxSalary: 5000000,
-        currency: 'NGN'
-    },
-    {
-        id: 'DEPT-002',
-        tenantId: 'tenant-default',
-        name: 'Engineering',
-        description: 'Software Development and IT Operations',
-        minSalary: 150000,
-        maxSalary: 800000,
-        currency: 'NGN'
-    },
-    {
-        id: 'DEPT-003',
-        tenantId: 'tenant-default',
-        name: 'Operations',
-        description: 'Day to day company operations',
-        minSalary: 100000,
-        maxSalary: 400000,
-        currency: 'NGN'
-    },
-    {
-        id: 'DEPT-004',
-        tenantId: 'tenant-default',
-        name: 'Product',
-        description: 'Product Managers and Designers',
-        minSalary: 150000,
-        maxSalary: 600000,
-        currency: 'NGN'
-    },
-    {
-        id: 'DEPT-005',
-        tenantId: 'tenant-default',
-        name: 'Marketing',
-        description: 'Marketing and Sales',
-        minSalary: 100000,
-        maxSalary: 350000,
-        currency: 'NGN'
-    },
-    {
-        id: 'DEPT-006',
-        tenantId: 'tenant-default',
-        name: 'Compliance',
-        description: 'Auditing and compliance tracking',
-        minSalary: 200000,
-        maxSalary: 500000,
-        currency: 'NGN'
-    },
-    {
-        id: 'DEPT-007',
-        tenantId: 'tenant-default',
-        name: 'General',
-        description: 'General Staff and Interns',
-        minSalary: 50000,
-        maxSalary: 150000,
-        currency: 'NGN'
-    }
-];
+export const initialDepartments: Department[] = [];
 
 export const promotionRequests: PromotionRequest[] = [];
 
@@ -1630,45 +1382,31 @@ export const initialFooterContent: FooterContent = {
         id: 'footer-nav',
         lastUpdated: new Date().toISOString(),
         title: 'Primary Navigation',
-        links: [
-            { id: 'nav-1', label: 'Services', url: '/services', isVisible: true },
-            { id: 'nav-2', label: 'Technology', url: '/technology', isVisible: true },
-            { id: 'nav-3', label: 'Eleastar & You', url: '/culture', isVisible: true },
-            { id: 'nav-4', label: 'About Eleastar', url: '/about', isVisible: true },
-            { id: 'nav-5', label: 'Contact', url: '/contact', isVisible: true },
-            { id: 'nav-6', label: 'New Update', url: '/news', isVisible: true },
-            { id: 'nav-7', label: 'Locate us', url: '/contact#map', isVisible: true },
-        ]
+        links: []
     },
     utility: {
         id: 'footer-utility',
         lastUpdated: new Date().toISOString(),
         title: 'Utility Links',
-        links: [
-            { id: 'util-1', label: 'Privacy policy', url: '/privacy', isVisible: true },
-            { id: 'util-2', label: 'Terms of use', url: '/terms', isVisible: true },
-        ]
+        links: []
     },
     social: {
         id: 'footer-social',
         lastUpdated: new Date().toISOString(),
-        title: 'Social Media',
-        links: [
-            { id: 'soc-1', label: 'Facebook', url: '#', isVisible: true },
-            { id: 'soc-2', label: 'X (Twitter)', url: '#', isVisible: true },
-            { id: 'soc-3', label: 'LinkedIn', url: '#', isVisible: true },
-            { id: 'soc-4', label: 'Instagram', url: '#', isVisible: true },
-        ]
+        title: 'Connect With Us',
+        links: []
     },
     legal: {
         id: 'footer-legal',
         lastUpdated: new Date().toISOString(),
-        content: "We grant you a limited, non-exclusive, non-transferable, revocable license to use the Website and our services for personal, non-commercial use, subject to these Terms. This license does not include any resale of our services or their contents; any collection and use of any product listings, descriptions, or prices; any derivative use of our services or their contents; or any use of data mining, robots, or similar data gathering and extraction tools. You may view, download for caching purposes only, and print pages from the Website for your personal use, subject to the restrictions set out below and elsewhere in these Terms"
+        title: 'Legal',
+        links: []
     },
     copyright: {
         id: 'footer-copyright',
         lastUpdated: new Date().toISOString(),
-        content: "RC - 7130026"
+        content: '© 2026 Eleastar. All rights reserved.',
+        links: []
     }
 };
 
@@ -1693,7 +1431,7 @@ export interface ServiceDetailOfferingSection extends BaseSection {
     title: string;
     description: string; // or text? Industrial has 'text', IT has 'description' and 'text'. Let's standardize on description for new ones, but support existing.
     // Industrial uses 'text', IT uses 'description' (in mock) but type def might be inconsistent.
-    // Let's check Industrial again.
+    // Let's look at the Industrial again.
     // Industrial mock uses 'text'. IT mock uses 'description' and 'text'?
     // Let's look at the IT mock data again. IT mock uses 'description'.
     // Industrial mock uses 'text'.
@@ -2274,21 +2012,4 @@ export const initialPromotionRequests: PromotionRequest[] = [];
 // --- Task Management ---
 export const initialTasks: Task[] = [];
 
-export const initialApiKeys: SystemApiKey[] = [
-    {
-        id: 'API-1',
-        tenantId: 'tenant-default',
-        name: 'Main Website Frontend',
-        keyPreview: 'es_pk_********************a87b',
-        createdAt: '2026-02-10T09:30:00Z',
-        status: 'active'
-    },
-    {
-        id: 'API-2',
-        tenantId: 'tenant-default',
-        name: 'Staging Environment Test',
-        keyPreview: 'es_pk_********************4f9c',
-        createdAt: '2026-02-01T14:15:00Z',
-        status: 'disabled'
-    }
-];
+export const initialApiKeys: SystemApiKey[] = [];

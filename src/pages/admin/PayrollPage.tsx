@@ -7,14 +7,12 @@ import { generatePastCycles } from '../../utils/payrollUtils';
 import { useFeedback } from '../../context/FeedbackContext';
 import { Select } from '../../components/Select';
 import type { Employee } from '../../data/mockData';
-import { DepartmentSettings } from './DepartmentSettings';
 
 export const PayrollPage: React.FC = () => {
     const { employees, payrollStatus, bulkPayrollAdjustment, cooReviewPayroll, cfoApprovePayroll, updateEmployeeSalary, rolePermissions, currentUserRole } = useAdmin();
     const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
     const [editingSalaryEmployee, setEditingSalaryEmployee] = useState<Employee | null>(null);
     const { showConfirm } = useFeedback();
-    const [activeTab, setActiveTab] = useState<'payment' | 'structures'>('payment');
 
     // --- Cycle Selection State ---
     const initialYear = useMemo(() => new Date().getFullYear(), []);
@@ -191,330 +189,294 @@ export const PayrollPage: React.FC = () => {
                     <h1 className="text-2xl font-bold text-slate-900">Payroll Management</h1>
 
                     {/* Tabs */}
-                    <div className="flex items-center gap-4 mt-4 border-b border-slate-200">
-                        <button
-                            onClick={() => setActiveTab('payment')}
-                            className={`pb-2 px-1 text-sm font-medium transition-colors relative ${activeTab === 'payment'
-                                ? 'text-brand-600 border-b-2 border-brand-600'
-                                : 'text-slate-500 hover:text-slate-700'
-                                }`}
-                        >
-                            Payment Execution
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('structures')}
-                            className={`pb-2 px-1 text-sm font-medium transition-colors relative ${activeTab === 'structures'
-                                ? 'text-brand-600 border-b-2 border-brand-600'
-                                : 'text-slate-500 hover:text-slate-700'
-                                }`}
-                        >
-                            Departments & Salary Bands
-                        </button>
+
+                    <div className="flex items-center gap-3 mt-4">
+                        {/* Year Selector */}
+                        <Select
+                            value={selectedYear.toString()}
+                            onChange={(val: string) => setSelectedYear(Number(val))}
+                            options={[
+                                { value: initialYear.toString(), label: initialYear.toString() },
+                                { value: (initialYear - 1).toString(), label: (initialYear - 1).toString() },
+                                { value: (initialYear - 2).toString(), label: (initialYear - 2).toString() }
+                            ]}
+                            className="min-w-[100px]"
+                        />
+                        <span className="text-slate-300">|</span>
+                        <Select
+                            value={viewCycleId}
+                            onChange={(val: string) => setViewCycleId(val)}
+                            options={availableCycles.map(cycle => ({ value: cycle.id, label: cycle.month }))}
+                            className="min-w-[150px]"
+                        />
+                        <span className={`font-bold px-2 py-0.5 rounded text-xs uppercase ${targetCycle.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
+                            targetCycle.status === 'Approved' ? 'bg-blue-100 text-blue-700' :
+                                'bg-orange-100 text-orange-700'
+                            }`}>
+                            {targetCycle.status}
+                        </span>
                     </div>
 
-                    {activeTab === 'payment' ? (
-                        <>
-                            <div className="flex items-center gap-3 mt-4">
-                                {/* Year Selector */}
-                                {/* Year Selector */}
-                                <Select
-                                    value={selectedYear.toString()}
-                                    onChange={(val: string) => setSelectedYear(Number(val))}
-                                    options={[
-                                        { value: initialYear.toString(), label: initialYear.toString() },
-                                        { value: (initialYear - 1).toString(), label: (initialYear - 1).toString() },
-                                        { value: (initialYear - 2).toString(), label: (initialYear - 2).toString() }
-                                    ]}
-                                    className="min-w-[100px]"
-                                />
-                                <span className="text-slate-300">|</span>
-                                <Select
-                                    value={viewCycleId}
-                                    onChange={(val: string) => setViewCycleId(val)}
-                                    options={availableCycles.map(cycle => ({ value: cycle.id, label: cycle.month }))}
-                                    className="min-w-[150px]"
-                                />
-                                <span className={`font-bold px-2 py-0.5 rounded text-xs uppercase ${targetCycle.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
-                                    targetCycle.status === 'Approved' ? 'bg-blue-100 text-blue-700' :
-                                        'bg-orange-100 text-orange-700'
-                                    }`}>
-                                    {targetCycle.status}
-                                </span>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="mt-6">
-                            <DepartmentSettings />
-                        </div>
-                    )}
                 </div>
                 <div className="flex gap-3">
-                    {activeTab === 'payment' && (
+                    {currentUserRole !== 'FINANCE_ADMIN' && (
+                        <button
+                            onClick={() => setShowAdjustmentModal(true)}
+                            disabled={!isCurrentCycle || payrollStatus.status === 'Paid' || payrollStatus.status === 'Approved'}
+                            className="btn-secondary"
+                        >
+                            <Plus size={18} />
+                            {selectedIds.length > 0 ? `Adjust Selected (${selectedIds.length})` : 'New Adjustment'}
+                        </button>
+                    )}
+
+                    {(payrollStatus.status !== 'Paid' && isCurrentCycle) && (
                         <>
-                            {currentUserRole !== 'FINANCE_ADMIN' && (
+                            {/* COO Review Button */}
+                            {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'COO') && payrollStatus.status === 'Draft' && (
                                 <button
-                                    onClick={() => setShowAdjustmentModal(true)}
-                                    disabled={!isCurrentCycle || payrollStatus.status === 'Paid' || payrollStatus.status === 'Approved'}
-                                    className="btn-secondary"
+                                    onClick={() => showConfirm({
+                                        title: 'Review Payroll',
+                                        message: 'Mark this payroll as reviewed and ready for CFO approval?',
+                                        onConfirm: cooReviewPayroll
+                                    })}
+                                    className="btn-primary"
                                 >
-                                    <Plus size={18} />
-                                    {selectedIds.length > 0 ? `Adjust Selected (${selectedIds.length})` : 'New Adjustment'}
+                                    <Check size={18} />
+                                    COO Review
                                 </button>
                             )}
 
-                            {(payrollStatus.status !== 'Paid' && isCurrentCycle) && (
-                                <>
-                                    {/* COO Review Button */}
-                                    {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'COO') && payrollStatus.status === 'Draft' && (
-                                        <button
-                                            onClick={() => showConfirm({
-                                                title: 'Review Payroll',
-                                                message: 'Mark this payroll as reviewed and ready for CFO approval?',
-                                                onConfirm: cooReviewPayroll
-                                            })}
-                                            className="btn-primary"
-                                        >
-                                            <Check size={18} />
-                                            COO Review
-                                        </button>
-                                    )}
+                            {/* CFO Approval Button */}
+                            {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'FINANCE_ADMIN') && payrollStatus.status === 'Reviewed' && (
+                                <button
+                                    onClick={() => showConfirm({
+                                        title: 'Approve Payroll',
+                                        message: 'Approve this payroll and generate snapshot for payment execution?',
+                                        onConfirm: cfoApprovePayroll
+                                    })}
+                                    className="btn-success"
+                                >
+                                    <Check size={18} />
+                                    CFO Approve
+                                </button>
+                            )}
 
-                                    {/* CFO Approval Button */}
-                                    {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'FINANCE_ADMIN') && payrollStatus.status === 'Reviewed' && (
-                                        <button
-                                            onClick={() => showConfirm({
-                                                title: 'Approve Payroll',
-                                                message: 'Approve this payroll and generate snapshot for payment execution?',
-                                                onConfirm: cfoApprovePayroll
-                                            })}
-                                            className="btn-success"
-                                        >
-                                            <Check size={18} />
-                                            CFO Approve
-                                        </button>
-                                    )}
-
-                                    {/* Finance/Super Admin Payment Execution Link */}
-                                    {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'FINANCE_ADMIN' || currentUserRole === 'COO') && payrollStatus.status === 'Approved' && (
-                                        <a
-                                            href="/admin/finance"
-                                            className="btn-accent flex items-center gap-2"
-                                        >
-                                            <Wallet size={18} />
-                                            Go to Finance Ledger
-                                        </a>
-                                    )}
-                                </>
+                            {/* Finance/Super Admin Payment Execution Link */}
+                            {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'FINANCE_ADMIN' || currentUserRole === 'COO') && payrollStatus.status === 'Approved' && (
+                                <a
+                                    href="/admin/finance"
+                                    className="btn-accent flex items-center gap-2"
+                                >
+                                    <Wallet size={18} />
+                                    Go to Finance Ledger
+                                </a>
                             )}
                         </>
                     )}
                 </div>
             </div>
 
-            {activeTab === 'payment' && (
-                <>
-                    {/* Stats Cards */}
-                    <div className="grid md:grid-cols-3 gap-6 mb-8">
-                        <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg relative overflow-hidden">
-                            <div className="relative z-10">
-                                <div className="text-slate-400 text-sm font-medium">Total Monthly Payout</div>
-                                <div className="text-3xl font-bold mt-2">{formatNaira(totalPayout)}</div>
-                                <div className="text-xs text-slate-400 mt-4 border-t border-slate-700 pt-3 flex justify-between">
-                                    <span>Base: {formatNaira(totalBaseSalary)}</span>
-                                    <span className={totalAdjustments >= 0 ? 'text-emerald-400' : 'text-red-400'}>
-                                        {totalAdjustments >= 0 ? '+' : ''}{formatNaira(totalAdjustments)} (Adj)
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <div className="text-slate-500 text-sm font-medium">Next Pay Date</div>
-                            <div className="text-2xl font-bold text-slate-900 mt-2">Jan 25, 2026</div>
-                            <div className="text-xs text-orange-600 font-medium mt-2 flex items-center gap-1">
-                                <AlertCircle size={12} /> Approval deadline: Jan 20
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <div className="text-slate-500 text-sm font-medium">Past Cycles</div>
-                            <div className="mt-3 space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                    <span>December 2025</span>
-                                    <span className="text-emerald-600 font-bold">Paid</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span>November 2025</span>
-                                    <span className="text-emerald-600 font-bold">Paid</span>
-                                </div>
-                            </div>
+            {/* Stats Cards */}
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg relative overflow-hidden">
+                    <div className="relative z-10">
+                        <div className="text-slate-400 text-sm font-medium">Total Monthly Payout</div>
+                        <div className="text-3xl font-bold mt-2">{formatNaira(totalPayout)}</div>
+                        <div className="text-xs text-slate-400 mt-4 border-t border-slate-700 pt-3 flex justify-between">
+                            <span>Base: {formatNaira(totalBaseSalary)}</span>
+                            <span className={totalAdjustments >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                                {totalAdjustments >= 0 ? '+' : ''}{formatNaira(totalAdjustments)} (Adj)
+                            </span>
                         </div>
                     </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div className="text-slate-500 text-sm font-medium">Next Pay Date</div>
+                    <div className="text-2xl font-bold text-slate-900 mt-2">Jan 25, 2026</div>
+                    <div className="text-xs text-orange-600 font-medium mt-2 flex items-center gap-1">
+                        <AlertCircle size={12} /> Approval deadline: Jan 20
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div className="text-slate-500 text-sm font-medium">Past Cycles</div>
+                    <div className="mt-3 space-y-2 text-sm">
+                        <div className="flex justify-between">
+                            <span>December 2025</span>
+                            <span className="text-emerald-600 font-bold">Paid</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>November 2025</span>
+                            <span className="text-emerald-600 font-bold">Paid</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
 
 
-                    {/* Employee Table */}
-                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase">
-                                    <tr>
-                                        <th className="px-6 py-4 w-10">
-                                            <input
-                                                type="checkbox"
-                                                aria-label="Select All Employees"
-                                                className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                                                checked={filteredEmployees.length > 0 && selectedIds.length === filteredEmployees.length}
-                                                onChange={e => handleSelectAll(e.target.checked)}
-                                            />
-                                        </th>
-                                        <th className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                Employee
-                                                <select
-                                                    value={filterDept}
-                                                    onChange={e => setFilterDept(e.target.value)}
-                                                    className="ml-auto bg-transparent border-none text-xs font-bold text-slate-500 focus:ring-0 cursor-pointer p-0 w-24 text-right"
-                                                    title="Filter by Department"
-                                                >
-                                                    <option value="All">All Depts</option>
-                                                    {departments.map(d => <option key={d} value={d}>{d}</option>)}
-                                                </select>
-                                            </div>
-                                        </th>
-                                        <th className="px-6 py-4">
-                                            <select
-                                                value={filterRole}
-                                                onChange={e => setFilterRole(e.target.value)}
-                                                className="bg-transparent border-none text-xs font-bold text-slate-500 uppercase focus:ring-0 cursor-pointer p-0 w-full"
-                                                title="Filter by Role"
-                                            >
-                                                <option value="All">All Roles</option>
-                                                {roles.map(r => <option key={r} value={r}>{r}</option>)}
-                                            </select>
-                                        </th>
-                                        <th className="px-6 py-3">
-                                            <select
-                                                value={filterType}
-                                                onChange={e => setFilterType(e.target.value)}
-                                                className="bg-transparent border-none text-xs font-bold text-slate-500 uppercase focus:ring-0 cursor-pointer p-0 w-full"
-                                                title="Filter by Type"
-                                            >
-                                                <option value="All">All Types</option>
-                                                <option value="Full-time">Full-time</option>
-                                                <option value="Part-time">Part-time</option>
-                                                <option value="Intern">Intern</option>
-                                            </select>
-                                        </th>
-                                        <th className="px-6 py-3 text-right">Base Salary</th>
-                                        <th className="px-6 py-3 text-right">Adjustments</th>
-                                        <th className="px-6 py-3 text-right">Net Payable</th>
-                                        <th className="px-6 py-3 text-center">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {filteredEmployees.length > 0 ? (
-                                        filteredEmployees.map(emp => {
-                                            const adjustments = targetCycle.adjustments.filter(a => a.empId === emp.id);
-                                            const net = getEmployeeNet(emp.id, emp.salary || 0);
-                                            const isSelected = selectedIds.includes(emp.id);
+            {/* Employee Table */}
+            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase">
+                            <tr>
+                                <th className="px-6 py-4 w-10">
+                                    <input
+                                        type="checkbox"
+                                        aria-label="Select All Employees"
+                                        className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                                        checked={filteredEmployees.length > 0 && selectedIds.length === filteredEmployees.length}
+                                        onChange={e => handleSelectAll(e.target.checked)}
+                                    />
+                                </th>
+                                <th className="px-6 py-4">
+                                    <div className="flex items-center gap-2">
+                                        Employee
+                                        <select
+                                            value={filterDept}
+                                            onChange={e => setFilterDept(e.target.value)}
+                                            className="ml-auto bg-transparent border-none text-xs font-bold text-slate-500 focus:ring-0 cursor-pointer p-0 w-24 text-right"
+                                            title="Filter by Department"
+                                        >
+                                            <option value="All">All Depts</option>
+                                            {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                                        </select>
+                                    </div>
+                                </th>
+                                <th className="px-6 py-4">
+                                    <select
+                                        value={filterRole}
+                                        onChange={e => setFilterRole(e.target.value)}
+                                        className="bg-transparent border-none text-xs font-bold text-slate-500 uppercase focus:ring-0 cursor-pointer p-0 w-full"
+                                        title="Filter by Role"
+                                    >
+                                        <option value="All">All Roles</option>
+                                        {roles.map(r => <option key={r} value={r}>{r}</option>)}
+                                    </select>
+                                </th>
+                                <th className="px-6 py-3">
+                                    <select
+                                        value={filterType}
+                                        onChange={e => setFilterType(e.target.value)}
+                                        className="bg-transparent border-none text-xs font-bold text-slate-500 uppercase focus:ring-0 cursor-pointer p-0 w-full"
+                                        title="Filter by Type"
+                                    >
+                                        <option value="All">All Types</option>
+                                        <option value="Full-time">Full-time</option>
+                                        <option value="Part-time">Part-time</option>
+                                        <option value="Intern">Intern</option>
+                                    </select>
+                                </th>
+                                <th className="px-6 py-3 text-right">Base Salary</th>
+                                <th className="px-6 py-3 text-right">Adjustments</th>
+                                <th className="px-6 py-3 text-right">Net Payable</th>
+                                <th className="px-6 py-3 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {filteredEmployees.length > 0 ? (
+                                filteredEmployees.map(emp => {
+                                    const adjustments = targetCycle.adjustments.filter(a => a.empId === emp.id);
+                                    const net = getEmployeeNet(emp.id, emp.salary || 0);
+                                    const isSelected = selectedIds.includes(emp.id);
 
-                                            return (
-                                                <tr key={emp.id} className={`hover:bg-slate-50 transition-colors ${isSelected ? 'bg-brand-50/30' : ''}`}>
-                                                    <td className="px-6 py-3">
-                                                        <input
-                                                            type="checkbox"
-                                                            aria-label={`Select ${emp.name}`}
-                                                            className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                                                            checked={isSelected}
-                                                            onChange={e => handleSelectOne(emp.id, e.target.checked)}
-                                                        />
-                                                    </td>
-                                                    <td className="px-6 py-3 font-medium text-slate-900">{emp.name}</td>
-                                                    <td className="px-6 py-3 text-sm text-slate-500">{emp.title}</td>
-                                                    <td className="px-6 py-3 text-xs">
-                                                        <span className={`px-2 py-1 rounded border ${emp.employmentType === 'Full-time' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-purple-50 text-purple-700 border-purple-100'
-                                                            }`}>
-                                                            {emp.employmentType}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-3 text-right font-mono text-slate-600 text-sm">
-                                                        {formatNaira(emp.salary || 0)}
-                                                    </td>
-                                                    <td className="px-6 py-3 text-right">
-                                                        {adjustments.length > 0 ? (
-                                                            <div className="flex flex-col items-end gap-1">
-                                                                {adjustments.map((a, i) => (
-                                                                    <span key={i} className={`text-xs px-1.5 py-0.5 rounded ${a.type === 'Bonus' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
-                                                                        {a.type === 'Bonus' ? '+' : '-'}{formatNaira(a.amount)}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        ) : <span className="text-slate-300">-</span>}
-                                                    </td>
-                                                    <td className="px-6 py-3 text-right font-mono font-bold text-slate-900 text-sm">
-                                                        {formatNaira(net)}
-                                                    </td>
-                                                    <td className="px-6 py-3">
-                                                        {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'HR_ADMIN' || currentUserRole === 'MANAGEMENT_ADMIN') && (
-                                                            <button
-                                                                onClick={() => {
-                                                                    const fullEmployee = employees.find(e => e.id === emp.id);
-                                                                    if (fullEmployee) setEditingSalaryEmployee(fullEmployee);
-                                                                }}
-                                                                className="btn-ghost btn-icon text-slate-400 hover:text-brand-600 hover:bg-brand-50"
-                                                                title="Edit Salary"
-                                                            >
-                                                                <Edit2 size={16} />
-                                                            </button>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })
-                                    ) : (
-                                        <tr>
-                                            <td colSpan={8} className="px-6 py-12 text-center text-slate-500">
-                                                No employees match your filters.
+                                    return (
+                                        <tr key={emp.id} className={`hover:bg-slate-50 transition-colors ${isSelected ? 'bg-brand-50/30' : ''}`}>
+                                            <td className="px-6 py-3">
+                                                <input
+                                                    type="checkbox"
+                                                    aria-label={`Select ${emp.name}`}
+                                                    className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                                                    checked={isSelected}
+                                                    onChange={e => handleSelectOne(emp.id, e.target.checked)}
+                                                />
+                                            </td>
+                                            <td className="px-6 py-3 font-medium text-slate-900">{emp.name}</td>
+                                            <td className="px-6 py-3 text-sm text-slate-500">{emp.title}</td>
+                                            <td className="px-6 py-3 text-xs">
+                                                <span className={`px-2 py-1 rounded border ${emp.employmentType === 'Full-time' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-purple-50 text-purple-700 border-purple-100'
+                                                    }`}>
+                                                    {emp.employmentType}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-3 text-right font-mono text-slate-600 text-sm">
+                                                {formatNaira(emp.salary || 0)}
+                                            </td>
+                                            <td className="px-6 py-3 text-right">
+                                                {adjustments.length > 0 ? (
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        {adjustments.map((a, i) => (
+                                                            <span key={i} className={`text-xs px-1.5 py-0.5 rounded ${a.type === 'Bonus' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                                                                {a.type === 'Bonus' ? '+' : '-'}{formatNaira(a.amount)}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                ) : <span className="text-slate-300">-</span>}
+                                            </td>
+                                            <td className="px-6 py-3 text-right font-mono font-bold text-slate-900 text-sm">
+                                                {formatNaira(net)}
+                                            </td>
+                                            <td className="px-6 py-3">
+                                                {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'HR_ADMIN' || currentUserRole === 'MANAGEMENT_ADMIN') && (
+                                                    <button
+                                                        onClick={() => {
+                                                            const fullEmployee = employees.find(e => e.id === emp.id);
+                                                            if (fullEmployee) setEditingSalaryEmployee(fullEmployee);
+                                                        }}
+                                                        className="btn-ghost btn-icon text-slate-400 hover:text-brand-600 hover:bg-brand-50"
+                                                        title="Edit Salary"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
-                                    )}
-                                </tbody>
-                                <tfoot className="bg-slate-50 border-t border-slate-200 font-bold">
-                                    <tr>
-                                        <td colSpan={5} className="px-6 py-3 text-slate-900">Total (All Employees)</td>
-                                        <td className="px-6 py-3 text-right text-slate-900">{totalAdjustments !== 0 ? formatNaira(totalAdjustments) : '-'}</td>
-                                        <td className="px-6 py-3 text-right text-slate-900 text-lg">{formatNaira(totalPayout)}</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan={8} className="px-6 py-12 text-center text-slate-500">
+                                        No employees match your filters.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                        <tfoot className="bg-slate-50 border-t border-slate-200 font-bold">
+                            <tr>
+                                <td colSpan={5} className="px-6 py-3 text-slate-900">Total (All Employees)</td>
+                                <td className="px-6 py-3 text-right text-slate-900">{totalAdjustments !== 0 ? formatNaira(totalAdjustments) : '-'}</td>
+                                <td className="px-6 py-3 text-right text-slate-900 text-lg">{formatNaira(totalPayout)}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
 
-                    {/* Adjustment Modal */}
-                    <PayrollAdjustmentModal
-                        isOpen={showAdjustmentModal}
-                        onClose={() => setShowAdjustmentModal(false)}
-                        onApply={handleApplyAdjustment}
-                        employees={employees}
-                        initialSelectedIds={selectedIds}
+            {/* Adjustment Modal */}
+            <PayrollAdjustmentModal
+                isOpen={showAdjustmentModal}
+                onClose={() => setShowAdjustmentModal(false)}
+                onApply={handleApplyAdjustment}
+                employees={employees}
+                initialSelectedIds={selectedIds}
+            />
+
+            {/* Salary Edit Modal */}
+            {
+                editingSalaryEmployee && (
+                    <SalaryEditModal
+                        employee={editingSalaryEmployee}
+                        onClose={() => setEditingSalaryEmployee(null)}
+                        onSave={(newSalary, reason, effectiveDate) => {
+                            updateEmployeeSalary(editingSalaryEmployee.id, newSalary, reason, effectiveDate);
+                            setEditingSalaryEmployee(null);
+                        }}
                     />
-
-                    {/* Salary Edit Modal */}
-                    {
-                        editingSalaryEmployee && (
-                            <SalaryEditModal
-                                employee={editingSalaryEmployee}
-                                onClose={() => setEditingSalaryEmployee(null)}
-                                onSave={(newSalary, reason, effectiveDate) => {
-                                    updateEmployeeSalary(editingSalaryEmployee.id, newSalary, reason, effectiveDate);
-                                    setEditingSalaryEmployee(null);
-                                }}
-                            />
-                        )
-                    }
-                </>
-            )}
+                )
+            }
         </div >
     );
 };
