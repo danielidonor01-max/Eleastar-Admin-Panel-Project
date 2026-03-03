@@ -62,7 +62,7 @@ export const Employees: React.FC = () => {
             verifiedAt: new Date().toISOString(),
             joinedAt: new Date().toISOString(),
             salary: newEmp.salary || 100000,
-            systemRole: newEmp.role_id === 1 ? 'ADMIN' : (newEmp.role_id === 2 ? 'MANAGER' : 'USER'),
+            systemRole: newEmp.role_id === 1 ? 'SUPER_ADMIN' : (newEmp.role_id === 2 ? 'HR_ADMIN' : 'USER'),
             accessGranted: newEmp.status === 'active',
             password: newEmp.password,
             password_confirmation: newEmp.password_confirmation,
