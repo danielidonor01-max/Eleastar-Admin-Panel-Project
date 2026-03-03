@@ -10,7 +10,7 @@ import { payrollService } from '../services/payrollService';
 import { jobService } from '../services/jobService';
 import { leaveService } from '../services/leaveService';
 import { performanceService } from '../services/performanceService';
-import { fallbackCMSData } from '../data/fallbackCMS';
+// import { fallbackCMSData } from '../data/fallbackCMS';
 import { cmsService } from '../services/cmsService';
 import { settingsService } from '../services/settingsService';
 import { financeService } from '../services/financeService';
@@ -110,6 +110,7 @@ export interface AdminContextType {
     updateEmployee: (id: string, updates: Partial<Employee>) => void;
     updateUserProfile: (updates: Partial<Employee>) => void; // Safe update for self
     addEmployee: (employee: Omit<Employee, 'tenantId'>) => void;
+    deleteEmployee: (id: string) => void;
     updateEmployeeContract: (id: string, contract: any) => void;
     uploadContractDocument: (id: string, doc: any) => void;
     regenerateQR: (ids: string[]) => void;
@@ -389,11 +390,11 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                         } else if (cmsResponse.success && cmsResponse.data) {
                             setCmsContent(cmsResponse.data as any);
                         } else {
-                            // Extreme fallback so CMS never infinite spins
-                            setCmsContent(fallbackCMSData);
+                            // If no CMS content, just set to null (no fallback)
+                            setCmsContent(null);
                         }
                     } catch (cmsErr) {
-                        setCmsContent(fallbackCMSData);
+                        setCmsContent(null);
                     }
 
                     if (servicesResponse.success) setServicesCollection(servicesResponse.data);
@@ -559,95 +560,108 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setActivityLogs(prev => [newLog, ...prev]);
     };
 
-    const updateEmployee = (id: string, updates: Partial<Employee>) => {
-        setEmployees(prev => prev.map(emp => {
-            if (emp.id === id) {
-                const oldEmp = emp;
-                // Salary Band Logic: Enforce structure on role change
-                if (updates.systemRole && updates.systemRole !== emp.systemRole) {
-                    // Exclusions: Compliance & Audit Officers (per requirements)
-                    const isExcluded = ['CHIEF_RISK_OFFICER'].includes(updates.systemRole) ||
-                        (updates.title && /Compliance|Audit/i.test(updates.title)) ||
-                        (emp.title && /Compliance|Audit/i.test(emp.title));
+    const updateEmployee = async (id: string, updates: Partial<Employee>) => {
+        setIsLoading(true);
+        try {
+            const response = await employeeService.updateEmployee(id, updates);
+            if (response.success) {
+                setEmployees(prev => prev.map(emp => {
+                    if (emp.id === id) {
+                        const oldEmp = emp;
+                        // Salary Band Logic: Enforce structure on role change
+                        if (updates.systemRole && updates.systemRole !== emp.systemRole) {
+                            // Exclusions: Compliance & Audit Officers (per requirements)
+                            const isExcluded = ['CHIEF_RISK_OFFICER'].includes(updates.systemRole) ||
+                                (updates.title && /Compliance|Audit/i.test(updates.title)) ||
+                                (emp.title && /Compliance|Audit/i.test(emp.title));
 
-                    if (!isExcluded) {
-                        const dept = departments.find(d => d.name === updates.department);
-                        if (dept) {
-                            // Ensure salary respects the band of the NEW role
-                            let newSalary = updates.salary !== undefined ? updates.salary : emp.salary;
-                            let adjusted = false;
+                            if (!isExcluded) {
+                                const dept = departments.find(d => d.name === updates.department);
+                                if (dept) {
+                                    // Ensure salary respects the band of the NEW role
+                                    let newSalary = updates.salary !== undefined ? updates.salary : emp.salary;
+                                    let adjusted = false;
 
-                            if (newSalary < dept.minSalary) {
-                                newSalary = dept.minSalary;
-                                adjusted = true;
-                            } else if (newSalary > dept.maxSalary) {
-                                newSalary = dept.maxSalary;
-                                adjusted = true;
-                            }
+                                    if (newSalary < dept.minSalary) {
+                                        newSalary = dept.minSalary;
+                                        adjusted = true;
+                                    } else if (newSalary > dept.maxSalary) {
+                                        newSalary = dept.maxSalary;
+                                        adjusted = true;
+                                    }
 
-                            if (adjusted) {
-                                updates.salary = newSalary;
-                                logAction('Salary Auto-Adjustment', `Salary adjusted to ₦${newSalary.toLocaleString()} to match ${updates.department} band.`);
+                                    if (adjusted) {
+                                        updates.salary = newSalary;
+                                        logAction('Salary Auto-Adjustment', `Salary adjusted to ₦${newSalary.toLocaleString()} to match ${updates.department} band.`);
+                                    }
+                                }
                             }
                         }
+
+                        const newEmp = { ...emp, ...updates };
+
+                        // Detect Financial/Role Changes and Notify
+                        if (updates.salary && updates.salary !== oldEmp.salary) {
+                            const diff = updates.salary - oldEmp.salary;
+                            const type = diff > 0 ? 'Salary Increase' : 'Salary Adjustment';
+
+                            dispatchNotification(
+                                {
+                                    title: type,
+                                    message: `Your salary has been updated to ₦${updates.salary.toLocaleString()}`,
+                                    type: 'Payroll',
+                                    link: '/user/profile'
+                                },
+                                { userId: id },
+                                ['in-app', 'email'] // Critical: Send Email
+                            );
+                            logAction(type, `Updated salary for ${id} from ${oldEmp.salary} to ${updates.salary}`);
+                        }
+
+                        if (updates.title && updates.title !== oldEmp.title) {
+                            dispatchNotification(
+                                {
+                                    title: 'Role Update',
+                                    message: `Congratulations on your new role: ${updates.title}!`,
+                                    type: 'HR',
+                                    link: '/user/profile'
+                                },
+                                { userId: id },
+                                ['in-app', 'email'] // Critical: Send Email
+                            );
+                            logAction('Promotion/Role Change', `Updated title for ${id} to ${updates.title}`);
+                        }
+
+                        if (updates.department && updates.department !== oldEmp.department) {
+                            dispatchNotification(
+                                {
+                                    title: 'Department Transfer',
+                                    message: `You have been moved to the ${updates.department} department`,
+                                    type: 'HR',
+                                    link: '/user/profile'
+                                },
+                                { userId: id },
+                                ['in-app'] // Information only
+                            );
+                        }
+
+                        return newEmp;
                     }
+                    return emp;
+                }));
+
+                // Log generic update if not captured above or simple profile update
+                if (!updates.salary && !updates.title) {
+                    logAction('Updated Employee', `Updated profile for ${id}`);
                 }
-
-                const newEmp = { ...emp, ...updates };
-
-                // Detect Financial/Role Changes and Notify
-                if (updates.salary && updates.salary !== oldEmp.salary) {
-                    const diff = updates.salary - oldEmp.salary;
-                    const type = diff > 0 ? 'Salary Increase' : 'Salary Adjustment';
-
-                    dispatchNotification(
-                        {
-                            title: type,
-                            message: `Your salary has been updated to ₦${updates.salary.toLocaleString()}`,
-                            type: 'Payroll',
-                            link: '/user/profile'
-                        },
-                        { userId: id },
-                        ['in-app', 'email'] // Critical: Send Email
-                    );
-                    logAction(type, `Updated salary for ${id} from ${oldEmp.salary} to ${updates.salary}`);
-                }
-
-                if (updates.title && updates.title !== oldEmp.title) {
-                    dispatchNotification(
-                        {
-                            title: 'Role Update',
-                            message: `Congratulations on your new role: ${updates.title}!`,
-                            type: 'HR',
-                            link: '/user/profile'
-                        },
-                        { userId: id },
-                        ['in-app', 'email'] // Critical: Send Email
-                    );
-                    logAction('Promotion/Role Change', `Updated title for ${id} to ${updates.title}`);
-                }
-
-                if (updates.department && updates.department !== oldEmp.department) {
-                    dispatchNotification(
-                        {
-                            title: 'Department Transfer',
-                            message: `You have been moved to the ${updates.department} department`,
-                            type: 'HR',
-                            link: '/user/profile'
-                        },
-                        { userId: id },
-                        ['in-app'] // Information only
-                    );
-                }
-
-                return newEmp;
+                showSuccess({ title: 'Profile Updated', message: 'Employee profile updated successfully.' });
+            } else {
+                showError({ title: 'Update Failed', message: response.error });
             }
-            return emp;
-        }));
-
-        // Log generic update if not captured above or simple profile update
-        if (!updates.salary && !updates.title) {
-            logAction('Updated Employee', `Updated profile for ${id}`);
+        } catch (err) {
+            showError({ title: 'Update Error', message: 'Failed to update employee.' });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -692,6 +706,24 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
         } catch (err) {
             showError({ title: 'Onboarding Error', message: 'Failed to create employee.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const deleteEmployee = async (id: string) => {
+        setIsLoading(true);
+        try {
+            const response = await employeeService.deleteEmployee(id);
+            if (response.success) {
+                setEmployees(prev => prev.filter(emp => emp.id !== id));
+                logAction('Offboarding', `Removed employee: ${id}`);
+                showSuccess({ title: 'Employee Removed', message: 'Employee has been removed from the system.' });
+            } else {
+                showError({ title: 'Offboarding Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Offboarding Error', message: 'Failed to delete employee.' });
         } finally {
             setIsLoading(false);
         }
@@ -2235,25 +2267,51 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     // --- Task Management ---
-    const createTask = (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => {
-        const newTask: Task = {
-            ...taskData,
-            id: `TSK-${Date.now()}`,
-            status: 'Pending',
-            createdAt: new Date().toISOString()
-        };
-        setTasks(prev => [newTask, ...prev]);
+    const createTask = async (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => {
+        setIsLoading(true);
+        try {
+            const response = await import('../services/taskService').then(m => m.taskService.createTask(taskData));
+            if (response.success) {
+                const newTask: Task = {
+                    ...taskData,
+                    id: response.data?.id || `TSK-${Date.now()}`,
+                    status: 'Pending',
+                    createdAt: new Date().toISOString()
+                };
+                setTasks(prev => [newTask, ...prev]);
 
-        dispatchNotification(
-            { title: 'New Task Assigned', message: `You have been assigned: ${taskData.title}`, type: 'HR', link: '/user/tasks' },
-            { userId: taskData.assignedTo }
-        );
+                dispatchNotification(
+                    { title: 'New Task Assigned', message: `You have been assigned: ${taskData.title}`, type: 'HR', link: '/user/tasks' },
+                    { userId: taskData.assignedTo }
+                );
+                showSuccess({ title: 'Task Created', message: 'Task assigned successfully.' });
+            } else {
+                showError({ title: 'Creation Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Creation Error', message: 'Failed to create task.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const updateTaskStatus = (taskId: string, status: Task['status']) => {
-        setTasks(prev => prev.map(task =>
-            task.id === taskId ? { ...task, status } : task
-        ));
+    const updateTaskStatus = async (taskId: string, status: Task['status']) => {
+        setIsLoading(true);
+        try {
+            const response = await import('../services/taskService').then(m => m.taskService.updateTaskStatus(taskId, status));
+            if (response.success) {
+                setTasks(prev => prev.map(task =>
+                    task.id === taskId ? { ...task, status } : task
+                ));
+                showSuccess({ title: 'Status Updated', message: `Task status updated to ${status}.` });
+            } else {
+                showError({ title: 'Update Failed', message: response.error });
+            }
+        } catch (err) {
+            showError({ title: 'Update Error', message: 'Failed to update task status.' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const submitTaskEvidence = (taskId: string, notes: string, b64Evidence: string[]) => {
@@ -2328,6 +2386,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             updateEmployee,
             updateUserProfile,
             addEmployee,
+            deleteEmployee,
             regenerateQR,
             toggleQRStatus,
             updatePayrollStatus,

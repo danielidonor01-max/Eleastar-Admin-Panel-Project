@@ -34,7 +34,7 @@ export const taskService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to fetch tasks' };
@@ -56,7 +56,7 @@ export const taskService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to create task' };
@@ -77,7 +77,7 @@ export const taskService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to fetch task statistics' };
@@ -103,7 +103,7 @@ export const taskService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to fetch my tasks' };
@@ -125,7 +125,7 @@ export const taskService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to update task status' };

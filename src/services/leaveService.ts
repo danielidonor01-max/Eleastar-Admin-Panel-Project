@@ -28,13 +28,13 @@ export const leaveService = {
                 });
             }
 
-            const response = await fetch(`${API_BASE_URL}/leave-requests?${query.toString()}`, {
+            const response = await fetch(`${API_BASE_URL}/leaves?${query.toString()}`, {
                 method: 'GET',
                 headers: getHeaders()
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to fetch leave requests' };
@@ -48,7 +48,7 @@ export const leaveService = {
      */
     requestLeave: async (userId: string, requestPayload: Omit<LeaveRequest, 'id' | 'tenantId' | 'employeeId' | 'status' | 'requestedAt'>): Promise<ApiResponse<LeaveRequest>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/leave-requests`, {
+            const response = await fetch(`${API_BASE_URL}/leaves/apply`, {
                 method: 'POST',
                 headers: getHeaders(),
                 body: JSON.stringify({
@@ -58,7 +58,7 @@ export const leaveService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to submit leave request' };
@@ -72,14 +72,14 @@ export const leaveService = {
      */
     updateLeaveStatus: async (requestId: string | number, status: 'Approved' | 'Rejected', reason?: string): Promise<ApiResponse<void>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/leave-requests/${requestId}/status`, {
+            const response = await fetch(`${API_BASE_URL}/leaves/${requestId}/status`, {
                 method: 'PUT',
                 headers: getHeaders(),
                 body: JSON.stringify({ status, rejection_reason: reason })
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: undefined, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || `Failed to ${status.toLowerCase()} leave request` };
@@ -143,7 +143,7 @@ export const leaveService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to apply for leave' };
@@ -164,7 +164,7 @@ export const leaveService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: undefined, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to approve leave request' };
@@ -186,7 +186,7 @@ export const leaveService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: undefined, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to reject leave request' };
@@ -207,7 +207,7 @@ export const leaveService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to fetch leave statistics' };
@@ -231,7 +231,7 @@ export const leaveService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to fetch my leave requests' };
@@ -252,7 +252,7 @@ export const leaveService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to fetch leave types' };

@@ -8,7 +8,7 @@ import {
     type ServiceCollection,
     initialServicesCollection
 } from '../data/mockData';
-import { fallbackCMSData } from '../data/fallbackCMS';
+// import { fallbackCMSData } from '../data/fallbackCMS';
 import type { CMSData } from '../types/cms';
 
 // Helper for fetching tokens securely. Assuming the app stores 'token' in localStorage
@@ -193,11 +193,10 @@ export const cmsService = {
      * FALLBACK Methods - still using mockData temporarily depending on the context consumption.
      * Over time, these will be replaced by the Live endpoints above when fully integrated
      */
-    getCMSContent: async (): Promise<ApiResponse<CMSData>> => {
+    getCMSContent: async (): Promise<ApiResponse<CMSData | null>> => {
         await delay();
-        // Fallback for parts of the app that still expect the flat array of mock sections. 
-        // AdminContext will now switch to getCMSPages()/getPublicPageSections() where possible.
-        return mockSuccess(fallbackCMSData);
+        // Removed fallbackCMSData per user request to rely purely on Backend API
+        return mockSuccess(null);
     },
 
     updateCMSContent: async (_id: string, _updates: Partial<CMSSection>): Promise<ApiResponse<void>> => {

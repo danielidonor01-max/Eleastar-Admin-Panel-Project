@@ -1,0 +1,853 @@
+Login Response: {
+    "success": true,
+    "message": "Login successful",
+    "data": {
+        "user": {
+            "id": 1,
+            "employee_id": "EMP-001",
+            "name": "Admin User",
+            "email": "admin@example.com",
+            "role_id": 1,
+            "department": "IT",
+            "status": "active"
+        },
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoiLCJpYXQiOjE3MDg4MjA0MDAsIm5iZiI6MTcwODgyMDQwMCwiZXhwIjoxNzQwMzU2NDAwLCJzdWIiOiIxIiwic2NvcGVzIjpbXX0.signature",
+        "token_type": "Bearer"
+    }
+}
+
+Verify OTP Response: {
+    "success": true,
+    "message": "OTP verified successfully",
+    "data": {
+        "user": {
+            "id": 2,
+            "employee_id": "EMP-002",
+            "name": "John Doe",
+            "email": "user@example.com"
+        },
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...",
+        "token_type": "Bearer"
+    }
+}
+
+Resend OTP Response: {
+    "success": true,
+    "message": "OTP resent successfully",
+    "data": null
+}
+
+Forgot Password Response: {
+    "success": true,
+    "message": "Password reset link sent to your email",
+    "data": null
+}
+
+Reset Password Response: {
+    "success": true,
+    "message": "Password reset successfully",
+    "data": null
+}
+
+Get Current User Response: {
+    "success": true,
+    "message": "User retrieved successfully",
+    "data": {
+        "id": 1,
+        "employee_id": "EMP-001",
+        "name": "Admin User",
+        "email": "admin@example.com",
+        "role_id": 1,
+        "department": "IT",
+        "status": "active"
+    }
+}
+
+Logout Response: {
+    "success": true,
+    "message": "Logout successful",
+    "data": null
+}
+
+List All Employees Response: {
+    "success": true,
+    "message": "Employees retrieved successfully",
+    "data": {
+        "current_page": 1,
+        "data": [
+            {
+                "id": 1,
+                "employee_id": "EMP-001",
+                "name": "John Doe",
+                "email": "john@example.com",
+                "role_id": 1,
+                "department": "IT",
+                "employment_type": "Full-time",
+                "salary": "5000.00",
+                "status": "active",
+                "created_at": "2026-01-15T10:30:00.000000Z",
+                "role_relation": {
+                    "id": 1,
+                    "name": "Administrator",
+                    "slug": "admin"
+                }
+            },
+            {
+                "id": 2,
+                "employee_id": "EMP-002",
+                "name": "Jane Smith",
+                "email": "jane@example.com",
+                "role_id": 2,
+                "department": "HR",
+                "employment_type": "Full-time",
+                "salary": "4500.00",
+                "status": "active",
+                "created_at": "2026-01-20T14:20:00.000000Z",
+                "role_relation": {
+                    "id": 2,
+                    "name": "HR Manager",
+                    "slug": "hr-manager"
+                }
+            }
+        ],
+        "first_page_url": "http://localhost:8000/api/employees?page=1",
+        "from": 1,
+        "last_page": 1,
+        "last_page_url": "http://localhost:8000/api/employees?page=1",
+        "next_page_url": null,
+        "path": "http://localhost:8000/api/employees",
+        "per_page": 15,
+        "prev_page_url": null,
+        "to": 2,
+        "total": 2
+    }
+}
+
+Create Employee Response: {
+    "success": true,
+    "message": "Employee created successfully",
+    "data": {
+        "id": 3,
+        "employee_id": "EMP-003",
+        "name": "Jane Smith",
+        "email": "jane.smith@example.com",
+        "role_id": 2,
+        "department": "HR",
+        "employment_type": "Full-time",
+        "salary": "4500.00",
+        "status": "active",
+        "created_at": "2026-02-25T10:30:00.000000Z",
+        "updated_at": "2026-02-25T10:30:00.000000Z"
+    }
+}
+
+Get Employee Details Response: {
+    "success": true,
+    "message": "Employee retrieved successfully",
+    "data": {
+        "full_name": "John Doe",
+        "id": "EMP-001",
+        "role": "Administrator",
+        "department": "IT",
+        "type": "Full-time",
+        "status": "active"
+    }
+}
+
+Update Employee Response: {
+    "success": true,
+    "message": "Employee updated successfully",
+    "data": {
+        "id": 1,
+        "employee_id": "EMP-001",
+        "name": "John Doe Updated",
+        "email": "john.updated@example.com",
+        "department": "Engineering",
+        "salary": "5500.00",
+        "updated_at": "2026-02-25T11:00:00.000000Z"
+    }
+}
+
+Update Employee Status Response: {
+    "success": true,
+    "message": "Employee status updated successfully",
+    "data": {
+        "id": 1,
+        "employee_id": "EMP-001",
+        "status": "inactive",
+        "updated_at": "2026-02-25T11:15:00.000000Z"
+    }
+}
+
+Delete Employee Response: {
+    "success": true,
+    "message": "Employee deleted successfully"
+}
+
+List All Roles Response: {
+    "success": true,
+    "message": "Roles retrieved successfully",
+    "data": [
+        {
+            "id": 1,
+            "name": "Administrator",
+            "slug": "admin",
+            "description": "Full system access",
+            "created_at": "2026-01-01T00:00:00.000000Z",
+            "permissions": [
+                {
+                    "id": 1,
+                    "name": "View Employees",
+                    "slug": "employees.view",
+                    "module": "employees"
+                },
+                {
+                    "id": 2,
+                    "name": "Create Employees",
+                    "slug": "employees.create",
+                    "module": "employees"
+                },
+                {
+                    "id": 5,
+                    "name": "View Payroll",
+                    "slug": "payroll.view",
+                    "module": "payroll"
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "name": "HR Manager",
+            "slug": "hr-manager",
+            "description": "Human Resources management",
+            "created_at": "2026-01-01T00:00:00.000000Z",
+            "permissions": [
+                {
+                    "id": 1,
+                    "name": "View Employees",
+                    "slug": "employees.view",
+                    "module": "employees"
+                },
+                {
+                    "id": 2,
+                    "name": "Create Employees",
+                    "slug": "employees.create",
+                    "module": "employees"
+                }
+            ]
+        }
+    ]
+}
+
+Create Role Response: {
+    "success": true,
+    "message": "Role created successfully",
+    "data": {
+        "id": 3,
+        "name": "Accountant",
+        "slug": "accountant",
+        "description": "Financial and accounting operations",
+        "created_at": "2026-02-25T12:00:00.000000Z",
+        "permissions": [
+            {
+                "id": 5,
+                "name": "View Payroll",
+                "slug": "payroll.view",
+                "module": "payroll"
+            },
+            {
+                "id": 6,
+                "name": "Create Payroll",
+                "slug": "payroll.create",
+                "module": "payroll"
+            },
+            {
+                "id": 7,
+                "name": "Update Payroll",
+                "slug": "payroll.update",
+                "module": "payroll"
+            }
+        ]
+    }
+}
+
+Get Role Details Response: {
+    "success": true,
+    "message": "Role retrieved successfully",
+    "data": {
+        "id": 1,
+        "name": "Administrator",
+        "slug": "admin",
+        "description": "Full system access",
+        "created_at": "2026-01-01T00:00:00.000000Z",
+        "permissions": [
+            {
+                "id": 1,
+                "name": "View Employees",
+                "slug": "employees.view",
+                "module": "employees"
+            },
+            {
+                "id": 2,
+                "name": "Create Employees",
+                "slug": "employees.create",
+                "module": "employees"
+            }
+        ]
+    }
+}
+
+Update Role Response: {
+    "success": true,
+    "message": "Role updated successfully",
+    "data": {
+        "id": 3,
+        "name": "Senior Accountant",
+        "slug": "senior-accountant",
+        "description": "Senior financial and accounting operations",
+        "updated_at": "2026-02-25T13:00:00.000000Z"
+    }
+}
+
+Delete Role Response: {
+    "success": true,
+    "message": "Role deleted successfully"
+}
+
+Assign Permissions to Role Response: {
+    "success": true,
+    "message": "Permissions assigned successfully",
+    "data": {
+        "id": 2,
+        "name": "HR Manager",
+        "slug": "hr-manager",
+        "permissions": [
+            {
+                "id": 1,
+                "name": "View Employees",
+                "slug": "employees.view",
+                "module": "employees"
+            },
+            {
+                "id": 2,
+                "name": "Create Employees",
+                "slug": "employees.create",
+                "module": "employees"
+            },
+            {
+                "id": 5,
+                "name": "View Payroll",
+                "slug": "payroll.view",
+                "module": "payroll"
+            },
+            {
+                "id": 6,
+                "name": "Create Payroll",
+                "slug": "payroll.create",
+                "module": "payroll"
+            }
+        ]
+    }
+}
+
+Get Payroll Summary Response: {
+    "status": true,
+    "message": "Payroll summary retrieved successfully.",
+    "data": {
+        "cycle": {
+            "id": 1,
+            "cycle_id": "PC-2602-001",
+            "month": "February",
+            "year": 2026,
+            "pay_date": "2026-03-01",
+            "approval_deadline": "2026-02-25",
+            "status": "draft",
+            "total_payout": "125000.00",
+            "created_at": "2026-02-01T10:00:00.000000Z"
+        },
+        "summary": {
+            "total_employees": 25,
+            "total_gross": "125000.00",
+            "total_adjustments": "5000.00",
+            "total_net": "130000.00"
+        }
+    }
+}
+
+Get Payroll Details Response: {
+    "status": true,
+    "message": "Payroll details retrieved successfully.",
+    "data": {
+        "id": 1,
+        "cycle_id": "PC-2602-001",
+        "month": "February",
+        "year": 2026,
+        "pay_date": "2026-03-01",
+        "approval_deadline": "2026-02-25",
+        "status": "draft",
+        "total_payout": "125000.00",
+        "created_at": "2026-02-01T10:00:00.000000Z",
+        "items": [
+            {
+                "id": 1,
+                "employee_id": 1,
+                "employee_name": "John Doe",
+                "gross_salary": "5000.00",
+                "adjustments_total": "200.00",
+                "net_salary": "5200.00"
+            },
+            {
+                "id": 2,
+                "employee_id": 2,
+                "employee_name": "Jane Smith",
+                "gross_salary": "4500.00",
+                "adjustments_total": "0.00",
+                "net_salary": "4500.00"
+            }
+        ]
+    }
+}
+
+Generate Payroll Cycle Response: {
+    "status": true,
+    "message": "Payroll cycle generated successfully.",
+    "data": {
+        "id": 2,
+        "cycle_id": "PC-2603-001",
+        "month": "March",
+        "year": 2026,
+        "pay_date": "2026-04-01",
+        "approval_deadline": "2026-03-25",
+        "status": "draft",
+        "total_payout": "125000.00",
+        "created_at": "2026-02-25T12:00:00.000000Z",
+        "items_count": 25
+    }
+}
+
+Approve Payroll Response: {
+    "status": true,
+    "message": "Payroll approved successfully.",
+    "data": {
+        "id": 1,
+        "cycle_id": "PC-2602-001",
+        "status": "approved",
+        "updated_at": "2026-02-25T12:30:00.000000Z"
+    }
+}
+
+Update Payroll Status Response: {
+    "status": true,
+    "message": "Payroll status updated successfully.",
+    "data": {
+        "id": 1,
+        "cycle_id": "PC-2602-001",
+        "status": "paid",
+        "updated_at": "2026-02-25T13:00:00.000000Z"
+    }
+}
+
+Get Past Payroll Cycles Response: {
+    "status": true,
+    "message": "Past payroll cycles retrieved successfully.",
+    "data": {
+        "current_page": 1,
+        "data": [
+            {
+                "id": 3,
+                "cycle_id": "PC-2601-001",
+                "month": "January",
+                "year": 2026,
+                "pay_date": "2026-02-01",
+                "status": "paid",
+                "total_payout": "120000.00"
+            },
+            {
+                "id": 2,
+                "cycle_id": "PC-2512-001",
+                "month": "December",
+                "year": 2025,
+                "pay_date": "2026-01-01",
+                "status": "paid",
+                "total_payout": "118000.00"
+            }
+        ],
+        "per_page": 15,
+        "total": 2
+    }
+}
+
+List Payroll Employees Response: {
+    "status": true,
+    "message": "Payroll employees retrieved successfully.",
+    "data": {
+        "cycle": {
+            "id": 1,
+            "cycle_id": "PC-2602-001",
+            "month": "February",
+            "year": 2026,
+            "status": "draft"
+        },
+        "payroll_items": {
+            "current_page": 1,
+            "data": [
+                {
+                    "id": 1,
+                    "payroll_cycle_id": 1,
+                    "employee_id": 1,
+                    "gross_salary": "5000.00",
+                    "adjustments_total": "200.00",
+                    "net_salary": "5200.00",
+                    "employee": {
+                        "id": 1,
+                        "employee_id": "EMP-001",
+                        "name": "John Doe",
+                        "department": "IT",
+                        "employment_type": "Full-time",
+                        "role_relation": {
+                            "id": 1,
+                            "name": "Administrator"
+                        }
+                    },
+                    "adjustments": [
+                        {
+                            "id": 1,
+                            "type": "bonus",
+                            "amount": "200.00",
+                            "description": "Performance bonus"
+                        }
+                    ]
+                }
+            ],
+            "per_page": 15,
+            "total": 1
+        }
+    }
+}
+
+Get Employee Payroll Details Response: {
+    "status": true,
+    "message": "Employee payroll details retrieved successfully.",
+    "data": {
+        "id": 1,
+        "payroll_cycle_id": 1,
+        "employee_id": 1,
+        "gross_salary": "5000.00",
+        "adjustments_total": "200.00",
+        "net_salary": "5200.00",
+        "employee": {
+            "id": 1,
+            "employee_id": "EMP-001",
+            "name": "John Doe",
+            "email": "john@example.com",
+            "department": "IT",
+            "employment_type": "Full-time",
+            "role_relation": {
+                "id": 1,
+                "name": "Administrator"
+            }
+        },
+        "adjustments": [
+            {
+                "id": 1,
+                "type": "bonus",
+                "amount": "200.00",
+                "description": "Performance bonus",
+                "created_at": "2026-02-20T10:00:00.000000Z",
+                "creator": {
+                    "id": 1,
+                    "name": "Admin User"
+                }
+            }
+        ],
+        "payroll_cycle": {
+            "id": 1,
+            "cycle_id": "PC-2602-001",
+            "month": "February",
+            "year": 2026,
+            "status": "draft"
+        }
+    }
+}
+
+Create Adjustment Response: {
+    "success": true,
+    "message": "Payroll adjustment created successfully.",
+    "data": {
+        "id": 2,
+        "payroll_item_id": 1,
+        "type": "bonus",
+        "amount": "500.00",
+        "description": "Quarterly performance bonus",
+        "created_by": 1,
+        "created_at": "2026-02-25T14:00:00.000000Z",
+        "payroll_item": {
+            "id": 1,
+            "gross_salary": "5000.00",
+            "adjustments_total": "700.00",
+            "net_salary": "5700.00"
+        }
+    }
+}
+
+Update Adjustment Response: {
+    "success": true,
+    "message": "Payroll adjustment updated successfully.",
+    "data": {
+        "id": 1,
+        "type": "bonus",
+        "amount": "300.00",
+        "description": "Updated bonus amount",
+        "updated_at": "2026-02-25T14:30:00.000000Z",
+        "payroll_item": {
+            "id": 1,
+            "adjustments_total": "500.00",
+            "net_salary": "5500.00"
+        }
+    }
+}
+
+Delete Adjustment Response: {
+    "success": true,
+    "message": "Payroll adjustment deleted successfully.",
+    "data": {
+        "payroll_item": {
+            "id": 1,
+            "adjustments_total": "0.00",
+            "net_salary": "5000.00"
+        }
+    }
+}
+
+List All Tasks Response: {
+    "status": true,
+    "message": "Tasks retrieved successfully",
+    "data": {
+        "items": [
+            {
+                "id": 1,
+                "title": "Audit safety equipment",
+                "description": "Detailed instructions for the assignee...",
+                "assigned_to": 2,
+                "assigned_by": 1,
+                "priority": "medium",
+                "status": "in_progress",
+                "delivery_date": "2026-03-15",
+                "created_at": "2026-02-28T10:00:00.000000Z",
+                "assigned_to_user": {
+                    "id": 2,
+                    "name": "John Doe",
+                    "email": "john@example.com",
+                    "employee_id": "EMP-002"
+                },
+                "assigned_by_user": {
+                    "id": 1,
+                    "name": "Admin User",
+                    "email": "admin@example.com",
+                    "employee_id": "EMP-001"
+                }
+            }
+        ],
+        "pagination": {
+            "total": 1,
+            "per_page": 15,
+            "current_page": 1,
+            "last_page": 1,
+            "from": 1,
+            "to": 1
+        }
+    }
+}
+
+Create Task Response: {
+    "status": true,
+    "message": "Task created successfully",
+    "data": {
+        "id": 1,
+        "title": "Audit safety equipment",
+        "description": "Detailed instructions for the assignee...",
+        "assigned_to": 2,
+        "assigned_by": 1,
+        "priority": "medium",
+        "status": "in_progress",
+        "delivery_date": "2026-03-15",
+        "created_at": "2026-02-28T10:00:00.000000Z",
+        "updated_at": "2026-02-28T10:00:00.000000Z"
+    }
+}
+
+Get Task Statistics Response: {
+    "status": true,
+    "message": "Task statistics retrieved successfully",
+    "data": {
+        "total_tasks": 5,
+        "in_progress": 2,
+        "awaiting_review": 1,
+        "completed": 2
+    }
+}
+
+Get My Tasks Response: {
+    "status": true,
+    "message": "My tasks retrieved successfully",
+    "data": {
+        "items": [
+            {
+                "id": 1,
+                "title": "Audit safety equipment",
+                "description": "Detailed instructions...",
+                "priority": "medium",
+                "status": "in_progress",
+                "delivery_date": "2026-03-15"
+            }
+        ]
+    }
+}
+
+Update Task Status Response: {
+    "status": true,
+    "message": "Task status updated successfully",
+    "data": {
+        "id": 1,
+        "title": "Audit safety equipment",
+        "status": "completed",
+        "updated_at": "2026-02-28T15:30:00.000000Z"
+    }
+}
+
+List All Leave Requests Response: {
+    "status": true,
+    "message": "Leave requests retrieved successfully",
+    "data": {
+        "items": [
+            {
+                "id": 1,
+                "employee_id": 2,
+                "type": "annual",
+                "start_date": "2026-03-10",
+                "end_date": "2026-03-14",
+                "duration_days": 5,
+                "reason": "Family vacation",
+                "status": "pending",
+                "created_at": "2026-02-28T10:00:00.000000Z",
+                "employee": {
+                    "id": 2,
+                    "name": "John Doe",
+                    "email": "john@example.com",
+                    "employee_id": "EMP-002",
+                    "department": "IT"
+                }
+            }
+        ],
+        "pagination": {
+            "total": 3,
+            "per_page": 15,
+            "current_page": 1,
+            "last_page": 1,
+            "from": 1,
+            "to": 3
+        }
+    }
+}
+
+Apply for Leave Response: {
+    "status": true,
+    "message": "Leave application submitted successfully",
+    "data": {
+        "id": 1,
+        "employee_id": 2,
+        "type": "annual",
+        "start_date": "2026-03-10",
+        "end_date": "2026-03-14",
+        "duration_days": 5,
+        "reason": "Family vacation",
+        "status": "pending",
+        "approved_by": null,
+        "approved_at": null,
+        "admin_comments": null,
+        "created_at": "2026-02-28T10:00:00.000000Z",
+        "updated_at": "2026-02-28T10:00:00.000000Z"
+    }
+}
+
+Approve Leave Request Response: {
+    "status": true,
+    "message": "Leave request approved successfully",
+    "data": {
+        "id": 1,
+        "employee_id": 2,
+        "type": "annual",
+        "start_date": "2026-03-10",
+        "end_date": "2026-03-14",
+        "duration_days": 5,
+        "reason": "Family vacation",
+        "status": "approved",
+        "approved_by": 1,
+        "approved_at": "2026-02-28T12:00:00.000000Z",
+        "admin_comments": "Approved for the requested period.",
+        "updated_at": "2026-02-28T12:00:00.000000Z"
+    }
+}
+
+Reject Leave Request Response: {
+    "status": true,
+    "message": "Leave request rejected successfully",
+    "data": {
+        "id": 1,
+        "employee_id": 2,
+        "type": "annual",
+        "start_date": "2026-03-10",
+        "end_date": "2026-03-14",
+        "duration_days": 5,
+        "reason": "Family vacation",
+        "status": "rejected",
+        "approved_by": 1,
+        "approved_at": "2026-02-28T12:00:00.000000Z",
+        "admin_comments": "Leave period conflicts with project deadline.",
+        "updated_at": "2026-02-28T12:00:00.000000Z"
+    }
+}
+
+Get Leave Statistics Response: {
+    "status": true,
+    "message": "Leave statistics retrieved successfully",
+    "data": {
+        "total_requests": 8,
+        "pending": 3,
+        "approved": 4,
+        "rejected": 1
+    }
+}
+
+Get My Leave Requests Response: {
+    "status": true,
+    "message": "My leave requests retrieved successfully",
+    "data": {
+        "items": [
+            {
+                "id": 1,
+                "type": "annual",
+                "start_date": "2026-03-10",
+                "end_date": "2026-03-14",
+                "duration_days": 5,
+                "reason": "Family vacation",
+                "status": "approved",
+                "created_at": "2026-02-28T10:00:00.000000Z"
+            }
+        ]
+    }
+}
+
+Get Leave Types Response: {
+    "status": true,
+    "message": "Leave types retrieved successfully",
+    "data": {
+        "annual": "Annual Leave",
+        "sick": "Sick Leave",
+        "maternity": "Maternity Leave",
+        "paternity": "Paternity Leave",
+        "emergency": "Emergency Leave",
+        "study": "Study Leave",
+        "other": "Other"
+    }
+}

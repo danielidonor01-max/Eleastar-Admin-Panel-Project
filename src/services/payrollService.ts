@@ -28,7 +28,7 @@ export const payrollService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: undefined, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || `Failed to update payroll status to ${status}` };
@@ -54,7 +54,7 @@ export const payrollService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: undefined, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to add payroll adjustment' };
@@ -81,7 +81,7 @@ export const payrollService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to fetch payroll cycles' };
@@ -105,7 +105,7 @@ export const payrollService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to fetch payroll summary' };
@@ -126,7 +126,7 @@ export const payrollService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to fetch payroll details' };
@@ -148,7 +148,7 @@ export const payrollService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to generate payroll cycle' };
@@ -169,7 +169,7 @@ export const payrollService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to approve payroll' };
@@ -193,7 +193,7 @@ export const payrollService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to fetch past payroll cycles' };
@@ -221,7 +221,7 @@ export const payrollService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to fetch payroll employees' };
@@ -242,7 +242,7 @@ export const payrollService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to fetch employee payroll details' };
@@ -264,7 +264,7 @@ export const payrollService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: data.data, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to update adjustment' };
@@ -285,7 +285,7 @@ export const payrollService = {
             });
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && (data.success || data.status)) {
                 return { success: true, data: undefined, message: data.message };
             }
             return { success: false, data: null as any, error: data.message || 'Failed to delete adjustment' };
