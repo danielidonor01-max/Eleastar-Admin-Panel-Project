@@ -16,18 +16,25 @@ export const Employees: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
 
     // Form State
-    const [newEmp, setNewEmp] = useState<Partial<Employee>>({
+    // Form State
+    const [newEmp, setNewEmp] = useState<Partial<Employee> & { password?: string; password_confirmation?: string; role_id?: number }>({
         status: 'active',
         employmentType: 'Full-time',
         department: departments.length > 0 ? departments[0].name : 'General', // Default to first department or 'General'
-        salary: 0
+        salary: 0,
+        role_id: 3 // Default User
     });
 
-    const handleAddSubmit = (e: React.FormEvent) => {
+    const handleAddSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!newEmp.name || !newEmp.email || !newEmp.department || !newEmp.salary) {
-            showError({ title: 'Validation Error', message: 'Please fill in all required fields: Name, Email, Department, and Salary.' });
+        if (!newEmp.name || !newEmp.email || !newEmp.department || !newEmp.salary || !newEmp.password || !newEmp.password_confirmation || !newEmp.role_id) {
+            showError({ title: 'Validation Error', message: 'Please fill in all required fields including password and role.' });
+            return;
+        }
+
+        if (newEmp.password !== newEmp.password_confirmation) {
+            showError({ title: 'Validation Error', message: 'Passwords do not match.' });
             return;
         }
 
@@ -43,9 +50,8 @@ export const Employees: React.FC = () => {
             return;
         }
 
-        const emp = {
+        const emp: Omit<Employee, 'tenantId'> & { password?: string; password_confirmation?: string; role_id?: number } = {
             id: `EMP-${Date.now().toString().slice(-4)}`,
-            tenantId: 'tenant-default',
             name: newEmp.name!,
             title: newEmp.title || 'Staff',
             department: newEmp.department!,
@@ -56,13 +62,15 @@ export const Employees: React.FC = () => {
             verifiedAt: new Date().toISOString(),
             joinedAt: new Date().toISOString(),
             salary: newEmp.salary || 100000,
-            systemRole: 'USER',
-            accessGranted: newEmp.status === 'active'
-        } as Employee;
-        addEmployee(emp);
-        showSuccess({ title: 'Employee Added', message: `${emp.name} has been successfully onboarded.` });
+            systemRole: newEmp.role_id === 1 ? 'ADMIN' : (newEmp.role_id === 2 ? 'MANAGER' : 'USER'),
+            accessGranted: newEmp.status === 'active',
+            password: newEmp.password,
+            password_confirmation: newEmp.password_confirmation,
+            role_id: newEmp.role_id
+        };
+        await addEmployee(emp);
         setShowAddModal(false);
-        setNewEmp({ status: 'active', employmentType: 'Full-time' });
+        setNewEmp({ status: 'active', employmentType: 'Full-time', role_id: 3 });
     };
 
     const handleAction = (action: string, emp: Employee) => {
@@ -362,6 +370,19 @@ export const Employees: React.FC = () => {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
+                                    <label htmlFor="emp-role" className="block text-sm font-medium text-slate-700 mb-1">System Role</label>
+                                    <select
+                                        id="emp-role"
+                                        className="w-full p-2 border border-slate-200 rounded-lg"
+                                        value={newEmp.role_id || 3}
+                                        onChange={e => setNewEmp({ ...newEmp, role_id: Number(e.target.value) })}
+                                    >
+                                        <option value={1}>Administrator</option>
+                                        <option value={2}>HR Manager</option>
+                                        <option value={3}>User</option>
+                                    </select>
+                                </div>
+                                <div>
                                     <label htmlFor="emp-type" className="block text-sm font-medium text-slate-700 mb-1">Employment Type</label>
                                     <select
                                         id="emp-type"
@@ -375,21 +396,48 @@ export const Employees: React.FC = () => {
                                         <option value="Intern">Intern</option>
                                     </select>
                                 </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label htmlFor="emp-status" className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-                                    <select
-                                        id="emp-status"
+                                    <label htmlFor="emp-password" className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                                    <input
+                                        id="emp-password"
+                                        type="password"
+                                        required
                                         className="w-full p-2 border border-slate-200 rounded-lg"
-                                        value={newEmp.status || 'onboarding'}
-                                        onChange={e => setNewEmp({ ...newEmp, status: e.target.value as any })}
-                                    >
-                                        <option value="onboarding">Onboarding</option>
-                                        <option value="probation">Probation</option>
-                                        <option value="active">Active</option>
-                                        <option value="suspended">Suspended</option>
-                                        <option value="exited">Exited</option>
-                                    </select>
+                                        value={newEmp.password || ''}
+                                        onChange={e => setNewEmp({ ...newEmp, password: e.target.value })}
+                                        minLength={6}
+                                    />
                                 </div>
+                                <div>
+                                    <label htmlFor="emp-password-conf" className="block text-sm font-medium text-slate-700 mb-1">Confirm Password</label>
+                                    <input
+                                        id="emp-password-conf"
+                                        type="password"
+                                        required
+                                        className="w-full p-2 border border-slate-200 rounded-lg"
+                                        value={newEmp.password_confirmation || ''}
+                                        onChange={e => setNewEmp({ ...newEmp, password_confirmation: e.target.value })}
+                                        minLength={6}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label htmlFor="emp-status" className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                                <select
+                                    id="emp-status"
+                                    className="w-full p-2 border border-slate-200 rounded-lg"
+                                    value={newEmp.status || 'onboarding'}
+                                    onChange={e => setNewEmp({ ...newEmp, status: e.target.value as any })}
+                                >
+                                    <option value="onboarding">Onboarding</option>
+                                    <option value="probation">Probation</option>
+                                    <option value="active">Active</option>
+                                    <option value="suspended">Suspended</option>
+                                    <option value="exited">Exited</option>
+                                </select>
                             </div>
 
                             <div className="pt-4 flex justify-end gap-3 border-t border-slate-100 mt-6">
@@ -398,31 +446,35 @@ export const Employees: React.FC = () => {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div >
             )}
 
             {/* Profile Modal */}
-            {selectedEmployee && (
-                <EmployeeProfileModal
-                    employee={selectedEmployee}
-                    onClose={() => setSelectedEmployee(null)}
-                />
-            )}
+            {
+                selectedEmployee && (
+                    <EmployeeProfileModal
+                        employee={selectedEmployee}
+                        onClose={() => setSelectedEmployee(null)}
+                    />
+                )
+            }
 
             {/* Contract Management Modal */}
-            {contractEmployee && (
-                <ContractManagementModal
-                    employee={contractEmployee}
-                    onClose={() => setContractEmployee(null)}
-                    onSaveContract={(contractInfo) => {
-                        updateEmployeeContract(contractEmployee.id, contractInfo);
-                        setContractEmployee(null);
-                    }}
-                    onUploadDocument={(document) => {
-                        uploadContractDocument(contractEmployee.id, document);
-                    }}
-                />
-            )}
-        </div>
+            {
+                contractEmployee && (
+                    <ContractManagementModal
+                        employee={contractEmployee}
+                        onClose={() => setContractEmployee(null)}
+                        onSaveContract={(contractInfo) => {
+                            updateEmployeeContract(contractEmployee.id, contractInfo);
+                            setContractEmployee(null);
+                        }}
+                        onUploadDocument={(document) => {
+                            uploadContractDocument(contractEmployee.id, document);
+                        }}
+                    />
+                )
+            }
+        </div >
     );
 };

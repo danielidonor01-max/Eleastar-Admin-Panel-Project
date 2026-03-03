@@ -109,7 +109,7 @@ export interface AdminContextType {
     // Actions
     updateEmployee: (id: string, updates: Partial<Employee>) => void;
     updateUserProfile: (updates: Partial<Employee>) => void; // Safe update for self
-    addEmployee: (employee: Omit<Employee, 'tenantId'>) => void;
+    addEmployee: (employee: Omit<Employee, 'tenantId'> & { password?: string; password_confirmation?: string; role_id?: number }) => Promise<void> | void;
     deleteEmployee: (id: string) => void;
     updateEmployeeContract: (id: string, contract: any) => void;
     uploadContractDocument: (id: string, doc: any) => void;
@@ -692,15 +692,25 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     };
 
-    const addEmployee = async (newEmployee: Omit<Employee, 'tenantId'>) => {
+    const addEmployee = async (newEmployee: Omit<Employee, 'tenantId'> & { password?: string; password_confirmation?: string; role_id?: number }) => {
         setIsLoading(true);
         try {
-            const fullEmployee: Employee = { ...newEmployee, tenantId: currentTenantId || 'tenant-default' };
-            const response = await employeeService.createEmployee(fullEmployee);
+            const { password, password_confirmation, role_id, ...empData } = newEmployee;
+            // The API requires the full payload for creation, including password and role_id
+            const fullEmployeePayload = {
+                ...empData,
+                tenantId: currentTenantId || 'tenant-default',
+                password,
+                password_confirmation,
+                role_id
+            };
+            const response = await employeeService.createEmployee(fullEmployeePayload);
             if (response.success) {
-                setEmployees(prev => [fullEmployee, ...prev]);
-                logAction('Onboarding', `Added new employee: ${fullEmployee.name}`);
-                showSuccess({ title: 'Employee Added', message: `${fullEmployee.name} has been successfully onboarded.` });
+                // If the backend returns the created employee we use it, otherwise fallback to our local construction
+                const createdEmp: Employee = response.data || { ...empData, tenantId: currentTenantId || 'tenant-default' } as Employee;
+                setEmployees(prev => [createdEmp, ...prev]);
+                logAction('Onboarding', `Added new employee: ${createdEmp.name}`);
+                showSuccess({ title: 'Employee Added', message: `${createdEmp.name} has been successfully onboarded.` });
             } else {
                 showError({ title: 'Onboarding Failed', message: response.error });
             }
