@@ -10,7 +10,7 @@ import { payrollService } from '../services/payrollService';
 import { jobService } from '../services/jobService';
 import { leaveService } from '../services/leaveService';
 import { performanceService } from '../services/performanceService';
-// import { fallbackCMSData } from '../data/fallbackCMS';
+import { fallbackCMSData } from '../data/fallbackCMS';
 import { cmsService } from '../services/cmsService';
 import { settingsService } from '../services/settingsService';
 import { financeService } from '../services/financeService';
@@ -348,17 +348,49 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     setEmployees(empData);
                 }
 
+                // 2b. Load Public CMS Data (Global Nav, Footer, Pages)
+                const safePromise = <T,>(p: Promise<T>, def: any = []): Promise<T> =>
+                    p.catch(e => ({ success: false, data: def, error: e.message } as unknown as T));
+
+                const [menusRes, settingsRes, pagesRes] = await Promise.all([
+                    safePromise(cmsService.getPublicMenus(), []),
+                    safePromise(cmsService.getPublicSettingsGroups(), []),
+                    safePromise(cmsService.getCMSPages(), null)
+                ]);
+
+                // Map Menus
+                // The cms menu response has shape: { data: { "1": { id: 1, name: "Main Menu", items: [...] } } } roughly, depending on backend.
+                // For now, let's keep the user's specific items mapped directly in the component, but we will store the raw response.
+                if (menusRes.success) {
+                    setGlobalContent(prev => ({
+                        ...prev,
+                        navigation: menusRes.data as any // We will format this in StickyHeader or map it here if needed
+                    }));
+                }
+
+                if (settingsRes.success) {
+                    // Update footer content from settings groups
+                    setFooterContent(prev => ({
+                        ...prev,
+                        rawSettings: settingsRes.data // Storing raw to be accessed by BrandFooter
+                    } as any));
+                }
+
+                if (pagesRes.success && pagesRes.data) {
+                    setCmsContent(pagesRes.data as any);
+                } else {
+                    setCmsContent(fallbackCMSData as any);
+                }
+
                 // 3. Load Notifications (if auth)
                 if (authResponse.success && authResponse.data) {
                     const safePromise = <T,>(p: Promise<T>, def: any = []): Promise<T> =>
                         p.catch(e => ({ success: false, data: def, error: e.message } as unknown as T));
 
-                    const [notifResponse, leaveResponse, cycleResponse, cmsResponse, settingsResponse, servicesResponse, ledgerResponse, salaryResponse, promotionResponse, bonusTypeResponse, bonusRequestResponse, jobsResponse, payrollStatusResponse] = await Promise.all([
+                    const [notifResponse, leaveResponse, cycleResponse, servicesResponse, ledgerResponse, salaryResponse, promotionResponse, bonusTypeResponse, bonusRequestResponse, jobsResponse, payrollStatusResponse] = await Promise.all([
                         safePromise(notificationService.getNotifications(authResponse.data.id, authResponse.data.role)),
                         safePromise(leaveService.getAllLeaveRequests()),
                         safePromise(performanceService.getReviewCycles()),
-                        safePromise(cmsService.getCMSContent(), null),
-                        safePromise(settingsService.getGlobalSettings(), null),
                         safePromise(cmsService.getServices()),
                         safePromise(financeService.getLedgerEntries()),
                         safePromise(departmentService.getDepartments()),
@@ -374,7 +406,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     if (notifResponse.success) setNotifications(safeArr(notifResponse.data));
                     if (leaveResponse.success) setLeaveRequests(safeArr(leaveResponse.data));
                     if (cycleResponse.success) setReviewCycles(safeArr(cycleResponse.data));
-                    if (settingsResponse.success) setGlobalContent(settingsResponse.data);
                     if (jobsResponse.success) setJobs(safeArr(jobsResponse.data));
 
                     const pStatusData = safeArr(payrollStatusResponse.data);
@@ -382,20 +413,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                         setPayrollStatus(pStatusData[0]);
                     }
 
-                    // Fetch real CMS content layout
-                    try {
-                        const pagesResponse = await cmsService.getCMSPages();
-                        if (pagesResponse.success && pagesResponse.data) {
-                            setCmsContent(pagesResponse.data as any);
-                        } else if (cmsResponse.success && cmsResponse.data) {
-                            setCmsContent(cmsResponse.data as any);
-                        } else {
-                            // If no CMS content, just set to null (no fallback)
-                            setCmsContent(null);
-                        }
-                    } catch (cmsErr) {
-                        setCmsContent(null);
-                    }
+
 
                     if (servicesResponse.success) setServicesCollection(servicesResponse.data);
                     if (ledgerResponse.success) setLedgerEntries(safeArr(ledgerResponse.data));

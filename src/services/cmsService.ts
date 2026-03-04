@@ -85,6 +85,28 @@ export const cmsService = {
     },
 
     /**
+     * Gets public settings (footer, global variables)
+     */
+    getPublicSettingsGroups: async (): Promise<ApiResponse<any>> => {
+        try {
+            const response = await fetch(`${CMS_API_BASE_URL}/cms/settings/groups`, {
+                headers: {
+                    'X-CMS-API-Key': CMS_PUBLIC_API_KEY,
+                    'Accept': 'application/json',
+                }
+            });
+            const data = await response.json();
+            return {
+                data: data.data || [],
+                success: true,
+                message: data.message
+            };
+        } catch (error: any) {
+            return { data: [] as any, success: false, error: error.message };
+        }
+    },
+
+    /**
      * Fetches all CMS pages (Admin)
      */
     getCMSPages: async (): Promise<ApiResponse<CMSData | null>> => {

@@ -1,26 +1,18 @@
 import React, { useState } from 'react';
 import { ShieldCheck, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useAdmin } from '../context/AdminContext';
 
 export const StickyHeader: React.FC = () => {
-    const { globalContent, cmsContent } = useAdmin();
     const [isServicesOpen, setIsServicesOpen] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-    // Map custom pages from CMS
-    const customNavItems = (cmsContent?.navData || []).map((item: any, i: number) => ({
-        id: `cms-nav-${item.slug || i}`,
-        label: item.label,
-        path: item.href || `/${item.slug}`,
-        isVisible: true,
-        order: 99 + i // Append to the end
-    }));
-
-    // Filter visible items and sort by order
-    const navItems = [...globalContent.navigation, ...customNavItems]
-        .filter(item => item.isVisible)
-        .sort((a, b) => a.order - b.order);
+    // Enforced specific navigation structure per user requirements
+    const navItems = [
+        { id: 'nav-services', label: 'Services', path: '/services', isDropdown: true },
+        { id: 'nav-tech', label: 'Technologies', path: '/technologies' },
+        { id: 'nav-you', label: 'Eleastar & You', path: '/eleastar-and-you' },
+        { id: 'nav-about', label: 'About Eleastar', path: '/about' }
+    ];
 
     return (
         <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm transition-all duration-300">
@@ -36,7 +28,7 @@ export const StickyHeader: React.FC = () => {
                 {/* Desktop Navigation */}
                 <nav className="hidden md:flex items-center gap-8">
                     {navItems.map(item => {
-                        if (item.label === 'Services') {
+                        if (item.isDropdown && item.label === 'Services') {
                             return (
                                 <div
                                     key={item.id}
@@ -46,24 +38,29 @@ export const StickyHeader: React.FC = () => {
                                 >
                                     <Link
                                         to={item.path}
-                                        className="flex items-center gap-1 text-sm font-bold text-slate-600 hover:text-brand-600 transition-colors py-2"
+                                        className="flex items-center gap-1 text-sm font-medium text-slate-800 hover:text-brand-600 transition-colors py-2"
                                     >
                                         {item.label} <ChevronDown size={14} className={`transition-transform duration-200 ${isServicesOpen ? 'rotate-180' : ''}`} />
                                     </Link>
 
                                     {/* Dropdown Menu */}
-                                    <div className={`absolute top-[90%] left-0 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 p-3 transition-all duration-200 origin-top-left ${isServicesOpen ? 'opacity-100 scale-100 translate-y-0 visible' : 'opacity-0 scale-95 -translate-y-2 invisible'}`}>
-                                        <div className="flex flex-col gap-1">
+                                    <div className={`absolute top-[90%] left-0 w-[450px] bg-white rounded-2xl shadow-xl border border-slate-100 p-6 transition-all duration-200 origin-top-left flex gap-6 ${isServicesOpen ? 'opacity-100 scale-100 translate-y-0 visible' : 'opacity-0 scale-95 -translate-y-2 invisible'}`}>
+                                        <div className="flex-1">
+                                            <h3 className="text-xl font-bold text-brand-900 mb-2">Our Solutions Are Innovative, Adaptive and Efficient</h3>
+                                            <p className="text-xs text-slate-500 mb-6 leading-relaxed">Our full-service portfolio, enables you to take advantage of the digital transformative power in Digital Marketing, E-Commerce, Manage IT, Collaboration and Communication.</p>
+                                            <Link to="/services" className="inline-block px-5 py-2 bg-[#0a3b82] text-white text-sm font-medium rounded-full hover:bg-[#072a5e] transition-colors">See All Services</Link>
+                                        </div>
+                                        <div className="flex-1 flex flex-col gap-1">
+                                            <h4 className="text-brand-800 font-bold mb-2">Services</h4>
                                             {[
-                                                { name: 'Industrial Solutions', path: '/services/industrial-solutions' },
-                                                { name: 'Information Technology', path: '/services/information-technology' },
-                                                { name: 'Research & Development', path: '/services/research-and-development' },
+                                                { name: 'Information Technology Services', path: '/services/information-technology' },
+                                                { name: 'Research and Development', path: '/services/research-and-development' },
                                                 { name: 'Electronics Manufacturing', path: '/services/electronics-manufacturing' },
+                                                { name: 'Industry Solutions', path: '/services/industry-solutions' },
                                                 { name: 'Specific IT Services', path: '/services/specific-it-services' }
                                             ].map((sub) => (
-                                                <Link key={sub.path} to={sub.path} className="px-4 py-3 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-700 rounded-xl transition-colors flex items-center justify-between group/item">
+                                                <Link key={sub.path} to={sub.path} className="py-2 text-sm font-medium text-slate-600 hover:text-brand-700 transition-colors flex items-center justify-between group/item">
                                                     {sub.name}
-                                                    <ChevronDown size={14} className="-rotate-90 opacity-0 group-hover/item:opacity-100 transition-opacity text-brand-400" />
                                                 </Link>
                                             ))}
                                         </div>
@@ -75,7 +72,7 @@ export const StickyHeader: React.FC = () => {
                             <Link
                                 key={item.id}
                                 to={item.path}
-                                className="text-sm font-bold text-slate-600 hover:text-brand-600 transition-colors"
+                                className="text-sm font-medium text-slate-800 hover:text-brand-600 transition-colors"
                             >
                                 {item.label}
                             </Link>
