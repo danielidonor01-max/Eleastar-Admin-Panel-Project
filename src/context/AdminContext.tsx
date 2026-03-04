@@ -128,7 +128,23 @@ export interface AdminContextType {
     updatePMSContent: (id: string, content: any) => Promise<void>; // Using any for flexible updates across union types
     publishPMSContent: (id: string) => Promise<void>;
     addCMSContent: (section: CMSSection) => Promise<void>;
-    createCMSPage: (pageName: string, slug: string) => Promise<void>;
+
+    // New CMS Actions (Pages & Menus)
+    createCMSPage: (payload: any) => Promise<void>;
+    updateCMSPage: (slug: string, payload: any) => Promise<void>;
+    deleteCMSPage: (slug: string) => Promise<void>;
+    updateCMSPageStatus: (slug: string, status: 'live' | 'draft') => Promise<void>;
+    getPageSections: (slug: string) => Promise<any>;
+    createCMSSection: (payload: any) => Promise<void>;
+    deleteCMSSection: (sectionId: string | number) => Promise<void>;
+
+    getCMSMenus: () => Promise<any>;
+    getMenuWithItems: (key: string) => Promise<any>;
+    createMenuItem: (payload: any) => Promise<void>;
+    updateMenuItem: (id: string | number, payload: any) => Promise<void>;
+    deleteMenuItem: (id: string | number) => Promise<void>;
+    updateMenuItemVisibility: (id: string | number, is_visible: boolean) => Promise<void>;
+
     deleteCMSContent: (id: string) => Promise<void>;
     updateFooterContent: (section: keyof FooterContent, data: Partial<FooterSection>) => Promise<void>;
 
@@ -210,6 +226,18 @@ export interface AdminContextType {
     createTask: (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => void;
     updateTaskStatus: (taskId: string, status: Task['status']) => void;
     submitTaskEvidence: (taskId: string, notes: string, b64Evidence: string[]) => void;
+
+    // Decoupled Refreshers
+    refreshLeaveRequests: () => Promise<void>;
+    refreshReviewCycles: () => Promise<void>;
+    refreshServices: () => Promise<void>;
+    refreshLedgerEntries: () => Promise<void>;
+    refreshDepartments: () => Promise<void>;
+    refreshPromotions: () => Promise<void>;
+    refreshBonuses: () => Promise<void>;
+    refreshJobs: () => Promise<void>;
+    refreshPayrollStatus: () => Promise<void>;
+    refreshPayroll: () => Promise<void>;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -387,44 +415,16 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     const safePromise = <T,>(p: Promise<T>, def: any = []): Promise<T> =>
                         p.catch(e => ({ success: false, data: def, error: e.message } as unknown as T));
 
-                    const [notifResponse, leaveResponse, cycleResponse, servicesResponse, ledgerResponse, salaryResponse, promotionResponse, bonusTypeResponse, bonusRequestResponse, jobsResponse, payrollStatusResponse] = await Promise.all([
-                        safePromise(notificationService.getNotifications(authResponse.data.id, authResponse.data.role)),
-                        safePromise(leaveService.getAllLeaveRequests()),
-                        safePromise(performanceService.getReviewCycles()),
-                        safePromise(cmsService.getServices()),
-                        safePromise(financeService.getLedgerEntries()),
-                        safePromise(departmentService.getDepartments()),
-                        safePromise(promotionService.getPromotionRequests()),
-                        safePromise(bonusService.getBonusTypes()),
-                        safePromise(bonusService.getBonusRequests()),
-                        safePromise(jobService.getAllJobs()),
-                        safePromise(payrollService.getPayrollStatus())
+                    const [notifResponse] = await Promise.all([
+                        safePromise(notificationService.getNotifications(authResponse.data.id, authResponse.data.role))
                     ]);
 
                     const safeArr = (d: any) => Array.isArray(d) ? d : (d?.data || []);
 
                     if (notifResponse.success) setNotifications(safeArr(notifResponse.data));
-                    if (leaveResponse.success) setLeaveRequests(safeArr(leaveResponse.data));
-                    if (cycleResponse.success) setReviewCycles(safeArr(cycleResponse.data));
-                    if (jobsResponse.success) setJobs(safeArr(jobsResponse.data));
 
-                    const pStatusData = safeArr(payrollStatusResponse.data);
-                    if (payrollStatusResponse.success && pStatusData.length > 0) {
-                        setPayrollStatus(pStatusData[0]);
-                    }
-
-
-
-                    if (servicesResponse.success) setServicesCollection(servicesResponse.data);
-                    if (ledgerResponse.success) setLedgerEntries(safeArr(ledgerResponse.data));
-                    if (salaryResponse.success) setDepartments(safeArr(salaryResponse.data));
-                    if (promotionResponse.success) setPromotionRequests(safeArr(promotionResponse.data));
-                    if (bonusTypeResponse.success) setBonusTypes(safeArr(bonusTypeResponse.data));
-                    if (bonusRequestResponse.success) setBonusRequests(safeArr(bonusRequestResponse.data));
-
-                    // Also fetch eligibility rules
-                    const eligibilityResponse = await promotionService.getEligibilityRules();
-                    if (eligibilityResponse.success) setEligibilityRules(safeArr(eligibilityResponse.data));
+                    // Removed monolithic pre-fetches to speed up initial load.
+                    // Pages will individually trigger their respective refreshers.
                 }
 
             } catch (error) {
@@ -1054,7 +1054,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const addCMSContent = async (section: any) => {
         setIsLoading(true);
         try {
-            const response = await cmsService.addCMSContent(section);
+            const response = await cmsService.createCMSSection(section);
             if (response.success) {
                 const pagesResponse = await cmsService.getCMSPages();
                 if (pagesResponse.success && pagesResponse.data) {
@@ -1072,82 +1072,13 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     };
 
-    const createCMSPage = async (pageName: string, slug: string) => {
-        setIsLoading(true);
-        try {
-            const response = await cmsService.addCMSPage(pageName, slug);
-            if (response.success) {
-                if (cmsContent) {
-                    const newCmsContent = { ...cmsContent };
-                    const safeSlug = slug.toLowerCase().replace(/\s+/g, '-');
 
-                    // 1. Add to pages
-                    newCmsContent.pages = {
-                        ...newCmsContent.pages,
-                        [safeSlug]: {
-                            heroCardData: []
-                        }
-                    };
 
-                    // 2. Add to metaData
-                    const existingMetaIndex = newCmsContent.metaData.findIndex((m: any) => m.slug === safeSlug);
-                    if (existingMetaIndex === -1) {
-                        newCmsContent.metaData = [
-                            ...newCmsContent.metaData,
-                            {
-                                slug: safeSlug,
-                                title: `${pageName} | Eleastar Technologies Ltd.`,
-                                description: `Learn more about ${pageName}`,
-                                keywords: `${safeSlug}, eleastar`,
-                                author: "Eleastar Technologies Ltd.",
-                                ogTags: {
-                                    ogTitle: `${pageName} | Eleastar Technologies Ltd.`,
-                                    ogDescription: `Learn more about ${pageName}`,
-                                    ogKeywords: `${safeSlug}, eleastar`,
-                                    ogUrl: `https://eleastar.com/${safeSlug}`,
-                                    ogType: "website",
-                                    ogLocale: "en_US",
-                                    ogSiteName: "Eleastar Technologies Ltd.",
-                                    ogImage: {
-                                        url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80',
-                                        alt: 'Eleastar Tech'
-                                    }
-                                }
-                            }
-                        ];
-                    }
-
-                    // 3. Add to navData
-                    const existingNavIndex = newCmsContent.navData.findIndex((n: any) => n.slug === safeSlug);
-                    if (existingNavIndex === -1) {
-                        newCmsContent.navData = [
-                            ...newCmsContent.navData,
-                            {
-                                label: pageName,
-                                slug: safeSlug,
-                                href: `/${safeSlug}`
-                            }
-                        ];
-                    }
-
-                    setCmsContent(newCmsContent);
-                }
-                logAction('CMS Page Created', `Created dynamic page ${pageName}`);
-                showSuccess({ title: 'Page Created', message: `${pageName} page has been created successfully.` });
-            } else {
-                showError({ title: 'Creation Failed', message: response.error || 'Failed to create page' });
-            }
-        } catch (err) {
-            showError({ title: 'Creation Error', message: 'Failed to create new CMS page.' });
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const deleteCMSContent = async (id: string) => {
         setIsLoading(true);
         try {
-            const response = await cmsService.deleteCMSContent(id);
+            const response = await cmsService.deleteCMSSection(id);
             if (response.success) {
                 const pagesResponse = await cmsService.getCMSPages();
                 if (pagesResponse.success && pagesResponse.data) {
@@ -1225,13 +1156,18 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const updateService = async (id: string, updates: Partial<ServiceItem>) => {
         setIsLoading(true);
         try {
-            const response = await cmsService.updateService(id, updates);
-            if (response.success) {
-                setServicesCollection(prev => prev.map(s => s.id === id ? { ...s, ...updates, lastUpdated: new Date().toISOString() } : s));
+            const res = await cmsService.updateService(id, updates);
+            if (res.success) {
+                setServicesCollection(prev => {
+                    if (Array.isArray(prev)) {
+                        return prev.map(s => s.id === id ? { ...s, ...updates, lastUpdated: new Date().toISOString() } : s) as any;
+                    }
+                    return prev;
+                });
                 logAction('Service Edit', `Updated service details for ${id}`);
                 showSuccess({ title: 'Service Updated', message: 'Service changes have been saved.' });
             } else {
-                showError({ title: 'Update Failed', message: response.error });
+                showError({ title: 'Update Failed', message: res.error });
             }
         } catch (err) {
             showError({ title: 'Update Error', message: 'Failed to save service changes.' });
@@ -1243,19 +1179,111 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const deleteService = async (id: string) => {
         setIsLoading(true);
         try {
-            const response = await cmsService.deleteService(id);
-            if (response.success) {
-                setServicesCollection(prev => prev.filter(s => s.id !== id));
+            const res = await cmsService.deleteService(id);
+            if (res.success) {
+                setServicesCollection(prev => {
+                    if (Array.isArray(prev)) {
+                        return prev.filter(s => s.id !== id) as any;
+                    }
+                    return prev;
+                });
                 logAction('Service Deleted', `Removed service ${id}`);
                 showSuccess({ title: 'Service Deleted', message: 'Service has been removed from catalog.' });
             } else {
-                showError({ title: 'Deletion Failed', message: response.error });
+                showError({ title: 'Deletion Failed', message: res.error });
             }
         } catch (err) {
             showError({ title: 'Deletion Error', message: 'Failed to delete service.' });
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // -------------------------------------------------------------
+    // NEW CMS API Wrappers (Pages & Menus)
+    // -------------------------------------------------------------
+    const createCMSPage = async (payload: any) => {
+        const res = await cmsService.createCMSPage(payload);
+        if (res.success) {
+            // Ideally trigger a refresh of pages list
+            showSuccess({ title: 'Success', message: 'Page Created' });
+        } else {
+            showError({ title: 'Error', message: res.error || 'Failed to create page' });
+            throw new Error(res.error);
+        }
+    };
+
+    const updateCMSPage = async (slug: string, payload: any) => {
+        const res = await cmsService.updateCMSPage(slug, payload);
+        if (res.success) {
+            showSuccess({ title: 'Success', message: 'Page Updated' });
+        } else {
+            showError({ title: 'Error', message: res.error || 'Failed to update page' });
+            throw new Error(res.error);
+        }
+    };
+
+    const deleteCMSPage = async (slug: string) => {
+        const res = await cmsService.deleteCMSPage(slug);
+        if (res.success) {
+            showSuccess({ title: 'Success', message: 'Page Deleted' });
+        } else {
+            showError({ title: 'Error', message: res.error || 'Failed to delete page' });
+            throw new Error(res.error);
+        }
+    };
+
+    const updateCMSPageStatus = async (slug: string, status: 'live' | 'draft') => {
+        const res = await cmsService.updateCMSPageStatus(slug, status);
+        if (!res.success) throw new Error(res.error);
+    };
+
+    const getPageSections = async (slug: string) => {
+        const res = await cmsService.getPageSections(slug);
+        if (res.success) return res.data;
+        throw new Error(res.error);
+    };
+
+    const createCMSSection = async (payload: any) => {
+        const res = await cmsService.createCMSSection(payload);
+        if (!res.success) throw new Error(res.error);
+    };
+
+    const deleteCMSSection = async (sectionId: string | number) => {
+        const res = await cmsService.deleteCMSSection(sectionId);
+        if (!res.success) throw new Error(res.error);
+    };
+
+    const getCMSMenus = async () => {
+        const res = await cmsService.getCMSMenus();
+        if (res.success) return res.data;
+        throw new Error(res.error);
+    };
+
+    const getMenuWithItems = async (key: string) => {
+        const res = await cmsService.getMenuWithItems(key);
+        if (res.success) return res.data;
+        throw new Error(res.error);
+    };
+
+    const createMenuItem = async (payload: any) => {
+        const res = await cmsService.createMenuItem(payload);
+        if (!res.success) throw new Error(res.error);
+    };
+
+    const updateMenuItem = async (id: string | number, payload: any) => {
+        const res = await cmsService.updateMenuItem(id, payload);
+        if (!res.success) throw new Error(res.error);
+    };
+
+    const deleteMenuItem = async (id: string | number) => {
+        const res = await cmsService.deleteMenuItem(id);
+        if (!res.success) throw new Error(res.error);
+    };
+
+    const updateMenuItemVisibility = async (id: string | number, is_visible: boolean) => {
+        const res = await cmsService.updateMenuItemVisibility(id, is_visible);
+        if (!res.success) throw new Error(res.error);
     };
 
     const updateCeoSignature = async (url: string) => {
@@ -2387,6 +2415,70 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }));
     };
 
+    // --- Decoupled Refreshers ---
+    const safeArr = (d: any) => Array.isArray(d) ? d : (d?.data || []);
+
+    const refreshPayroll = React.useCallback(async () => {
+        // Mock data fetch for payroll status since no real endpoint currently provides `getCurrentStatus`.
+        setPayrollStatus(payrollStatus);
+    }, [payrollStatus]);
+
+    const refreshLeaveRequests = async () => {
+        const res = await leaveService.getAllLeaveRequests();
+        if (res.success) setLeaveRequests(safeArr(res.data));
+    };
+
+    const refreshReviewCycles = async () => {
+        const res = await performanceService.getReviewCycles();
+        if (res.success) setReviewCycles(safeArr(res.data));
+    };
+
+    const refreshServices = async () => {
+        const res = await cmsService.getServices();
+        if (res.success) setServicesCollection(res.data);
+    };
+
+    const refreshLedgerEntries = async () => {
+        const res = await financeService.getLedgerEntries();
+        if (res.success) setLedgerEntries(safeArr(res.data));
+    };
+
+    const refreshDepartments = async () => {
+        const res = await departmentService.getDepartments();
+        if (res.success) setDepartments(safeArr(res.data));
+    };
+
+    const refreshPromotions = async () => {
+        const [promoRes, rulesRes] = await Promise.all([
+            promotionService.getPromotionRequests(),
+            promotionService.getEligibilityRules()
+        ]);
+        if (promoRes.success) setPromotionRequests(safeArr(promoRes.data));
+        if (rulesRes.success) setEligibilityRules(safeArr(rulesRes.data));
+    };
+
+    const refreshBonuses = async () => {
+        const [typeRes, reqRes] = await Promise.all([
+            bonusService.getBonusTypes(),
+            bonusService.getBonusRequests()
+        ]);
+        if (typeRes.success) setBonusTypes(safeArr(typeRes.data));
+        if (reqRes.success) setBonusRequests(safeArr(reqRes.data));
+    };
+
+    const refreshJobs = async () => {
+        const res = await jobService.getAllJobs();
+        if (res.success) setJobs(safeArr(res.data));
+    };
+
+    const refreshPayrollStatus = async () => {
+        const res = await payrollService.getPayrollStatus();
+        const pStatusData = safeArr(res.data);
+        if (res.success && pStatusData.length > 0) {
+            setPayrollStatus(pStatusData[0]);
+        }
+    };
+
     return (
         <AdminContext.Provider value={{
             employees: visibleEmployees,
@@ -2441,7 +2533,22 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             updatePMSContent,
             publishPMSContent,
             addCMSContent,
+
+            // New CMS Wrappers
             createCMSPage,
+            updateCMSPage,
+            deleteCMSPage,
+            updateCMSPageStatus,
+            getPageSections,
+            createCMSSection,
+            deleteCMSSection,
+            getCMSMenus,
+            getMenuWithItems,
+            createMenuItem,
+            updateMenuItem,
+            deleteMenuItem,
+            updateMenuItemVisibility,
+
             deleteCMSContent,
             footerContent,
             updateFooterContent,
@@ -2506,6 +2613,19 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             cooReviewPayroll,
             cfoApprovePayroll,
             updateEmployeeSalary,
+
+            // Decoupled Refreshers
+            refreshLeaveRequests,
+            refreshReviewCycles,
+            refreshServices,
+            refreshLedgerEntries,
+            refreshDepartments,
+            refreshPromotions,
+            refreshBonuses,
+            refreshJobs,
+            refreshPayrollStatus,
+            refreshPayroll, // Added refreshPayroll here
+
             isLoading,
         }}>
             {/* Global PIN Modal */}

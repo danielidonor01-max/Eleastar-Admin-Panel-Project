@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Check, AlertCircle, Plus, Wallet, Edit2 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { PayrollAdjustmentModal } from '../../components/PayrollAdjustmentModal';
@@ -9,10 +9,15 @@ import { Select } from '../../components/Select';
 import type { Employee } from '../../data/mockData';
 
 export const PayrollPage: React.FC = () => {
-    const { employees, payrollStatus, bulkPayrollAdjustment, cooReviewPayroll, cfoApprovePayroll, updateEmployeeSalary, rolePermissions, currentUserRole } = useAdmin();
+    const { employees, payrollStatus, bulkPayrollAdjustment, cooReviewPayroll, cfoApprovePayroll, updateEmployeeSalary, rolePermissions, currentUserRole, refreshPayroll } = useAdmin();
     const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
     const [editingSalaryEmployee, setEditingSalaryEmployee] = useState<Employee | null>(null);
     const { showConfirm } = useFeedback();
+
+    // Data Fetching
+    useEffect(() => {
+        refreshPayroll();
+    }, [refreshPayroll]);
 
     // --- Cycle Selection State ---
     const initialYear = useMemo(() => new Date().getFullYear(), []);

@@ -199,6 +199,74 @@ export const fallbackCMSData: CMSData = {
                             "imageAlt": "Custom Software Development"
                         }
                     ]
+                },
+                {
+                    "slug": "research-and-development",
+                    "title": "Research & Development",
+                    "description": "Innovative R&D solutions driving product evolution and market expansion.",
+                    "bannerImage": "/images/services/research-and-development.png",
+                    "bannerImageAlt": "Research & Development",
+                    "servicesContent": [
+                        {
+                            "index": 1,
+                            "TextTitle1": "Advanced",
+                            "TextTitle2": "Prototyping",
+                            "TextDescription": "From ideation to market-ready prototypes.",
+                            "image": "/images/services/it-services/software-development.png",
+                            "imageAlt": "Prototyping"
+                        }
+                    ]
+                },
+                {
+                    "slug": "electronics-manufacturing",
+                    "title": "Electronics Manufacturing",
+                    "description": "High-quality precision manufacturing for standard and custom electronic components.",
+                    "bannerImage": "/images/services/electronics-manufacturing.png",
+                    "bannerImageAlt": "Electronics Manufacturing",
+                    "servicesContent": [
+                        {
+                            "index": 1,
+                            "TextTitle1": "PCB",
+                            "TextTitle2": "Assembly",
+                            "TextDescription": "State-of-the-art circuit board manufacturing.",
+                            "image": "/images/services/it-services/software-development.png",
+                            "imageAlt": "PCB Assembly"
+                        }
+                    ]
+                },
+                {
+                    "slug": "industrial-solutions",
+                    "title": "Industrial Solutions",
+                    "description": "Streamlining modern industrial workflows with smart automation.",
+                    "bannerImage": "/images/services/industry-solutions.png",
+                    "bannerImageAlt": "Industry Solutions",
+                    "servicesContent": [
+                        {
+                            "index": 1,
+                            "TextTitle1": "Smart",
+                            "TextTitle2": "Automation",
+                            "TextDescription": "Optimizing factories for the next generation of industry standards.",
+                            "image": "/images/services/it-services/software-development.png",
+                            "imageAlt": "Automation"
+                        }
+                    ]
+                },
+                {
+                    "slug": "specific-it-services",
+                    "title": "Specific IT Services",
+                    "description": "Niche IT consulting customized to your precise enterprise challenges.",
+                    "bannerImage": "/images/services/specific-it.png",
+                    "bannerImageAlt": "Specific IT",
+                    "servicesContent": [
+                        {
+                            "index": 1,
+                            "TextTitle1": "Cyber",
+                            "TextTitle2": "Security Audits",
+                            "TextDescription": "Comprehensive analysis of your security posture.",
+                            "image": "/images/services/it-services/software-development.png",
+                            "imageAlt": "Cyber Security"
+                        }
+                    ]
                 }
             ]
         }

@@ -56,7 +56,7 @@ export const authService = {
                     token
                 };
 
-                Cookies.set('admin_token', token, { expires: 1, secure: true, sameSite: 'strict' });
+                Cookies.set('admin_token', token, { expires: 1, secure: window.location.protocol === 'https:', sameSite: 'strict' });
                 localStorage.setItem('user_id', loggedInUser.id);
 
                 return { success: true, data: { user: loggedInUser, token, refreshToken: data.data?.refresh_token || data.refresh_token || token }, message: data.message || 'Login successful' };
@@ -99,7 +99,7 @@ export const authService = {
                     token
                 };
 
-                Cookies.set('admin_token', token, { expires: 1, secure: true, sameSite: 'strict' });
+                Cookies.set('admin_token', token, { expires: 1, secure: window.location.protocol === 'https:', sameSite: 'strict' });
                 localStorage.setItem('user_id', loggedInUser.id);
 
                 return { success: true, data: { user: loggedInUser, token, refreshToken: token }, message: data.message };

@@ -4,9 +4,14 @@ import { CheckCircle, XCircle, Clock, User, Filter } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 export const LeaveManagement: React.FC = () => {
-    const { employees, leaveRequests, approveLeave, rejectLeave } = useAdmin();
+    const { employees, leaveRequests, approveLeave, rejectLeave, refreshLeaveRequests } = useAdmin();
     const [filter, setFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('Pending');
     const location = useLocation();
+
+    // Data Fetching
+    useEffect(() => {
+        refreshLeaveRequests();
+    }, [refreshLeaveRequests]);
 
     // UI State
     const [rejectModalOpen, setRejectModalOpen] = useState(false);

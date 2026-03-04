@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { Plus, Edit2, Check, X, Clock, ShieldCheck } from 'lucide-react';
 import type { BonusType, BonusRequest } from '../../data/mockData';
@@ -13,8 +13,14 @@ export function BonusPage() {
         requestBonus,
         bonusRequests,
         approveBonus,
-        rejectBonus
+        rejectBonus,
+        refreshBonuses
     } = useAdmin();
+
+    // Data Fetching
+    useEffect(() => {
+        refreshBonuses();
+    }, [refreshBonuses]);
 
     const [activeTab, setActiveTab] = useState<'types' | 'award' | 'requests'>('types');
     const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);

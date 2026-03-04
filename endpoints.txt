@@ -1,42 +1,36 @@
-Login POST {{base_url}}/auth/login
-Verify OTP POST {{base_url}}/auth/verify-otp
-Resend OTP POST {{base_url}}/auth/resend-otp
-Forgot Password POST {{base_url}}/auth/forgot-password
-Reset Password POST {{base_url}}/auth/reset-password
-Get Current User GET {{base_url}}/auth/me
-Logout POST {{base_url}}/auth/logout
-List All Employees GET {{base_url}}/employees?per_page=15&status=active&department=IT&search=John&role=1
-Create Employee POST {{base_url}}/employees
-Get Employee Details GET {{base_url}}/employees/EMP-001
-Update Employee PUT {{base_url}}/employees/EMP-001
-Update Employee Status PATCH {{base_url}}/employees/EMP-001/status
-Delete Employee DELETE {{base_url}}/employees/EMP-001
-List All Roles GET {{base_url}}/roles
-Create Role POST {{base_url}}/roles
-Get Role Details GET {{base_url}}/roles/1
-Update Role PUT {{base_url}}/roles/3
-Delete Role DELETE {{base_url}}/roles/3
-Assign Permissions to Role POST {{base_url}}/roles/2/permissions
-Get Payroll Summary GET {{base_url}}/payroll?cycle_id=1
-Get Payroll Details GET {{base_url}}/payroll/1
-Generate Payroll Cycle POST {{base_url}}/payroll
-Approve Payroll POST {{base_url}}/payroll/1/approve
-Update Payroll Status PATCH {{base_url}}/payroll/1/status
-Get Past Payroll Cycles GET {{base_url}}/payroll/history/past?per_page=15
-List Payroll Employees GET {{base_url}}/payroll-employees?cycle_id=1&department=IT&role_id=1&employment_type=Full-time&search=John&per_page=15
-Get Employee Payroll Details GET {{base_url}}/payroll-employees/1
-Create Adjustment POST {{base_url}}/payroll-adjustments
-Update Adjustment PUT {{base_url}}/payroll-adjustments/1
-Delete Adjustment DELETE {{base_url}}/payroll-adjustments/1
-List All Tasks GET {{base_url}}/tasks?per_page=15&status=in_progress&priority=high&search=audit
-Create Task POST {{base_url}}/tasks
-Get Task Statistics GET {{base_url}}/tasks/statistics
-Get My Tasks GET {{base_url}}/tasks/my-tasks?status=in_progress
-Update Task Status PATCH {{base_url}}/tasks/1/status
-List All Leave Requests GET {{base_url}}/leaves?per_page=15&status=pending&type=annual&search=john
-Apply for Leave POST {{base_url}}/leaves/apply
-Approve Leave Request PATCH {{base_url}}/leaves/1/approve
-Reject Leave Request PATCH {{base_url}}/leaves/1/reject
-Get Leave Statistics GET {{base_url}}/leaves/statistics
-Get My Leave Requests GET {{base_url}}/leaves/my-leaves?status=approved
-Get Leave Types GET {{base_url}}/leaves/types
+﻿Authentication > Login: POST /auth/login
+Authentication > Verify OTP: POST /auth/verify-otp
+Authentication > Resend OTP: POST /auth/resend-otp
+Authentication > Forgot Password: POST /auth/forgot-password
+Authentication > Reset Password: POST /auth/reset-password
+Authentication > Get Current User: GET /auth/me
+Authentication > Logout: POST /auth/logout
+Website CMS > Admin Portal > Pages > List all pages: GET /portal/cms/pages
+Website CMS > Admin Portal > Pages > Create a new page: POST /portal/cms/pages
+Website CMS > Admin Portal > Pages > Update page status: PATCH /portal/cms/pages/{{slug}}/status
+Website CMS > Admin Portal > Pages > Get a single page: GET /portal/cms/pages/{{slug}}
+Website CMS > Admin Portal > Pages > Update a page: PUT /portal/cms/pages/{{slug}}
+Website CMS > Admin Portal > Pages > Delete a page: DELETE /portal/cms/pages/:slug
+Website CMS > Admin Portal > Pages > List sections for a page: GET /portal/cms/pages/{slug}/sections
+Website CMS > Admin Portal > Page Sections > Create a new section: POST /portal/cms/sections
+Website CMS > Admin Portal > Page Sections > Update a section: PUT /portal/cms/sections/{section_id}
+Website CMS > Admin Portal > Page Sections > Delete a section: DELETE /portal/cms/sections/{section_id}
+Website CMS > Admin Portal > Page Sections > Update section status: PATCH /portal/cms/sections/{section_id}/status
+Website CMS > Admin Portal > Menus > List all menus: GET /portal/cms/menus
+Website CMS > Admin Portal > Menus > Create a new menu: POST /portal/cms/menus
+Website CMS > Admin Portal > Menus > Update a menu: PUT /portal/cms/menus/:key
+Website CMS > Admin Portal > Menus > Delete a menu: DELETE /portal/cms/menus/:key
+Website CMS > Admin Portal > Menus > Update footer metadata: PATCH /portal/cms/menus/footer/metadata
+Website CMS > Admin Portal > Menus > List items for a menu: GET /portal/cms/menus/header/items
+Website CMS > Admin Portal > Menus > Get a single menu with items: GET /portal/cms/menus/:key
+Website CMS > Admin Portal > Menus > Create a new menu item: POST /portal/cms/menu-items
+Website CMS > Admin Portal > Menus > Update a menu item: PUT /portal/cms/menu-items/:id
+Website CMS > Admin Portal > Menus > Delete a menu item: DELETE /portal/cms/menu-items/:id
+Website CMS > Admin Portal > Menus > Toggle menu item visibility: PATCH /portal/cms/menu-items/:id/visibility
+Website CMS > Admin Portal > Api Keys > List all API keys: GET /portal/cms/api-keys
+Website CMS > Admin Portal > Api Keys > Create a new API key: POST /portal/cms/api-keys
+Website CMS > Admin Portal > Api Keys > Delete an API key: DELETE /portal/cms/api-keys/:id
+Website CMS > Admin Portal > Api Keys > Toggle API key status: PATCH /portal/cms/api-keys/:id/status
+Website CMS > Public > Get All Live pages and its slug: GET /cms/get-slugs
+Website CMS > Public > Get Page Sections: GET 
+Website CMS > Public > Get Menus: GET /cms/menus

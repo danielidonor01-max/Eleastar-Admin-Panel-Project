@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import { Calendar, Plus, User, CheckSquare } from 'lucide-react';
@@ -15,10 +15,16 @@ export const PerformancePage: React.FC = () => {
         startReviewCycle,
         submitSelfReview,
         approvePerformanceReview,
-        requestRevision
+        requestRevision,
+        refreshReviewCycles
     } = useAdmin();
     const { showError } = useFeedback();
     const [isCreating, setIsCreating] = useState(false);
+
+    // Data Fetching
+    useEffect(() => {
+        refreshReviewCycles();
+    }, [refreshReviewCycles]);
 
     // Review Logic Data
     const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, User, FileText, Globe, X, Command } from 'lucide-react';
+import { Search, User, FileText, Globe, X } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { employees } from '../data/mockData';
 
@@ -64,7 +64,6 @@ export const GlobalSearchMenu: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 
     // Load searchable items securely based on Role
     const searchIndex = React.useMemo(() => generateSearchIndex(rolePermissions, currentUserRole, cmsContent), [rolePermissions, currentUserRole, cmsContent]);
@@ -107,9 +106,6 @@ export const GlobalSearchMenu: React.FC = () => {
                 <div className="flex items-center gap-2">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <span>Search anywhere...</span>
-                </div>
-                <div className="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded text-xs font-mono font-bold text-slate-500">
-                    {isMac ? <Command size={10} /> : 'Ctrl+'}K
                 </div>
             </div>
 

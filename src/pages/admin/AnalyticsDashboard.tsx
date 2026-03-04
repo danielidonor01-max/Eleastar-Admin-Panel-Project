@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import {
     Users,
@@ -19,10 +19,20 @@ export function AnalyticsDashboard() {
         leaveRequests,
         bonusRequests,
         promotionRequests,
-        currentUserRole
+        currentUserRole,
+        refreshPromotions,
+        refreshBonuses,
+        refreshLeaveRequests
     } = useAdmin();
 
     const [activeTab, setActiveTab] = useState<'health' | 'cost' | 'risk'>('health');
+
+    // Data Fetching
+    useEffect(() => {
+        refreshPromotions();
+        refreshBonuses();
+        refreshLeaveRequests();
+    }, [refreshPromotions, refreshBonuses, refreshLeaveRequests]);
 
     // Access Control
     const canView = ['Super Admin', 'CEO', 'COO', 'Finance Admin'].includes(currentUserRole);

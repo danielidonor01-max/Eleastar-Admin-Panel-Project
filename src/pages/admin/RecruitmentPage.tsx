@@ -6,12 +6,17 @@ import { useLocation } from 'react-router-dom';
 import type { Job } from '../../data/mockData';
 
 export const RecruitmentPage: React.FC = () => {
-    const { jobs, addJob, updateJob } = useAdmin();
+    const { jobs, addJob, updateJob, refreshJobs } = useAdmin();
     const { showConfirm, showInfo } = useFeedback();
     const [activeTab, setActiveTab] = useState<'jobs' | 'techhub'>('jobs');
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
     const location = useLocation();
+
+    // Data Fetching
+    useEffect(() => {
+        refreshJobs();
+    }, [refreshJobs]);
 
     // Deep Linking Handler
     useEffect(() => {
