@@ -134,17 +134,15 @@ export const PayrollPage: React.FC = () => {
     }, [displayEmployees, employees, filterDept, filterRole, filterType]);
 
     const totalBaseSalary = snapshotData
-        ? snapshotData.employees.reduce((sum: number, e: any) => sum + e.salary, 0)
-        : employees.reduce((sum, emp) => sum + (emp.salary || 0), 0);
+        ? snapshotData.employees.reduce((sum: number, e: any) => Number(sum) + Number(e.salary || 0), 0)
+        : employees.reduce((sum, emp) => Number(sum) + Number(emp.salary || 0), 0);
 
     const totalAdjustments = targetCycle.adjustments.reduce((sum, adj) => {
-        return sum + (adj.type === 'Bonus' ? adj.amount : -adj.amount);
+        return Number(sum) + (adj.type === 'Bonus' ? Number(adj.amount || 0) : -Number(adj.amount || 0));
     }, 0);
 
-    // For snapshot, totalPayout is pre-calculated but we can re-sum to be safe
-    const totalPayout = snapshotData
-        ? targetCycle.snapshot!.totalPayout
-        : totalBaseSalary + totalAdjustments;
+    // Re-sum totalPayout securely to avoid string concatenation bugs inherited from legacy snapshots
+    const totalPayout = Number(totalBaseSalary) + Number(totalAdjustments);
 
     // Handlers
     const handleSelectAll = (checked: boolean) => {
@@ -333,47 +331,53 @@ export const PayrollPage: React.FC = () => {
                                     />
                                 </th>
                                 <th className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        Employee
+                                    <div className="flex flex-col gap-2">
+                                        <div className="font-bold">Employee</div>
                                         <select
                                             value={filterDept}
                                             onChange={e => setFilterDept(e.target.value)}
-                                            className="ml-auto bg-transparent border-none text-xs font-bold text-slate-500 focus:ring-0 cursor-pointer p-0 w-24 text-right"
+                                            className="w-full mt-1 p-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-700 bg-white"
                                             title="Filter by Department"
                                         >
-                                            <option value="All">All Depts</option>
+                                            <option value="All">All Departments</option>
                                             {departments.map(d => <option key={d} value={d}>{d}</option>)}
                                         </select>
                                     </div>
                                 </th>
                                 <th className="px-6 py-4">
-                                    <select
-                                        value={filterRole}
-                                        onChange={e => setFilterRole(e.target.value)}
-                                        className="bg-transparent border-none text-xs font-bold text-slate-500 uppercase focus:ring-0 cursor-pointer p-0 w-full"
-                                        title="Filter by Role"
-                                    >
-                                        <option value="All">All Roles</option>
-                                        {roles.map(r => <option key={r} value={r}>{r}</option>)}
-                                    </select>
+                                    <div className="flex flex-col gap-2">
+                                        <div className="font-bold invisible">Role</div>{/* Hidden to align with left */}
+                                        <select
+                                            value={filterRole}
+                                            onChange={e => setFilterRole(e.target.value)}
+                                            className="w-full mt-1 p-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-700 bg-white cursor-pointer"
+                                            title="Filter by Role"
+                                        >
+                                            <option value="All">All Roles</option>
+                                            {roles.map(r => <option key={r} value={r}>{r}</option>)}
+                                        </select>
+                                    </div>
                                 </th>
                                 <th className="px-6 py-3">
-                                    <select
-                                        value={filterType}
-                                        onChange={e => setFilterType(e.target.value)}
-                                        className="bg-transparent border-none text-xs font-bold text-slate-500 uppercase focus:ring-0 cursor-pointer p-0 w-full"
-                                        title="Filter by Type"
-                                    >
-                                        <option value="All">All Emp. Types</option>
-                                        <option value="Full-time">Full-time</option>
-                                        <option value="Part-time">Part-time</option>
-                                        <option value="Intern">Intern</option>
-                                    </select>
+                                    <div className="flex flex-col gap-2">
+                                        <div className="font-bold invisible">Type</div>
+                                        <select
+                                            value={filterType}
+                                            onChange={e => setFilterType(e.target.value)}
+                                            className="w-full mt-1 p-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-700 bg-white cursor-pointer"
+                                            title="Filter by Type"
+                                        >
+                                            <option value="All">All Emp. Types</option>
+                                            <option value="Full-time">Full-time</option>
+                                            <option value="Part-time">Part-time</option>
+                                            <option value="Intern">Intern</option>
+                                        </select>
+                                    </div>
                                 </th>
-                                <th className="px-6 py-3 text-right">Base Salary</th>
-                                <th className="px-6 py-3 text-right">Adjustments</th>
-                                <th className="px-6 py-3 text-right">Net Payable</th>
-                                <th className="px-6 py-3 text-center">Actions</th>
+                                <th className="px-6 py-4 text-right align-top"><div className="mt-8 font-bold">Base Salary</div></th>
+                                <th className="px-6 py-4 text-right align-top"><div className="mt-8 font-bold">Adjustments</div></th>
+                                <th className="px-6 py-4 text-right align-top"><div className="mt-8 font-bold">Net Payable</div></th>
+                                <th className="px-6 py-4 text-center align-top"><div className="mt-8 font-bold">Actions</div></th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">

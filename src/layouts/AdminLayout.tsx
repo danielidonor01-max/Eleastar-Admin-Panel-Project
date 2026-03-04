@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Globe, ChevronDown, ChevronRight, LogOut, Calendar, Share2, BarChart2, QrCode, Wallet, FileText, Check, Shield, TrendingUp, Gift, Activity, CheckSquare } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Globe, ChevronDown, ChevronRight, LogOut, Calendar, BarChart2, QrCode, Wallet, FileText, Check, Shield, TrendingUp, Gift, Activity, CheckSquare } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { NotificationMenu } from '../components/NotificationMenu';
 import { GlobalSearchMenu } from '../components/GlobalSearchMenu';
-import { useFeedback } from '../context/FeedbackContext';
 import type { AdminRole } from '../data/mockData';
 import type { ModuleType } from '../context/AdminContext';
-import { PUBLIC_LINK } from '../config';
 
 export const AdminLayout: React.FC = () => {
     const {
@@ -17,8 +15,6 @@ export const AdminLayout: React.FC = () => {
         isAuthenticated,
         cmsContent
     } = useAdmin();
-
-    const { showSuccess } = useFeedback();
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -385,21 +381,7 @@ export const AdminLayout: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-6">
-                        {/* Share Preview Button */}
-                        {currentUserRole === 'SUPER_ADMIN' && (
-                            <button
-                                onClick={() => {
-                                    const previewUrl = PUBLIC_LINK || window.location.origin;
-                                    navigator.clipboard.writeText(previewUrl);
-                                    showSuccess({ title: 'Copied', message: `Link copied: ${previewUrl}` });
-                                }}
-                                className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors text-sm font-medium border border-indigo-200"
-                                title="Share this link for review"
-                            >
-                                <Share2 size={16} />
-                                <span>Share Preview Link</span>
-                            </button>
-                        )}
+
 
                         {/* Notifications */}
                         <NotificationMenu />
