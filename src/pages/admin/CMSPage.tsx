@@ -4,7 +4,7 @@ import { useCMS } from '../../context/CMSContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import {
     Save, AlertCircle, CheckCircle, Eye, Layout, FileCode, Plus, X,
-    Globe, Key, Trash2, Edit2, ToggleLeft, ToggleRight, Menu,
+    Globe, Key, Trash2, Edit2, Menu,
     ExternalLink, Copy, RefreshCw,
     FileText, FolderOpen, Lock
 } from 'lucide-react';
@@ -12,6 +12,48 @@ import { DynamicJsonEditor } from '../../components/DynamicJsonEditor';
 import { CMSPreviewPane } from '../../components/CMSPreviewPane';
 import { PUBLIC_LINK } from '../../config';
 import { cmsService } from '../../services/cmsService';
+
+// ──────────────────────────────────────────────
+// Shared UI Components (Internal)
+// ──────────────────────────────────────────────
+
+const CMSToggle: React.FC<{ active: boolean | number; onToggle: () => void; label?: string }> = ({ active, onToggle, label }) => (
+    <button
+        onClick={onToggle}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${active ? 'bg-green-500' : 'bg-slate-300'}`}
+        title={label}
+    >
+        <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${active ? 'translate-x-6' : 'translate-x-1'}`}
+        />
+    </button>
+);
+
+const CMSActionButton: React.FC<{
+    onClick: () => void;
+    icon: React.ElementType;
+    label: string;
+    variant?: 'danger' | 'primary' | 'ghost';
+    isLoading?: boolean;
+}> = ({ onClick, icon: Icon, label, variant = 'ghost', isLoading }) => {
+    const variants = {
+        primary: 'bg-brand-600 text-white hover:bg-brand-700 shadow-sm',
+        danger: 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white border border-red-100',
+        ghost: 'text-slate-400 hover:text-brand-600 hover:bg-brand-50'
+    };
+
+    return (
+        <button
+            onClick={(e) => { e.stopPropagation(); onClick(); }}
+            disabled={isLoading}
+            className={`p-2 rounded-xl transition-all duration-200 flex items-center gap-2 group ${variants[variant]}`}
+            title={label}
+        >
+            <Icon size={16} className={`transition-transform group-hover:scale-110 ${isLoading ? 'animate-spin' : ''}`} />
+            {variant !== 'ghost' && <span className="text-xs font-semibold">{label}</span>}
+        </button>
+    );
+};
 
 // ──────────────────────────────────────────────
 // Sub-module types
@@ -203,23 +245,19 @@ const ApiKeysTab: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${k.is_active ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
-                                        {k.is_active ? 'active' : 'inactive'}
-                                    </span>
-                                    <button
-                                        onClick={() => handleToggle(k.id, k.is_active)}
-                                        className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
-                                        title={k.is_active ? 'Disable' : 'Enable'}
-                                    >
-                                        {k.is_active ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(k.id)}
-                                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                        title="Delete Key"
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        <CMSToggle
+                                            active={k.is_active}
+                                            onToggle={() => handleToggle(k.id, k.is_active)}
+                                            label={k.is_active ? 'Disable' : 'Enable'}
+                                        />
+                                        <CMSActionButton
+                                            onClick={() => handleDelete(k.id)}
+                                            icon={Trash2}
+                                            label="Delete Key"
+                                            variant="danger"
+                                        />
+                                    </div>
                                 </div>
                             </li>
                         ))}
@@ -467,16 +505,23 @@ const MenuBuilderTab: React.FC = () => {
                                                                     <div className="text-xs text-slate-400 font-mono">{item.url}</div>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <button onClick={() => handleToggleVisibility(item)} title={item.is_visible !== false ? 'Hide' : 'Show'} className="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg hover:bg-brand-50">
-                                                                    {item.is_visible !== false ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-                                                                </button>
-                                                                <button onClick={() => { setEditingItem(item); setEditLabel(item.label); setEditUrl(item.url); }} title="Edit Item" className="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg hover:bg-brand-50">
-                                                                    <Edit2 size={14} />
-                                                                </button>
-                                                                <button onClick={() => handleDeleteItem(item.id)} title="Delete Item" className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50">
-                                                                    <Trash2 size={14} />
-                                                                </button>
+                                                            <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <CMSToggle
+                                                                    active={item.is_visible !== false}
+                                                                    onToggle={() => handleToggleVisibility(item)}
+                                                                    label={item.is_visible !== false ? 'Hide' : 'Show'}
+                                                                />
+                                                                <CMSActionButton
+                                                                    onClick={() => { setEditingItem(item); setEditLabel(item.label); setEditUrl(item.url); }}
+                                                                    icon={Edit2}
+                                                                    label="Edit"
+                                                                />
+                                                                <CMSActionButton
+                                                                    onClick={() => handleDeleteItem(item.id)}
+                                                                    icon={Trash2}
+                                                                    label="Delete"
+                                                                    variant="danger"
+                                                                />
                                                             </div>
                                                         </div>
                                                     )}
@@ -641,13 +686,18 @@ const PagesTab: React.FC = () => {
                                         <div className="text-sm font-medium truncate capitalize">{page.title}</div>
                                         <div className="text-[10px] font-mono text-slate-400 truncate">/{page.slug}</div>
                                     </div>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={e => { e.stopPropagation(); handleToggleStatus(page); }} className="p-1 rounded text-slate-400 hover:text-brand-600" title={page.status === 'live' ? 'Set draft' : 'Publish'}>
-                                            {page.status === 'live' ? <ToggleRight size={12} className="text-green-500" /> : <ToggleLeft size={12} />}
-                                        </button>
-                                        <button onClick={e => { e.stopPropagation(); handleDelete(page.slug); }} className="p-1 rounded text-slate-400 hover:text-red-500" title="Delete Page">
-                                            <Trash2 size={11} />
-                                        </button>
+                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <CMSToggle
+                                            active={page.status === 'live'}
+                                            onToggle={() => handleToggleStatus(page)}
+                                            label={page.status === 'live' ? 'Set Draft' : 'Publish'}
+                                        />
+                                        <CMSActionButton
+                                            onClick={() => handleDelete(page.slug)}
+                                            icon={Trash2}
+                                            label="Delete"
+                                            variant="danger"
+                                        />
                                     </div>
                                 </div>
                             </li>

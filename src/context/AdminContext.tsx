@@ -47,7 +47,7 @@ export type { AdminNotification, NotificationType, NotificationChannel, EmailLog
 
 // Role & Permissions Types
 
-export type ModuleType = 'Dashboard' | 'Employees' | 'QR & ID' | 'Payroll' | 'Recruitment' | 'Website CMS' | 'Settings' | 'Leave' | 'Performance' | 'Compliance' | 'System Users';
+export type ModuleType = 'Dashboard' | 'Employees' | 'QR & ID' | 'Payroll' | 'Recruitment' | 'Website CMS' | 'Settings' | 'Leave' | 'Performance' | 'Compliance' | 'System Users' | 'Tasks';
 
 export interface AdminContextType {
     isLoading: boolean; // Global loading state
@@ -202,8 +202,8 @@ const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 // Initial Permissions Configuration
 const INITIAL_PERMISSIONS: Record<AdminRole, ModuleType[]> = {
-    'SUPER_ADMIN': ['Dashboard', 'Employees', 'QR & ID', 'Payroll', 'Recruitment', 'Website CMS', 'Settings', 'Leave', 'Performance', 'Compliance', 'System Users'],
-    'COO': ['Dashboard', 'Employees', 'QR & ID', 'Payroll', 'Recruitment', 'Website CMS', 'Leave', 'Performance', 'Compliance'],
+    'SUPER_ADMIN': ['Dashboard', 'Employees', 'QR & ID', 'Payroll', 'Recruitment', 'Website CMS', 'Settings', 'Leave', 'Performance', 'Compliance', 'System Users', 'Tasks'],
+    'COO': ['Dashboard', 'Employees', 'QR & ID', 'Payroll', 'Recruitment', 'Website CMS', 'Leave', 'Performance', 'Compliance', 'Tasks'],
     'HR_ADMIN': ['Dashboard', 'Employees', 'Recruitment', 'QR & ID', 'Leave', 'Performance'],
     'MANAGEMENT_ADMIN': ['Dashboard', 'Employees', 'Leave', 'Performance', 'Compliance'],
     'FINANCE_ADMIN': ['Dashboard', 'Payroll'],
