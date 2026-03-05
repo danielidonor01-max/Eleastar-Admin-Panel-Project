@@ -1,25 +1,25 @@
-import { useCMS } from '../context/CMSContext';
+import React from 'react';
+
 import { Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
 
 export const BrandFooter: React.FC = () => {
-    const { footerContent } = useCMS();
 
     const navLinks = [
-        ...(footerContent.navigation.links || []),
-        ...(footerContent.utility.links || [])
+        { id: 'f-1', label: 'Services', url: '/services' },
+        { id: 'f-2', label: 'Technologies', url: '/technologies' },
+        { id: 'f-3', label: 'Eleastar & You', url: '/eleastar-and-you' },
+        { id: 'f-4', label: 'About Eleastar', url: '/about' },
+        { id: 'f-5', label: 'Contact', url: '/contact' },
+        { id: 'f-6', label: 'New Updates', url: '/new-updates' },
+        { id: 'f-7', label: 'Locate Us', url: '/locate-us' }
     ];
 
-    const socialIcons: Record<string, any> = {
-        facebook: Facebook,
-        twitter: Twitter,
-        instagram: Instagram,
-        linkedin: Linkedin
-    };
-
-    const socialLinks = (footerContent.social.links || []).map(l => ({
-        ...l,
-        icon: socialIcons[l.id.toLowerCase()] || Facebook
-    }));
+    const socialLinks = [
+        { id: 's-1', label: 'Facebook', url: '#', icon: Facebook },
+        { id: 's-2', label: 'X', url: '#', icon: Twitter },
+        { id: 's-3', label: 'Instagram', url: '#', icon: Instagram },
+        { id: 's-4', label: 'LinkedIn', url: '#', icon: Linkedin }
+    ];
 
     return (
         <footer className="bg-[#020617] text-white pt-16 pb-8 overflow-hidden relative">
@@ -65,16 +65,19 @@ export const BrandFooter: React.FC = () => {
             {/* Middle Section: Utility & Legal */}
             <div className="max-w-7xl mx-auto px-6 mb-20 relative z-10">
                 <div className="flex flex-wrap gap-6 mb-8 text-xs text-slate-400 font-medium uppercase tracking-wider items-center">
-                    {(footerContent.legal.links || []).map(link => (
-                        <a key={link.id} href={link.url} className="hover:text-white transition-colors">
-                            {link.label}
-                        </a>
-                    ))}
+                    <a href="/privacy-policy" className="hover:text-white transition-colors">
+                        Privacy Policy
+                    </a>
+                    <a href="/terms" className="hover:text-white transition-colors">
+                        Terms Of Service
+                    </a>
                     <a href="/login" className="hover:text-white transition-colors border-l border-slate-700 pl-6 ml-auto">
                         Admin Login
                     </a>
                     <div className="flex-grow text-right md:flex-grow-0 ml-auto">
-                        <span>{footerContent.copyright.content}</span>
+                        <span>Copyright © 2026</span>
+                        <span className="mx-2">•</span>
+                        <span>RC - 7130026</span>
                     </div>
                 </div>
 
