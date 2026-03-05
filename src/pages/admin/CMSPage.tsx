@@ -645,7 +645,7 @@ const PagesTab: React.FC = () => {
                                         <button onClick={e => { e.stopPropagation(); handleToggleStatus(page); }} className="p-1 rounded text-slate-400 hover:text-brand-600" title={page.status === 'live' ? 'Set draft' : 'Publish'}>
                                             {page.status === 'live' ? <ToggleRight size={12} className="text-green-500" /> : <ToggleLeft size={12} />}
                                         </button>
-                                        <button onClick={e => { e.stopPropagation(); handleDelete(page.slug); }} className="p-1 rounded text-slate-400 hover:text-red-500">
+                                        <button onClick={e => { e.stopPropagation(); handleDelete(page.slug); }} className="p-1 rounded text-slate-400 hover:text-red-500" title="Delete Page">
                                             <Trash2 size={11} />
                                         </button>
                                     </div>
@@ -750,7 +750,7 @@ const PagesTab: React.FC = () => {
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-bold text-slate-800">Create New Page</h3>
-                            <button onClick={() => setShowCreateModal(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100">
+                            <button onClick={() => setShowCreateModal(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100" title="Close">
                                 <X size={18} />
                             </button>
                         </div>
