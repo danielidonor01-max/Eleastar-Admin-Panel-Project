@@ -1,18 +1,14 @@
 import React, { useState } from 'react';
 import { ShieldCheck, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useCMS } from '../context/CMSContext';
 
 export const StickyHeader: React.FC = () => {
+    const { globalContent } = useCMS();
     const [isServicesOpen, setIsServicesOpen] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-    // Enforced specific navigation structure per user requirements
-    const navItems = [
-        { id: 'nav-services', label: 'Services', path: '/services', isDropdown: true },
-        { id: 'nav-tech', label: 'Technologies', path: '/technologies' },
-        { id: 'nav-you', label: 'Eleastar & You', path: '/eleastar-and-you' },
-        { id: 'nav-about', label: 'About Eleastar', path: '/about' }
-    ];
+    const navItems = globalContent.navigation;
 
     return (
         <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm transition-all duration-300">
@@ -28,7 +24,8 @@ export const StickyHeader: React.FC = () => {
                 {/* Desktop Navigation */}
                 <nav className="hidden md:flex items-center gap-8">
                     {navItems.map(item => {
-                        if (item.isDropdown && item.label === 'Services') {
+                        const hasSubItems = (item as any).subItems && (item as any).subItems.length > 0;
+                        if (hasSubItems) {
                             return (
                                 <div
                                     key={item.id}
@@ -42,25 +39,19 @@ export const StickyHeader: React.FC = () => {
                                     >
                                         {item.label} <ChevronDown size={14} className={`transition-transform duration-200 ${isServicesOpen ? 'rotate-180' : ''}`} />
                                     </Link>
-
+ 
                                     {/* Dropdown Menu */}
                                     <div className={`absolute top-[90%] left-0 w-[450px] bg-white rounded-2xl shadow-xl border border-slate-100 p-6 transition-all duration-200 origin-top-left flex gap-6 ${isServicesOpen ? 'opacity-100 scale-100 translate-y-0 visible' : 'opacity-0 scale-95 -translate-y-2 invisible'}`}>
                                         <div className="flex-1">
                                             <h3 className="text-xl font-bold text-brand-900 mb-2">Our Solutions Are Innovative, Adaptive and Efficient</h3>
-                                            <p className="text-xs text-slate-500 mb-6 leading-relaxed">Our full-service portfolio, enables you to take advantage of the digital transformative power in Digital Marketing, E-Commerce, Manage IT, Collaboration and Communication.</p>
-                                            <Link to="/services" className="inline-block px-5 py-2 bg-[#0a3b82] text-white text-sm font-medium rounded-full hover:bg-[#072a5e] transition-colors">See All Services</Link>
+                                            <p className="text-xs text-slate-500 mb-6 leading-relaxed">Our full-service portfolio enables you to take advantage of digital transformation in Marketing, E-Commerce, and IT.</p>
+                                            <Link to={item.path} className="inline-block px-5 py-2 bg-[#0a3b82] text-white text-sm font-medium rounded-full hover:bg-[#072a5e] transition-colors">See All {item.label}</Link>
                                         </div>
                                         <div className="flex-1 flex flex-col gap-1">
-                                            <h4 className="text-brand-800 font-bold mb-2">Services</h4>
-                                            {[
-                                                { name: 'Information Technology Services', path: '/services/information-technology' },
-                                                { name: 'Research and Development', path: '/services/research-and-development' },
-                                                { name: 'Electronics Manufacturing', path: '/services/electronics-manufacturing' },
-                                                { name: 'Industry Solutions', path: '/services/industry-solutions' },
-                                                { name: 'Specific IT Services', path: '/services/specific-it-services' }
-                                            ].map((sub) => (
-                                                <Link key={sub.path} to={sub.path} className="py-2 text-sm font-medium text-slate-600 hover:text-brand-700 transition-colors flex items-center justify-between group/item">
-                                                    {sub.name}
+                                            <h4 className="text-brand-800 font-bold mb-2">{item.label}</h4>
+                                            {(item as any).subItems.map((sub: any) => (
+                                                <Link key={sub.href || sub.slug} to={sub.href || '#'} className="py-2 text-sm font-medium text-slate-600 hover:text-brand-700 transition-colors flex items-center justify-between group/item">
+                                                    {sub.label}
                                                 </Link>
                                             ))}
                                         </div>
