@@ -40,7 +40,7 @@ export interface CMSContextType {
 const CMSContext = createContext<CMSContextType | undefined>(undefined);
 
 export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [cmsContent, setCmsContent] = useState<CMSData | null>(null);
+    const [cmsContent] = useState<CMSData | null>(null);
     const [footerContent, setFooterContent] = useState<FooterContent>(initialFooterContent);
     const [globalContent, setGlobalContent] = useState<GlobalContent>(initialGlobalContent);
     const [apiKeys, setApiKeys] = useState<SystemApiKey[]>(initialApiKeys);

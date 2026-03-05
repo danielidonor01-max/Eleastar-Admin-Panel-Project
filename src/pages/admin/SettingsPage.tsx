@@ -6,9 +6,11 @@ import type { AdminRole } from '../../data/mockData';
 import { Shield, Upload, Save, AlertTriangle, Check, Lock, Eye, RefreshCw, Key, Activity, Copy, CheckCircle2 } from 'lucide-react';
 import type { Employee } from '../../data/mockData';
 import { cmsService } from '../../services/cmsService';
+import { useCMS } from '../../context/CMSContext';
 
 export const SettingsPage: React.FC = () => {
-    const { activityLogs, employees, updateEmployee, ceoSignature, updateCeoSignature, rolePermissions, updateRolePermissions, currentUserRole, requestAuth, logAction, generateSystemPassword, sendEmail, addEmployee, apiKeys, addApiKey, toggleApiKeyStatus } = useAdmin();
+    const { activityLogs, employees, updateEmployee, ceoSignature, updateCeoSignature, rolePermissions, updateRolePermissions, currentUserRole, requestAuth, logAction, generateSystemPassword, sendEmail, addEmployee } = useAdmin();
+    const { apiKeys, addApiKey, toggleApiKeyStatus } = useCMS();
     const { showError, showSuccess } = useFeedback();
 
     // UI State
@@ -438,7 +440,7 @@ export const SettingsPage: React.FC = () => {
                                                     </td>
                                                 </tr>
                                             ) : (
-                                                apiKeys.map((key) => (
+                                                apiKeys.map((key: any) => (
                                                     <tr key={key.id} className={`hover:bg-slate-50 transition-colors ${key.status === 'disabled' ? 'opacity-60 bg-slate-50' : ''}`}>
                                                         <td className="px-6 py-4">
                                                             <div className="font-bold text-slate-900">{key.name}</div>

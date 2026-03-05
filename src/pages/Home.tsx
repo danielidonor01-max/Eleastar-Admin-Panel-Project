@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAdmin } from '../context/AdminContext';
+import { useCMS } from '../context/CMSContext';
 import { StickyHeader } from '../components/StickyHeader';
 import { BrandFooter } from '../components/BrandFooter';
 import { Link } from 'react-router-dom';
