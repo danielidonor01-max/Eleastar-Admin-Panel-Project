@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAdmin } from '../../context/AdminContext';
+import { useCMS } from '../../context/CMSContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import {
     Save, AlertCircle, CheckCircle, Eye, Layout, FileCode, Plus, X,
@@ -22,7 +22,7 @@ interface CMSApiKey {
     id: string | number;
     name: string;
     key?: string;
-    status: 'active' | 'inactive';
+    is_active: boolean | number;
     created_at?: string;
 }
 
@@ -113,13 +113,13 @@ const ApiKeysTab: React.FC = () => {
         } catch (e: any) { showError({ title: 'Error', message: e.message }); }
     };
 
-    const handleToggle = async (id: string | number, current: 'active' | 'inactive') => {
-        const next = current === 'active' ? 'inactive' : 'active';
+    const handleToggle = async (id: string | number, currentActive: boolean | number) => {
+        const next = !currentActive;
         try {
             const res = await cmsService.toggleApiKeyStatus(id, next);
             if (res.success) {
-                setKeys(prev => prev.map(k => k.id === id ? { ...k, status: next } : k));
-                showSuccess({ title: 'Updated', message: `Key status set to ${next}.` });
+                setKeys(prev => prev.map(k => k.id === id ? { ...k, is_active: next } : k));
+                showSuccess({ title: 'Updated', message: `Key status set to ${next ? 'active' : 'inactive'}.` });
             }
         } catch (e: any) { showError({ title: 'Error', message: e.message }); }
     };
@@ -196,22 +196,22 @@ const ApiKeysTab: React.FC = () => {
                         {keys.map(k => (
                             <li key={k.id} className="px-4 py-3 flex items-center justify-between group hover:bg-slate-50 transition-colors">
                                 <div className="flex items-center gap-3">
-                                    <Key size={16} className={k.status === 'active' ? 'text-brand-500' : 'text-slate-300'} />
+                                    <Key size={16} className={k.is_active ? 'text-brand-500' : 'text-slate-300'} />
                                     <div>
                                         <div className="text-sm font-medium text-slate-700">{k.name}</div>
                                         <div className="text-xs text-slate-400">{k.created_at ? new Date(k.created_at).toLocaleDateString() : 'Unknown date'}</div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${k.status === 'active' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
-                                        {k.status}
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${k.is_active ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
+                                        {k.is_active ? 'active' : 'inactive'}
                                     </span>
                                     <button
-                                        onClick={() => handleToggle(k.id, k.status)}
+                                        onClick={() => handleToggle(k.id, k.is_active)}
                                         className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
-                                        title={k.status === 'active' ? 'Disable' : 'Enable'}
+                                        title={k.is_active ? 'Disable' : 'Enable'}
                                     >
-                                        {k.status === 'active' ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                                        {k.is_active ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
                                     </button>
                                     <button
                                         onClick={() => handleDelete(k.id)}
@@ -449,10 +449,10 @@ const MenuBuilderTab: React.FC = () => {
                                                 <li key={item.id} className="px-4 py-3 group">
                                                     {editingItem?.id === item.id ? (
                                                         <div className="flex gap-2 items-center">
-                                                            <input value={editLabel} onChange={e => setEditLabel(e.target.value)} className="flex-1 px-2 py-1.5 text-sm border border-brand-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-400" />
-                                                            <input value={editUrl} onChange={e => setEditUrl(e.target.value)} className="flex-1 px-2 py-1.5 text-sm border border-brand-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-400" />
+                                                            <input value={editLabel} onChange={e => setEditLabel(e.target.value)} placeholder="Label" title="Menu Item Label" className="flex-1 px-2 py-1.5 text-sm border border-brand-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-400" />
+                                                            <input value={editUrl} onChange={e => setEditUrl(e.target.value)} placeholder="URL" title="Menu Item URL" className="flex-1 px-2 py-1.5 text-sm border border-brand-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-400" />
                                                             <button onClick={handleUpdateItem} className="px-3 py-1.5 bg-brand-600 text-white text-xs rounded-lg hover:bg-brand-700 font-semibold">Save</button>
-                                                            <button onClick={() => setEditingItem(null)} className="p-1.5 text-slate-400 hover:text-slate-600"><X size={14} /></button>
+                                                            <button onClick={() => setEditingItem(null)} title="Cancel" className="p-1.5 text-slate-400 hover:text-slate-600"><X size={14} /></button>
                                                         </div>
                                                     ) : (
                                                         <div className="flex items-center justify-between">
@@ -471,10 +471,10 @@ const MenuBuilderTab: React.FC = () => {
                                                                 <button onClick={() => handleToggleVisibility(item)} title={item.is_visible !== false ? 'Hide' : 'Show'} className="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg hover:bg-brand-50">
                                                                     {item.is_visible !== false ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
                                                                 </button>
-                                                                <button onClick={() => { setEditingItem(item); setEditLabel(item.label); setEditUrl(item.url); }} className="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg hover:bg-brand-50">
+                                                                <button onClick={() => { setEditingItem(item); setEditLabel(item.label); setEditUrl(item.url); }} title="Edit Item" className="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg hover:bg-brand-50">
                                                                     <Edit2 size={14} />
                                                                 </button>
-                                                                <button onClick={() => handleDeleteItem(item.id)} className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50">
+                                                                <button onClick={() => handleDeleteItem(item.id)} title="Delete Item" className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50">
                                                                     <Trash2 size={14} />
                                                                 </button>
                                                             </div>
@@ -498,7 +498,7 @@ const MenuBuilderTab: React.FC = () => {
 // Pages Manager Tab
 // ──────────────────────────────────────────────
 const PagesTab: React.FC = () => {
-    const { cmsContent, updatePMSContent, createCMSPage, deleteCMSPage, updateCMSPageStatus } = useAdmin();
+    const { cmsContent, updatePMSContent, createCMSPage, deleteCMSPage, updateCMSPageStatus } = useCMS();
     const { showSuccess, showError } = useFeedback();
 
     const [pages, setPages] = useState<CMSPageItem[]>([]);
@@ -525,12 +525,6 @@ const PagesTab: React.FC = () => {
                 // Backend may return array or object { data: [...] }
                 const raw = Array.isArray(res.data) ? res.data : (res.data as any)?.data || [];
                 setPages(raw);
-            } else if (cmsContent?.pages) {
-                // Fallback to context
-                const fallback = Object.keys(cmsContent.pages).map(k => ({
-                    slug: k, title: k.charAt(0).toUpperCase() + k.slice(1), status: 'live' as const
-                }));
-                setPages(fallback);
             }
         } catch { } finally { setLoading(false); }
     }, [cmsContent]);

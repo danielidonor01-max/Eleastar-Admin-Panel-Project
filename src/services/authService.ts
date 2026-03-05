@@ -1,6 +1,6 @@
 import { type ApiResponse, delay } from './api';
 import type { AdminRole } from '../data/mockData';
-import { API_BASE_URL } from '../config';
+import { apiClient } from '../utils/apiClient';
 import Cookies from 'js-cookie';
 
 export interface User {
@@ -9,7 +9,7 @@ export interface User {
     name: string;
     role: AdminRole;
     permissions: string[];
-    token?: string; // JWT token in the future
+    token?: string;
 }
 
 export interface LoginResponse {
@@ -18,32 +18,24 @@ export interface LoginResponse {
     refreshToken: string;
 }
 
-
 export const authService = {
     /**
      * Login with Email and Password
-     * Calls POST /auth/login
      */
     login: async (email: string, password: string): Promise<ApiResponse<LoginResponse | { requires_otp: boolean, email: string }>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            const response = await apiClient(`/auth/login`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
+                requireAuth: false,
                 body: JSON.stringify({ email, password })
             });
             const data = await response.json();
 
-            // Support both Postman format and simpler local template format, and the live API format
             if (response.ok && (data.success || data.status || data.access_token)) {
-                // Check if OTP is required
                 if (data.data?.requires_otp) {
                     return { success: true, data: data.data, message: data.message };
                 }
 
-                // Normal Login Success
                 const token = data.data?.token || data.access_token || data.token;
                 const user = data.data?.user || data.user;
 
@@ -59,29 +51,31 @@ export const authService = {
                 Cookies.set('admin_token', token, { expires: 1, secure: window.location.protocol === 'https:', sameSite: 'strict' });
                 localStorage.setItem('user_id', loggedInUser.id);
 
-                return { success: true, data: { user: loggedInUser, token, refreshToken: data.data?.refresh_token || data.refresh_token || token }, message: data.message || 'Login successful' };
+                return {
+                    success: true,
+                    data: {
+                        user: loggedInUser,
+                        token,
+                        refreshToken: data.data?.refresh_token || data.refresh_token || token
+                    },
+                    message: data.message || 'Login successful'
+                };
             } else {
-                console.error("Login failed. Server returned:", response.status, data);
                 return { success: false, data: null as any, error: data.message || 'Invalid credentials' };
             }
         } catch (error: any) {
-            console.error("Login catch block error:", error);
             return { success: false, data: null as any, error: error.message };
         }
     },
 
     /**
      * Verify OTP
-     * Calls POST /auth/verify-otp
      */
     verifyOTP: async (email: string, otp: string): Promise<ApiResponse<LoginResponse>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+            const response = await apiClient(`/auth/verify-otp`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
+                requireAuth: false,
                 body: JSON.stringify({ email, otp })
             });
             const data = await response.json();
@@ -113,16 +107,12 @@ export const authService = {
 
     /**
      * Resend OTP
-     * Calls POST /auth/resend-otp
      */
     resendOTP: async (email: string): Promise<ApiResponse<void>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
+            const response = await apiClient(`/auth/resend-otp`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
+                requireAuth: false,
                 body: JSON.stringify({ email })
             });
             const data = await response.json();
@@ -139,16 +129,12 @@ export const authService = {
 
     /**
      * Forgot Password
-     * Calls POST /auth/forgot-password
      */
     forgotPassword: async (email: string): Promise<ApiResponse<void>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+            const response = await apiClient(`/auth/forgot-password`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
+                requireAuth: false,
                 body: JSON.stringify({ email })
             });
             const data = await response.json();
@@ -165,16 +151,12 @@ export const authService = {
 
     /**
      * Reset Password
-     * Calls POST /auth/reset-password
      */
     resetPassword: async (payload: { email: string; token: string; password: string; password_confirmation: string }): Promise<ApiResponse<void>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+            const response = await apiClient(`/auth/reset-password`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
+                requireAuth: false,
                 body: JSON.stringify(payload)
             });
             const data = await response.json();
@@ -191,18 +173,13 @@ export const authService = {
 
     /**
      * Logout
-     * Calls POST /auth/logout
      */
     logout: async (): Promise<ApiResponse<void>> => {
         try {
             const token = Cookies.get('admin_token');
             if (token) {
-                await fetch(`${API_BASE_URL}/auth/logout`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json'
-                    }
+                await apiClient(`/auth/logout`, {
+                    method: 'POST'
                 });
             }
         } catch (error) {
@@ -217,24 +194,17 @@ export const authService = {
 
     /**
      * Get Current User
-     * Calls GET /auth/me
      */
     getCurrentUser: async (): Promise<ApiResponse<User | null>> => {
         const token = Cookies.get('admin_token');
         if (!token) return { success: true, data: null };
 
         try {
-            // Support both Postman /auth/me and boilerplate /users/me endpoints
-            const response = await fetch(`${API_BASE_URL}/auth/me`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                }
+            const response = await apiClient(`/auth/me`, {
+                method: 'GET'
             });
             const data = await response.json();
 
-            // Local boilerplate returns user object directly, Postman returns success wrap, Live API returns status wrap
             if (response.ok && (data.email || data.success || data.status)) {
                 const user = data.data?.user || data.data || data;
                 const loggedInUser: User = {
@@ -247,7 +217,6 @@ export const authService = {
                 };
                 return { success: true, data: loggedInUser };
             } else {
-                // Token invalid
                 Cookies.remove('admin_token');
                 return { success: true, data: null };
             }
@@ -258,21 +227,16 @@ export const authService = {
     },
 
     /**
-     * Refresh Token
-     * Currently a mock implementation until refresh route exists
+     * Mock implementations for development
      */
     refreshToken: async (): Promise<ApiResponse<string>> => {
         const refreshToken = Cookies.get('admin_refresh_token');
         if (!refreshToken) return { success: false, data: null as any, error: 'No refresh token' };
-        // Placeholder for real refresh logic
         return { success: true, data: refreshToken };
     },
 
-    /**
-     * Verify/Regenerate Token (Pin, etc)
-     */
     verifyPin: async (pin: string): Promise<boolean> => {
         await delay(500);
-        return pin === '1234'; // Mock PIN
+        return pin === '1234';
     }
 };

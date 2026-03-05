@@ -274,9 +274,9 @@ export const PerformancePage: React.FC = () => {
                                         <td className="p-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                    <style>{`.prog-${stat.id.replace(/[^a-zA-Z0-9]/g, '')} { width: ${stat.completionRate}%; }`}</style>
                                                     <div
-                                                        className={`h-full ${stat.completionRate >= 80 ? 'bg-emerald-500' : stat.completionRate >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
-                                                        style={{ width: `${stat.completionRate}%` }}
+                                                        className={`h-full prog-${stat.id.replace(/[^a-zA-Z0-9]/g, '')} ${stat.completionRate >= 80 ? 'bg-emerald-500' : stat.completionRate >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
                                                     />
                                                 </div>
                                                 <span className="text-sm font-bold text-slate-700 w-10">{stat.completionRate}%</span>
@@ -332,7 +332,8 @@ export const PerformancePage: React.FC = () => {
 
                             {/* Progress Bar */}
                             <div className="h-1.5 w-full bg-slate-100">
-                                <div className="h-full bg-indigo-500" style={{ width: `${completionRate}%` }}></div>
+                                <style>{`.prog-cycle-${cycle.id.replace(/[^a-zA-Z0-9]/g, '')} { width: ${completionRate}%; }`}</style>
+                                <div className={`h-full bg-indigo-500 prog-cycle-${cycle.id.replace(/[^a-zA-Z0-9]/g, '')}`}></div>
                             </div>
 
                             {/* Reviews List */}

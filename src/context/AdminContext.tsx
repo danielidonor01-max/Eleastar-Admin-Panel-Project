@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
-import { initialReviewCycles, initialPerformanceReviews, initialFooterContent, initialGlobalContent, initialServicesCollection, initialLedgerEntries, initialDepartments, initialPromotionRequests, initialEligibilityRules, initialTasks, initialApiKeys } from '../data/mockData';
-import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, CMSSection, FooterContent, FooterSection, GlobalContent, ServiceItem, ServiceCollection, BonusType, BonusRequest, LedgerEntry, Department, PromotionRequest, PromotionEligibilityRule, PayrollCycle, AdminRole, Task, SystemApiKey } from '../data/mockData';
+import { initialReviewCycles, initialPerformanceReviews, initialLedgerEntries, initialDepartments, initialPromotionRequests, initialEligibilityRules, initialTasks } from '../data/mockData';
+import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, BonusType, BonusRequest, LedgerEntry, Department, PromotionRequest, PromotionEligibilityRule, PayrollCycle, AdminRole, Task } from '../data/mockData';
 
 import * as reportService from '../services/reportService';
 import { authService } from '../services/authService';
@@ -10,8 +10,6 @@ import { payrollService } from '../services/payrollService';
 import { jobService } from '../services/jobService';
 import { leaveService } from '../services/leaveService';
 import { performanceService } from '../services/performanceService';
-import { fallbackCMSData } from '../data/fallbackCMS';
-import { cmsService } from '../services/cmsService';
 import { settingsService } from '../services/settingsService';
 import { financeService } from '../services/financeService';
 import { departmentService } from '../services/departmentService';
@@ -63,10 +61,8 @@ export interface AdminContextType {
     // Auth
     requestAuth: (level: 'CMS' | 'SENSITIVE', description: string, onConfirm: () => void) => void;
 
-    cmsContent: import('../types/cms').CMSData | null; // Changed to match backend nested JSON schema
-    footerContent: FooterContent; // Global Footer Data
-    globalContent: GlobalContent;
-    servicesCollection: ServiceCollection; // or ServiceItem[]
+    // CMS related state has been moved to CMSContext
+    // AdminContext now focuses only on core admin business logic (Employees, Payroll, etc.)
 
 
 
@@ -124,44 +120,7 @@ export interface AdminContextType {
     updateJob: (id: string, updates: Partial<Job>) => void;
     deleteJob: (id: string) => void;
 
-    // CMS Actions
-    updatePMSContent: (id: string, content: any) => Promise<void>; // Using any for flexible updates across union types
-    publishPMSContent: (id: string) => Promise<void>;
-    addCMSContent: (section: CMSSection) => Promise<void>;
-
-    // New CMS Actions (Pages & Menus)
-    createCMSPage: (payload: any) => Promise<void>;
-    updateCMSPage: (slug: string, payload: any) => Promise<void>;
-    deleteCMSPage: (slug: string) => Promise<void>;
-    updateCMSPageStatus: (slug: string, status: 'live' | 'draft') => Promise<void>;
-    getPageSections: (slug: string) => Promise<any>;
-    createCMSSection: (payload: any) => Promise<void>;
-    deleteCMSSection: (sectionId: string | number) => Promise<void>;
-
-    getCMSMenus: () => Promise<any>;
-    getMenuWithItems: (key: string) => Promise<any>;
-    createMenuItem: (payload: any) => Promise<void>;
-    updateMenuItem: (id: string | number, payload: any) => Promise<void>;
-    deleteMenuItem: (id: string | number) => Promise<void>;
-    updateMenuItemVisibility: (id: string | number, is_visible: boolean) => Promise<void>;
-
-    deleteCMSContent: (id: string) => Promise<void>;
-    updateFooterContent: (section: keyof FooterContent, data: Partial<FooterSection>) => Promise<void>;
-
-    // Global Settings
-    updateGlobal: (section: keyof GlobalContent, data: any) => Promise<void>;
-
-    // Services Collection
-    addService: (service: Omit<ServiceItem, 'tenantId'>) => Promise<void>;
-    updateService: (id: string, updates: Partial<ServiceItem>) => Promise<void>;
-    deleteService: (id: string) => Promise<void>;
-
-    // API Keys Management
-    apiKeys: SystemApiKey[];
-    addApiKey: (apiKey: Omit<SystemApiKey, 'id' | 'tenantId' | 'createdAt' | 'status'>) => void;
-    toggleApiKeyStatus: (id: string) => void;
-
-    // New Actions
+    // Role Actions
     switchRole: (role: AdminRole) => void;
     updateRolePermissions: (role: AdminRole, modules: ModuleType[]) => void;
 
@@ -230,7 +189,6 @@ export interface AdminContextType {
     // Decoupled Refreshers
     refreshLeaveRequests: () => Promise<void>;
     refreshReviewCycles: () => Promise<void>;
-    refreshServices: () => Promise<void>;
     refreshLedgerEntries: () => Promise<void>;
     refreshDepartments: () => Promise<void>;
     refreshPromotions: () => Promise<void>;
@@ -302,10 +260,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [employees, setEmployees] = useState<Employee[]>([]); // Start empty, fetch on mount
     const [jobs, setJobs] = useState<Job[]>([]);
     const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-    const [cmsContent, setCmsContent] = useState<import('../types/cms').CMSData | null>(null);
-    const [footerContent, setFooterContent] = useState<FooterContent>(initialFooterContent);
-    const [globalContent, setGlobalContent] = useState<GlobalContent>(initialGlobalContent);
-    const [servicesCollection, setServicesCollection] = useState<ServiceCollection>(initialServicesCollection);
     const [ceoSignature, setCeoSignature] = useState<string | null>(null);
     const [notifications, setNotifications] = useState<AdminNotification[]>(INITIAL_NOTIFICATIONS);
     const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
@@ -348,7 +302,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>(initialLedgerEntries);
     const [promotionRequests, setPromotionRequests] = useState<PromotionRequest[]>(initialPromotionRequests);
     const [eligibilityRules, setEligibilityRules] = useState<PromotionEligibilityRule[]>(initialEligibilityRules);
-    const [apiKeys, setApiKeys] = useState<SystemApiKey[]>(initialApiKeys);
 
     // AdminNotification Deduplication Ref
     const lastNotificationRef = React.useRef<{ sig: string; time: number } | null>(null);
@@ -358,73 +311,38 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const init = async () => {
             setIsLoading(true);
             try {
-                // 1. Check Auth
-                const authResponse = await authService.getCurrentUser();
+                // 1. Check Auth & Core Data
+                const [authResponse, empResponse] = await Promise.all([
+                    authService.getCurrentUser(),
+                    employeeService.getAllEmployees()
+                ]);
+
                 if (authResponse.success && authResponse.data) {
                     const user = authResponse.data;
                     setIsAuthenticated(true);
                     setCurrentUserRole(user.role);
                     setCurrentUserId(user.id);
-                    // Load permissions based on role
-                    // In a real app, permissions might come from the user object directly
+
+                    // 2. Load Notifications & Admin Specific Data
+                    const [notifResponse, cycleRes, payrollRes, deptsRes] = await Promise.all([
+                        notificationService.getNotifications(user.id, user.role),
+                        performanceService.getReviewCycles(),
+                        payrollService.getPayrollStatus(),
+                        departmentService.getDepartments()
+                    ]);
+
+                    if (notifResponse.success) {
+                        const safeArr = (d: any) => Array.isArray(d) ? d : (d?.data || []);
+                        setNotifications(safeArr(notifResponse.data));
+                    }
+                    if (cycleRes.success) setReviewCycles(cycleRes.data as any);
+                    if (payrollRes.success) setPayrollStatus(payrollRes.data as any);
+                    if (deptsRes.success) setDepartments(deptsRes.data as any);
                 }
 
-                // 2. Load Employees (Required for everyone to see names etc)
-                const empResponse = await employeeService.getAllEmployees();
                 if (empResponse.success) {
                     const empData = Array.isArray(empResponse.data) ? empResponse.data : (empResponse.data?.data || []);
                     setEmployees(empData);
-                }
-
-                // 2b. Load Public CMS Data (Global Nav, Footer, Pages)
-                const safePromise = <T,>(p: Promise<T>, def: any = []): Promise<T> =>
-                    p.catch(e => ({ success: false, data: def, error: e.message } as unknown as T));
-
-                const [menusRes, settingsRes, pagesRes] = await Promise.all([
-                    safePromise(cmsService.getPublicMenus(), []),
-                    safePromise(cmsService.getPublicSettingsGroups(), []),
-                    safePromise(cmsService.getCMSPages(), null)
-                ]);
-
-                // Map Menus
-                // The cms menu response has shape: { data: { "1": { id: 1, name: "Main Menu", items: [...] } } } roughly, depending on backend.
-                // For now, let's keep the user's specific items mapped directly in the component, but we will store the raw response.
-                if (menusRes.success) {
-                    setGlobalContent(prev => ({
-                        ...prev,
-                        navigation: menusRes.data as any // We will format this in StickyHeader or map it here if needed
-                    }));
-                }
-
-                if (settingsRes.success) {
-                    // Update footer content from settings groups
-                    setFooterContent(prev => ({
-                        ...prev,
-                        rawSettings: settingsRes.data // Storing raw to be accessed by BrandFooter
-                    } as any));
-                }
-
-                if (pagesRes.success && pagesRes.data) {
-                    setCmsContent(pagesRes.data as any);
-                } else {
-                    setCmsContent(fallbackCMSData as any);
-                }
-
-                // 3. Load Notifications (if auth)
-                if (authResponse.success && authResponse.data) {
-                    const safePromise = <T,>(p: Promise<T>, def: any = []): Promise<T> =>
-                        p.catch(e => ({ success: false, data: def, error: e.message } as unknown as T));
-
-                    const [notifResponse] = await Promise.all([
-                        safePromise(notificationService.getNotifications(authResponse.data.id, authResponse.data.role))
-                    ]);
-
-                    const safeArr = (d: any) => Array.isArray(d) ? d : (d?.data || []);
-
-                    if (notifResponse.success) setNotifications(safeArr(notifResponse.data));
-
-                    // Removed monolithic pre-fetches to speed up initial load.
-                    // Pages will individually trigger their respective refreshers.
                 }
 
             } catch (error) {
@@ -438,21 +356,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         init();
     }, []);
 
-    // Listen for CMS preview data from parent window (for iframe preview)
-    React.useEffect(() => {
-        const handleMessage = (event: MessageEvent) => {
-            if (event.data?.type === 'live-preview-update' && event.data?.data) {
-                const { cmsContent: newCms, globalContent: newGlobal, footerContent: newFooter, servicesCollection: newServices } = event.data.data;
-                if (newCms) setCmsContent(newCms);
-                if (newGlobal) setGlobalContent(newGlobal);
-                if (newFooter) setFooterContent(newFooter);
-                if (newServices) setServicesCollection(newServices);
-            }
-        };
-
-        window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
-    }, []);
+    // Removed CMS live preview listener - moved to CMS context or no longer needed here
 
     // --- REMINDER ENGINE LOGIC ---
     React.useEffect(() => {
@@ -1003,287 +907,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         } finally {
             setIsLoading(false);
         }
-    };
-
-    // CMS & Content Actions
-    const updatePMSContent = async (path: string | number, content: any) => {
-        setIsLoading(true);
-        try {
-            const response = await cmsService.updateCMSSection(path, content);
-            if (response.success) {
-                // For nested JSON, an update might mean completely replacing a subtree.
-                // Depending on how CMSPage.tsx is rebuilt, we may need to fetch the whole tree again or deep merge.
-                // For now, let's just trigger a re-fetch since the topology is complex.
-                const pagesResponse = await cmsService.getCMSPages();
-                if (pagesResponse.success && pagesResponse.data) {
-                    setCmsContent(pagesResponse.data as any);
-                }
-                logAction('CMS Edit', `Updated content path ${path}`);
-                showSuccess({ title: 'Section Saved', message: 'Changes have been saved successfully.' });
-            } else {
-                showError({ title: 'Update Failed', message: response.error || 'Failed to update section' });
-            }
-        } catch (err) {
-            showError({ title: 'Update Error', message: 'Failed to save CMS changes.' });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const publishPMSContent = async (path: string | number) => {
-        setIsLoading(true);
-        try {
-            const response = await cmsService.updateCMSSectionStatus(path, 'published');
-            if (response.success) {
-                logAction('CMS Publish', `Published section ${path}`);
-                dispatchNotification(
-                    { title: 'Website Updated', message: `Section ${path} has been published successfully.`, type: 'System', link: '/' },
-                    { roles: ['SUPER_ADMIN', 'COO'] }
-                );
-                showSuccess({ title: 'Published', message: 'Content is now live on the website.' });
-            } else {
-                showError({ title: 'Publish Failed', message: response.error || 'Failed to update status' });
-            }
-        } catch (err) {
-            showError({ title: 'Publish Error', message: 'Failed to publish content.' });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const addCMSContent = async (section: any) => {
-        setIsLoading(true);
-        try {
-            const response = await cmsService.createCMSSection(section);
-            if (response.success) {
-                const pagesResponse = await cmsService.getCMSPages();
-                if (pagesResponse.success && pagesResponse.data) {
-                    setCmsContent(pagesResponse.data as any);
-                }
-                logAction('CMS Section Added', `Added new content`);
-                showSuccess({ title: 'Section Added', message: 'New content section has been created.' });
-            } else {
-                showError({ title: 'Addition Failed', message: response.error });
-            }
-        } catch (err) {
-            showError({ title: 'Addition Error', message: 'Failed to add content section.' });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-
-
-
-    const deleteCMSContent = async (id: string) => {
-        setIsLoading(true);
-        try {
-            const response = await cmsService.deleteCMSSection(id);
-            if (response.success) {
-                const pagesResponse = await cmsService.getCMSPages();
-                if (pagesResponse.success && pagesResponse.data) {
-                    setCmsContent(pagesResponse.data as any);
-                }
-                logAction('CMS Section Deleted', `Removed section ${id}`);
-                showSuccess({ title: 'Deleted', message: 'Section has been removed.' });
-            } else {
-                showError({ title: 'Deletion Failed', message: response.error });
-            }
-        } catch (err) {
-            showError({ title: 'Deletion Error', message: 'Failed to delete section.' });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const updateFooterContent = async (section: keyof FooterContent, data: Partial<FooterSection>) => {
-        setIsLoading(true);
-        try {
-            const response = await cmsService.updateFooter(section, data);
-            if (response.success) {
-                // @ts-ignore
-                setFooterContent(prev => ({ ...prev, [section]: { ...prev[section], ...data } }));
-                logAction('Footer Edit', `Updated footer section: ${section}`);
-                showSuccess({ title: 'Footer Updated', message: 'Footer changes saved successfully.' });
-            } else {
-                showError({ title: 'Update Failed', message: response.error });
-            }
-        } catch (err) {
-            showError({ title: 'Update Error', message: 'Failed to update footer.' });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Global Settings & Services
-    const updateGlobal = async (section: keyof GlobalContent, data: any) => {
-        setIsLoading(true);
-        try {
-            const response = await settingsService.updateGlobal(section, data);
-            if (response.success) {
-                setGlobalContent(prev => ({ ...prev, [section]: data }));
-                logAction('Settings Update', `Updated global setting: ${section}`);
-                showSuccess({ title: 'Settings Saved', message: 'Global configuration updated.' });
-            } else {
-                showError({ title: 'Update Failed', message: response.error });
-            }
-        } catch (err) {
-            showError({ title: 'Update Error', message: 'Failed to save settings.' });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const addService = async (service: Omit<ServiceItem, 'tenantId'>) => {
-        setIsLoading(true);
-        try {
-            const fullService: ServiceItem = { ...service, tenantId: currentTenantId || 'tenant-default' };
-            const response = await cmsService.addService(fullService);
-            if (response.success) {
-                setServicesCollection(prev => [...prev, fullService]);
-                logAction('Service Added', `Added new service: ${fullService.title}`);
-                showSuccess({ title: 'Service Added', message: 'New service has been cataloged.' });
-            } else {
-                showError({ title: 'Addition Failed', message: response.error });
-            }
-        } catch (err) {
-            showError({ title: 'Addition Error', message: 'Failed to add service.' });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const updateService = async (id: string, updates: Partial<ServiceItem>) => {
-        setIsLoading(true);
-        try {
-            const res = await cmsService.updateService(id, updates);
-            if (res.success) {
-                setServicesCollection(prev => {
-                    if (Array.isArray(prev)) {
-                        return prev.map(s => s.id === id ? { ...s, ...updates, lastUpdated: new Date().toISOString() } : s) as any;
-                    }
-                    return prev;
-                });
-                logAction('Service Edit', `Updated service details for ${id}`);
-                showSuccess({ title: 'Service Updated', message: 'Service changes have been saved.' });
-            } else {
-                showError({ title: 'Update Failed', message: res.error });
-            }
-        } catch (err) {
-            showError({ title: 'Update Error', message: 'Failed to save service changes.' });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const deleteService = async (id: string) => {
-        setIsLoading(true);
-        try {
-            const res = await cmsService.deleteService(id);
-            if (res.success) {
-                setServicesCollection(prev => {
-                    if (Array.isArray(prev)) {
-                        return prev.filter(s => s.id !== id) as any;
-                    }
-                    return prev;
-                });
-                logAction('Service Deleted', `Removed service ${id}`);
-                showSuccess({ title: 'Service Deleted', message: 'Service has been removed from catalog.' });
-            } else {
-                showError({ title: 'Deletion Failed', message: res.error });
-            }
-        } catch (err) {
-            showError({ title: 'Deletion Error', message: 'Failed to delete service.' });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // -------------------------------------------------------------
-    // NEW CMS API Wrappers (Pages & Menus)
-    // -------------------------------------------------------------
-    const createCMSPage = async (payload: any) => {
-        const res = await cmsService.createCMSPage(payload);
-        if (res.success) {
-            // Ideally trigger a refresh of pages list
-            showSuccess({ title: 'Success', message: 'Page Created' });
-        } else {
-            showError({ title: 'Error', message: res.error || 'Failed to create page' });
-            throw new Error(res.error);
-        }
-    };
-
-    const updateCMSPage = async (slug: string, payload: any) => {
-        const res = await cmsService.updateCMSPage(slug, payload);
-        if (res.success) {
-            showSuccess({ title: 'Success', message: 'Page Updated' });
-        } else {
-            showError({ title: 'Error', message: res.error || 'Failed to update page' });
-            throw new Error(res.error);
-        }
-    };
-
-    const deleteCMSPage = async (slug: string) => {
-        const res = await cmsService.deleteCMSPage(slug);
-        if (res.success) {
-            showSuccess({ title: 'Success', message: 'Page Deleted' });
-        } else {
-            showError({ title: 'Error', message: res.error || 'Failed to delete page' });
-            throw new Error(res.error);
-        }
-    };
-
-    const updateCMSPageStatus = async (slug: string, status: 'live' | 'draft') => {
-        const res = await cmsService.updateCMSPageStatus(slug, status);
-        if (!res.success) throw new Error(res.error);
-    };
-
-    const getPageSections = async (slug: string) => {
-        const res = await cmsService.getPageSections(slug);
-        if (res.success) return res.data;
-        throw new Error(res.error);
-    };
-
-    const createCMSSection = async (payload: any) => {
-        const res = await cmsService.createCMSSection(payload);
-        if (!res.success) throw new Error(res.error);
-    };
-
-    const deleteCMSSection = async (sectionId: string | number) => {
-        const res = await cmsService.deleteCMSSection(sectionId);
-        if (!res.success) throw new Error(res.error);
-    };
-
-    const getCMSMenus = async () => {
-        const res = await cmsService.getCMSMenus();
-        if (res.success) return res.data;
-        throw new Error(res.error);
-    };
-
-    const getMenuWithItems = async (key: string) => {
-        const res = await cmsService.getMenuWithItems(key);
-        if (res.success) return res.data;
-        throw new Error(res.error);
-    };
-
-    const createMenuItem = async (payload: any) => {
-        const res = await cmsService.createMenuItem(payload);
-        if (!res.success) throw new Error(res.error);
-    };
-
-    const updateMenuItem = async (id: string | number, payload: any) => {
-        const res = await cmsService.updateMenuItem(id, payload);
-        if (!res.success) throw new Error(res.error);
-    };
-
-    const deleteMenuItem = async (id: string | number) => {
-        const res = await cmsService.deleteMenuItem(id);
-        if (!res.success) throw new Error(res.error);
-    };
-
-    const updateMenuItemVisibility = async (id: string | number, is_visible: boolean) => {
-        const res = await cmsService.updateMenuItemVisibility(id, is_visible);
-        if (!res.success) throw new Error(res.error);
     };
 
     const updateCeoSignature = async (url: string) => {
@@ -2390,31 +2013,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     };
 
-    // --- API Key Management ---
-    const addApiKey = (apiKeyData: Omit<SystemApiKey, 'id' | 'tenantId' | 'createdAt' | 'status'>) => {
-        const newApiKey: SystemApiKey = {
-            ...apiKeyData,
-            id: `API-${Date.now()}`,
-            tenantId: currentTenantId,
-            createdAt: new Date().toISOString(),
-            status: 'active'
-        };
-        setApiKeys(prev => [newApiKey, ...prev]);
-        logAction('System Integration', `Recorded generated CMS API Key: ${apiKeyData.name}`);
-    };
-
-    const toggleApiKeyStatus = (id: string) => {
-        setApiKeys(prev => prev.map(key => {
-            if (key.id === id) {
-                const newStatus = key.status === 'active' ? 'disabled' : 'active';
-                logAction('System Integration', `Changed API Key (${key.name}) status to ${newStatus}`);
-                showSuccess({ title: 'Status Updated', message: `API Key ${key.name} is now ${newStatus}.` });
-                return { ...key, status: newStatus };
-            }
-            return key;
-        }));
-    };
-
     // --- Decoupled Refreshers ---
     const safeArr = (d: any) => Array.isArray(d) ? d : (d?.data || []);
 
@@ -2431,11 +2029,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const refreshReviewCycles = async () => {
         const res = await performanceService.getReviewCycles();
         if (res.success) setReviewCycles(safeArr(res.data));
-    };
-
-    const refreshServices = async () => {
-        const res = await cmsService.getServices();
-        if (res.success) setServicesCollection(res.data);
     };
 
     const refreshLedgerEntries = async () => {
@@ -2483,7 +2076,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         <AdminContext.Provider value={{
             employees: visibleEmployees,
             jobs,
-            cmsContent,
             activityLogs,
             payrollStatus,
             requestAuth,
@@ -2514,10 +2106,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             bulkPayrollAdjustment,
             logAction,
             updateCeoSignature,
-            // API Keys
-            apiKeys,
-            addApiKey,
-            toggleApiKeyStatus,
             // Bonus Management
             bonusTypes,
             bonusRequests,
@@ -2529,35 +2117,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             addJob,
             updateJob,
             deleteJob,
-            // CMS & Content Actions
-            updatePMSContent,
-            publishPMSContent,
-            addCMSContent,
-
-            // New CMS Wrappers
-            createCMSPage,
-            updateCMSPage,
-            deleteCMSPage,
-            updateCMSPageStatus,
-            getPageSections,
-            createCMSSection,
-            deleteCMSSection,
-            getCMSMenus,
-            getMenuWithItems,
-            createMenuItem,
-            updateMenuItem,
-            deleteMenuItem,
-            updateMenuItemVisibility,
-
-            deleteCMSContent,
-            footerContent,
-            updateFooterContent,
-            globalContent,
-            servicesCollection,
-            updateGlobal,
-            addService,
-            updateService,
-            deleteService,
             updateEmployeeContract,
             uploadContractDocument,
             markNotificationAsRead,
@@ -2617,7 +2176,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             // Decoupled Refreshers
             refreshLeaveRequests,
             refreshReviewCycles,
-            refreshServices,
             refreshLedgerEntries,
             refreshDepartments,
             refreshPromotions,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAdmin } from '../context/AdminContext';
+import { useCMS } from '../context/CMSContext';
 import { StickyHeader } from '../components/StickyHeader';
 import { BrandFooter } from '../components/BrandFooter';
 import type { CMSAboutHeroData } from '../types/cms';
@@ -29,7 +29,7 @@ const AboutHeroRenderer: React.FC<{ data: CMSAboutHeroData }> = ({ data }) => (
 );
 
 export const About: React.FC = () => {
-    const { cmsContent } = useAdmin();
+    const { cmsContent } = useCMS();
 
     const aboutData = cmsContent?.pages?.about;
     const globalContactData = cmsContent?.contactUsCardData;

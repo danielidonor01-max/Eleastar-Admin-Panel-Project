@@ -90,7 +90,9 @@ const HeroRenderer: React.FC<{ cards: CMSHomeHeroCardData[] }> = ({ cards }) => 
 
 
 export const Home: React.FC = () => {
-    const { cmsContent } = useAdmin();
+    const { cmsContent } = useCMS();
+    // Assuming useAdmin isn't used for anything else. Wait, let's keep it safe.
+    // If it was just `const { cmsContent } = useAdmin();`, this is fine.
 
     const homeData = cmsContent?.pages?.home;
     const globalContactData = cmsContent?.contactUsCardData;

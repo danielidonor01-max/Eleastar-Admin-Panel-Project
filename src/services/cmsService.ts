@@ -1,5 +1,6 @@
-import { type ApiResponse, mockSuccess, delay } from './api';
-import { CMS_API_BASE_URL, CMS_PUBLIC_API_KEY } from '../config';
+import { type ApiResponse, mockError } from './api';
+import { apiClient } from '../utils/apiClient';
+import { CMS_PUBLIC_API_KEY } from '../config';
 import {
     type ServiceItem,
     type FooterSection,
@@ -7,11 +8,7 @@ import {
     type ServiceCollection,
     initialServicesCollection
 } from '../data/mockData';
-// import { fallbackCMSData } from '../data/fallbackCMS';
 import type { CMSData } from '../types/cms';
-
-// Helper for fetching tokens securely. Assuming the app stores 'token' in localStorage
-const getAuthToken = () => localStorage.getItem('token') || '';
 
 /**
  * Service for Website Content Management (CMS)
@@ -22,10 +19,10 @@ export const cmsService = {
      */
     getPublicCMSSlugs: async (): Promise<ApiResponse<{ name: string; slug: string }[]>> => {
         try {
-            const response = await fetch(`${CMS_API_BASE_URL}/cms/get-slugs`, {
+            const response = await apiClient(`/cms/get-slugs`, {
+                requireAuth: false,
                 headers: {
-                    'X-CMS-API-Key': CMS_PUBLIC_API_KEY,
-                    'Accept': 'application/json',
+                    'X-CMS-API-Key': CMS_PUBLIC_API_KEY
                 }
             });
             const data = await response.json();
@@ -44,10 +41,10 @@ export const cmsService = {
      */
     getPublicPageSections: async (slug: string): Promise<ApiResponse<any>> => {
         try {
-            const response = await fetch(`${CMS_API_BASE_URL}/cms/pages/${slug}`, {
+            const response = await apiClient(`/cms/pages/${slug}`, {
+                requireAuth: false,
                 headers: {
-                    'X-CMS-API-Key': CMS_PUBLIC_API_KEY,
-                    'Accept': 'application/json',
+                    'X-CMS-API-Key': CMS_PUBLIC_API_KEY
                 }
             });
             const data = await response.json();
@@ -66,10 +63,10 @@ export const cmsService = {
      */
     getPublicMenus: async (): Promise<ApiResponse<any>> => {
         try {
-            const response = await fetch(`${CMS_API_BASE_URL}/cms/menus`, {
+            const response = await apiClient(`/cms/menus`, {
+                requireAuth: false,
                 headers: {
-                    'X-CMS-API-Key': CMS_PUBLIC_API_KEY,
-                    'Accept': 'application/json',
+                    'X-CMS-API-Key': CMS_PUBLIC_API_KEY
                 }
             });
             const data = await response.json();
@@ -88,10 +85,10 @@ export const cmsService = {
      */
     getPublicSettingsGroups: async (): Promise<ApiResponse<any>> => {
         try {
-            const response = await fetch(`${CMS_API_BASE_URL}/cms/settings/groups`, {
+            const response = await apiClient(`/cms/settings/groups`, {
+                requireAuth: false,
                 headers: {
-                    'X-CMS-API-Key': CMS_PUBLIC_API_KEY,
-                    'Accept': 'application/json',
+                    'X-CMS-API-Key': CMS_PUBLIC_API_KEY
                 }
             });
             const data = await response.json();
@@ -110,13 +107,7 @@ export const cmsService = {
      */
     getCMSPages: async (): Promise<ApiResponse<CMSData | null>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/pages`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                }
-            });
+            const response = await apiClient(`/portal/cms/pages`, {});
             const data = await response.json();
             return {
                 data: data.data || null,
@@ -133,13 +124,7 @@ export const cmsService = {
      */
     listApiKeys: async (): Promise<ApiResponse<any[]>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/api-keys`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                }
-            });
+            const response = await apiClient(`/portal/cms/api-keys`, {});
             const data = await response.json();
             return { data: data.data || [], success: true, message: data.message };
         } catch (error: any) {
@@ -152,14 +137,8 @@ export const cmsService = {
      */
     generateApiKey: async (name: string): Promise<ApiResponse<{ name: string; key: string }>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/api-keys`, {
+            const response = await apiClient(`/portal/cms/api-keys`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
                 body: JSON.stringify({ name })
             });
             const data = await response.json();
@@ -179,10 +158,8 @@ export const cmsService = {
      */
     deleteApiKey: async (id: string | number): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/api-keys/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+            const response = await apiClient(`/portal/cms/api-keys/${id}`, {
+                method: 'DELETE'
             });
             const data = await response.json();
             if (!data.status) throw new Error(data.message || 'Failed to delete API key');
@@ -195,17 +172,11 @@ export const cmsService = {
     /**
      * Toggle API Key active status (Admin)
      */
-    toggleApiKeyStatus: async (id: string | number, status: 'active' | 'inactive'): Promise<ApiResponse<any>> => {
+    toggleApiKeyStatus: async (id: string | number, is_active: boolean): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/api-keys/${id}/status`, {
+            const response = await apiClient(`/portal/cms/api-keys/${id}/status`, {
                 method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ status })
+                body: JSON.stringify({ is_active })
             });
             const data = await response.json();
             if (!data.status) throw new Error(data.message || 'Failed to toggle status');
@@ -218,17 +189,11 @@ export const cmsService = {
     /**
      * Updates CMS content block (Admin)
      */
-    updateCMSSection: async (sectionId: string | number, updates: any): Promise<ApiResponse<any>> => {
+    updateCMSSection: async (sectionId: string | number, payload: any): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/sections/${sectionId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify(updates)
+            const response = await apiClient(`/portal/cms/sections/${sectionId}`, {
+                method: 'PUT',
+                body: JSON.stringify(payload)
             });
             const data = await response.json();
             if (!data.status) throw new Error(data.message || 'Failed to update section');
@@ -247,14 +212,8 @@ export const cmsService = {
      */
     updateCMSSectionStatus: async (sectionId: string | number, status: 'published' | 'draft'): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/sections/${sectionId}/status`, {
+            const response = await apiClient(`/portal/cms/sections/${sectionId}/status`, {
                 method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
                 body: JSON.stringify({ status })
             });
             const data = await response.json();
@@ -275,14 +234,8 @@ export const cmsService = {
     // -------------------------------------------------------------
     createCMSPage: async (payload: any): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/pages`, {
+            const response = await apiClient(`/portal/cms/pages`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
                 body: JSON.stringify(payload)
             });
             const data = await response.json();
@@ -295,14 +248,8 @@ export const cmsService = {
 
     updateCMSPage: async (slug: string, payload: any): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/pages/${slug}`, {
+            const response = await apiClient(`/portal/cms/pages/${slug}`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
                 body: JSON.stringify(payload)
             });
             const data = await response.json();
@@ -315,13 +262,8 @@ export const cmsService = {
 
     deleteCMSPage: async (slug: string): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/pages/${slug}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                }
+            const response = await apiClient(`/portal/cms/pages/${slug}`, {
+                method: 'DELETE'
             });
             const data = await response.json();
             if (!data.status) throw new Error(data.message || 'Failed to delete page');
@@ -333,14 +275,8 @@ export const cmsService = {
 
     updateCMSPageStatus: async (slug: string, status: 'live' | 'draft'): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/pages/${slug}/status`, {
+            const response = await apiClient(`/portal/cms/pages/${slug}/status`, {
                 method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
                 body: JSON.stringify({ status })
             });
             const data = await response.json();
@@ -353,13 +289,7 @@ export const cmsService = {
 
     getPageSections: async (slug: string): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/pages/${slug}/sections`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                }
-            });
+            const response = await apiClient(`/portal/cms/pages/${slug}/sections`, {});
             const data = await response.json();
             return { data: data.data, success: true, message: data.message };
         } catch (error: any) {
@@ -369,14 +299,8 @@ export const cmsService = {
 
     createCMSSection: async (payload: any): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/sections`, {
+            const response = await apiClient(`/portal/cms/sections`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
                 body: JSON.stringify(payload)
             });
             const data = await response.json();
@@ -389,13 +313,8 @@ export const cmsService = {
 
     deleteCMSSection: async (sectionId: string | number): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/sections/${sectionId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                }
+            const response = await apiClient(`/portal/cms/sections/${sectionId}`, {
+                method: 'DELETE'
             });
             const data = await response.json();
             if (!data.status) throw new Error(data.message || 'Failed to delete section');
@@ -410,13 +329,7 @@ export const cmsService = {
     // -------------------------------------------------------------
     getCMSMenus: async (): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/menus`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                }
-            });
+            const response = await apiClient(`/portal/cms/menus`, {});
             const data = await response.json();
             return { data: data.data, success: true, message: data.message };
         } catch (error: any) {
@@ -426,13 +339,7 @@ export const cmsService = {
 
     getMenuWithItems: async (key: string): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/menus/${key}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                }
-            });
+            const response = await apiClient(`/portal/cms/menus/${key}`, {});
             const data = await response.json();
             return { data: data.data, success: true, message: data.message };
         } catch (error: any) {
@@ -442,14 +349,8 @@ export const cmsService = {
 
     createMenuItem: async (payload: any): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/menu-items`, {
+            const response = await apiClient(`/portal/cms/menu-items`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
                 body: JSON.stringify(payload)
             });
             const data = await response.json();
@@ -462,14 +363,8 @@ export const cmsService = {
 
     updateMenuItem: async (id: string | number, payload: any): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/menu-items/${id}`, {
+            const response = await apiClient(`/portal/cms/menu-items/${id}`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
                 body: JSON.stringify(payload)
             });
             const data = await response.json();
@@ -482,13 +377,8 @@ export const cmsService = {
 
     deleteMenuItem: async (id: string | number): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/menu-items/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                }
+            const response = await apiClient(`/portal/cms/menu-items/${id}`, {
+                method: 'DELETE'
             });
             const data = await response.json();
             if (!data.status) throw new Error(data.message || 'Failed to delete menu item');
@@ -500,14 +390,8 @@ export const cmsService = {
 
     updateMenuItemVisibility: async (id: string | number, is_visible: boolean): Promise<ApiResponse<any>> => {
         try {
-            const token = getAuthToken();
-            const response = await fetch(`${CMS_API_BASE_URL}/portal/cms/menu-items/${id}/visibility`, {
+            const response = await apiClient(`/portal/cms/menu-items/${id}/visibility`, {
                 method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
                 body: JSON.stringify({ is_visible })
             });
             const data = await response.json();
@@ -519,33 +403,46 @@ export const cmsService = {
     },
 
     /**
-     * Footer Management
+     * Update Footer metadata (social links, copyright, etc.)
      */
-    updateFooter: async (_section: keyof FooterContent, _data: Partial<FooterSection>): Promise<ApiResponse<void>> => {
-        await delay();
-        return mockSuccess(undefined, 'Footer updated');
+    updateFooterMetadata: async (payload: any): Promise<ApiResponse<any>> => {
+        try {
+            const response = await apiClient(`/portal/cms/menus/footer/metadata`, {
+                method: 'PATCH',
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!data.status) throw new Error(data.message || 'Failed to update footer metadata');
+            return { data: data.data, success: true, message: data.message };
+        } catch (error: any) {
+            return { data: null, success: false, error: error.message };
+        }
     },
 
     /**
-     * Services Collection Management
+     * Footer Management (Legacy) - Redirect to metadata
+     */
+    updateFooter: async (_section: keyof FooterContent, data: Partial<FooterSection>): Promise<ApiResponse<void>> => {
+        return cmsService.updateFooterMetadata(data);
+    },
+
+    /**
+     * Services Collection Management (Legacy)
+     * Note: If backend adds specific services endpoints, implement them here.
      */
     getServices: async (): Promise<ApiResponse<ServiceCollection>> => {
-        await delay();
-        return mockSuccess(initialServicesCollection);
+        return { data: initialServicesCollection, success: true };
     },
 
     addService: async (_service: ServiceItem): Promise<ApiResponse<void>> => {
-        await delay();
-        return mockSuccess(undefined, 'Service added');
+        return mockError('Endpoint not implemented in backend');
     },
 
     updateService: async (_id: string, _updates: Partial<ServiceItem>): Promise<ApiResponse<void>> => {
-        await delay();
-        return mockSuccess(undefined, 'Service updated');
+        return mockError('Endpoint not implemented in backend');
     },
 
     deleteService: async (_id: string): Promise<ApiResponse<void>> => {
-        await delay();
-        return mockSuccess(undefined, 'Service deleted');
+        return mockError('Endpoint not implemented in backend');
     }
 };

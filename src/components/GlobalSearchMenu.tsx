@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, User, FileText, Globe, X } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
+import { useCMS } from '../context/CMSContext';
 import { employees } from '../data/mockData';
 
 // Generate a searchable unified index of routes
@@ -57,7 +58,8 @@ const generateSearchIndex = (rolePermissions: any, currentUserRole: string, cmsD
 };
 
 export const GlobalSearchMenu: React.FC = () => {
-    const { rolePermissions, currentUserRole, cmsContent } = useAdmin();
+    const { rolePermissions, currentUserRole } = useAdmin();
+    const { cmsContent } = useCMS();
     const navigate = useNavigate();
 
     const [isOpen, setIsOpen] = useState(false);

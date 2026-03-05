@@ -220,9 +220,9 @@ export function AnalyticsDashboard() {
                                         const heightPercentage = (item.count / maxCount) * 100;
                                         return (
                                             <div key={index} className="flex flex-col items-center w-full group relative">
+                                                <style>{`.chart-bar-${index} { height: ${heightPercentage}%; min-height: ${item.count > 0 ? '4px' : '0'}; }`}</style>
                                                 <div
-                                                    className="w-full bg-brand-600 rounded-t-md transition-all duration-500 hover:bg-brand-500"
-                                                    style={{ height: `${heightPercentage}%`, minHeight: item.count > 0 ? '4px' : '0' }}
+                                                    className={`w-full bg-brand-600 rounded-t-md transition-all duration-500 hover:bg-brand-500 chart-bar-${index}`}
                                                 />
                                                 <span className="text-xs text-slate-500 mt-2 text-center">{item.name}</span>
                                                 <div className="absolute -top-8 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
@@ -252,7 +252,8 @@ export function AnalyticsDashboard() {
                                                     <span className="text-slate-500">{item.value} ({((item.value / healthMetrics.total) * 100 || 0).toFixed(0)}%)</span>
                                                 </div>
                                                 <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                                                    <div className={`h-full ${item.color}`} style={{ width: item.width }} />
+                                                    <style>{`.status-bar-${i} { width: ${item.width}; }`}</style>
+                                                    <div className={`h-full ${item.color} status-bar-${i}`} />
                                                 </div>
                                             </div>
                                         ))}
@@ -299,9 +300,9 @@ export function AnalyticsDashboard() {
                                                 {item.name}
                                             </div>
                                             <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                                                <style>{`.dept-bar-${index} { width: ${widthPercentage}%; }`}</style>
                                                 <div
-                                                    className="h-full bg-sky-500 rounded-full"
-                                                    style={{ width: `${widthPercentage}%` }}
+                                                    className={`h-full bg-sky-500 rounded-full dept-bar-${index}`}
                                                 />
                                             </div>
                                             <div className="w-32 text-sm text-slate-900 font-mono text-right">

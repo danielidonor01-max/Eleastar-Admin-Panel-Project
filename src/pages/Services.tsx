@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAdmin } from '../context/AdminContext';
+import { useCMS } from '../context/CMSContext';
 import { StickyHeader } from '../components/StickyHeader';
 import { BrandFooter } from '../components/BrandFooter';
 import type { CMSServicesListData, CMSServiceItemData } from '../types/cms';
@@ -56,7 +56,7 @@ const ServiceContentBlock: React.FC<{ data: CMSServiceItemData; isImageLeft: boo
 };
 
 export const Services: React.FC = () => {
-    const { cmsContent } = useAdmin();
+    const { cmsContent } = useCMS();
 
     const servicesListData = cmsContent?.pages?.services?.servicesListData || [];
     const globalContactData = cmsContent?.contactUsCardData;
