@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Outlet, NavLink, Navigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Globe, ChevronDown, LogOut, Calendar, BarChart2, QrCode, Wallet, FileText, CheckSquare, Key } from 'lucide-react';
+import { Outlet, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Users, Settings, Globe, ChevronDown, ChevronRight, LogOut, Calendar, BarChart2, QrCode, Wallet, FileText, Check, Shield, TrendingUp, Gift, Activity, CheckSquare } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
+import { useCMS } from '../context/CMSContext';
 import { NotificationMenu } from '../components/NotificationMenu';
 import { GlobalSearchMenu } from '../components/GlobalSearchMenu';
 import type { AdminRole } from '../data/mockData';
@@ -14,7 +15,9 @@ export const AdminLayout: React.FC = () => {
         rolePermissions,
         isAuthenticated
     } = useAdmin();
+    const { cmsContent } = useCMS();
 
+    const navigate = useNavigate();
     const location = useLocation();
 
     if (!isAuthenticated) {
@@ -26,6 +29,18 @@ export const AdminLayout: React.FC = () => {
 
     // Sidebar State
     const [expandedCMS, setExpandedCMS] = useState(true); // Default open for visibility
+
+    // CMS Sections State (Collapsible)
+    const [cmsSectionState, setCmsSectionState] = useState({
+        global: true,
+        collections: false,
+        pages: true,
+        footer: false
+    });
+
+    const toggleCmsSection = (section: keyof typeof cmsSectionState) => {
+        setCmsSectionState(prev => ({ ...prev, [section]: !prev[section] }));
+    };
 
     // Auto-expand sidebar sections based on active route
     React.useEffect(() => {
@@ -40,7 +55,11 @@ export const AdminLayout: React.FC = () => {
     }, [location.pathname, location.search]);
 
     // Sidebar width based on CMS expansion
+    // If CMS is expanded, wide sidebar (280px), else standard (256px)
     const sidebarWidthClass = expandedCMS ? 'w-[280px]' : 'w-64';
+
+    // Click outside to close (simplified)
+    // In production, use click-outside hooks.
 
     const hasAccess = (module: ModuleType) => {
         return rolePermissions[currentUserRole].includes(module);
@@ -50,9 +69,8 @@ export const AdminLayout: React.FC = () => {
 
     return (
         <div className="flex h-screen bg-slate-50 font-sans text-slate-900">
-            {/* Sidebar */}
+
             <aside className={`${sidebarWidthClass} bg-slate-900 text-slate-300 flex flex-col h-full flex-shrink-0 transition-all duration-300 ease-in-out`}>
-                {/* Logo Section */}
                 <div className="h-20 flex flex-col justify-center px-6 border-b border-slate-800">
                     <div className="font-bold text-white tracking-wider flex items-center gap-2">
                         <img src="/assets/logo-horizontal-white.png" alt="Eleastar Admin" className="h-8 object-contain" />
@@ -63,7 +81,6 @@ export const AdminLayout: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Navigation Links */}
                 <nav className="flex-grow p-4 space-y-1 overflow-y-auto custom-scrollbar">
                     {hasAccess('Dashboard') && (
                         <>
@@ -84,174 +101,350 @@ export const AdminLayout: React.FC = () => {
 
                     {(hasAccess('Employees') || hasAccess('QR & ID')) && (
                         <>
-                            <div className="text-xs font-bold text-slate-500 uppercase px-3 mb-2 mt-6">Employee Management</div>
-                            {hasAccess('Employees') && (
-                                <NavLink to="/admin/employees" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
-                                    <Users size={20} />
-                                    Employees
-                                </NavLink>
-                            )}
+                            {/* Only show header if we haven't shown it for dashboard or if we want to group distinctively */}
+                            {/* In this simple list, we can just render the links if permitted */}
+
                             {hasAccess('QR & ID') && (
                                 <NavLink to="/admin/qr" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
                                     <QrCode size={20} />
                                     QR & ID
                                 </NavLink>
                             )}
+                            {hasAccess('Employees') && (
+                                <NavLink to="/admin/employees" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                    <Users size={20} />
+                                    Employees
+                                </NavLink>
+                            )}
+
                         </>
                     )}
 
-                    {hasAccess('Tasks') && (
-                        <NavLink to="/admin/tasks" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
-                            <CheckSquare size={20} />
-                            Admin Tasks
-                        </NavLink>
-                    )}
-
-                    {(hasAccess('Payroll') || hasAccess('Leave')) && (
+                    {(hasAccess('Payroll') || hasAccess('Recruitment')) && (
                         <>
-                            <div className="text-xs font-bold text-slate-500 uppercase px-3 mb-2 mt-6">Operations</div>
+                            <div className="text-xs font-bold text-slate-500 uppercase px-3 mb-2 mt-6">Finance & HR</div>
                             {hasAccess('Payroll') && (
                                 <NavLink to="/admin/payroll" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
                                     <Wallet size={20} />
                                     Payroll
                                 </NavLink>
                             )}
+
+                            {hasAccess('Recruitment') && (
+                                <NavLink to="/admin/recruitment" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                    <FileText size={20} />
+                                    Recruitment
+                                </NavLink>
+                            )}
+                            {/* Salary Bands */}
+                            {hasAccess('Employees') && (
+                                <NavLink to="/admin/salary-structures" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                    <TrendingUp size={20} />
+                                    Department Salary
+                                </NavLink>
+                            )}
+                            {hasAccess('Employees') && (
+                                <NavLink to="/admin/tasks" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                    <CheckSquare size={20} />
+                                    Task Mgmt
+                                </NavLink>
+                            )}
                             {hasAccess('Leave') && (
-                                <NavLink to="/admin/leaves" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                <NavLink to="/admin/leave" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
                                     <Calendar size={20} />
-                                    Leave Requests
+                                    Leave Mgmt
+                                </NavLink>
+                            )}
+                            {hasAccess('Performance') && (
+                                <NavLink to="/admin/performance" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                    <BarChart2 size={20} />
+                                    Performance
                                 </NavLink>
                             )}
                         </>
                     )}
 
-                    {/* Website CMS - Always show for Admins */}
-                    {['SUPER_ADMIN', 'COO', 'HR_ADMIN'].includes(currentUserRole) && (
-                        <div className="mt-6">
-                            <div className="text-xs font-bold text-slate-500 uppercase px-3 mb-2">Website Settings</div>
-                            <div className="space-y-1">
-                                <button
-                                    onClick={() => setExpandedCMS(!expandedCMS)}
-                                    className={`w-full flex items-center justify-between text-left px-3 py-2 text-sm flex items-center justify-between bg-slate-800 transition-colors ${expandedCMS ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-400'}`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <Globe size={20} />
-                                        <span>Website CMS</span>
-                                    </div>
-                                    <ChevronDown size={14} className={`transition-transform duration-200 ${expandedCMS ? '' : '-rotate-90'}`} />
-                                </button>
-
-                                {expandedCMS && (
-                                    <div className="ml-5 mt-2 space-y-1">
-                                        <NavLink to="/admin/cms?module=pages" className={({ isActive }) => {
-                                            const search = location.search;
-                                            const active = search.includes('module=pages') || (!search && isActive);
-                                            return `flex items-center gap-3 px-3 py-2 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                        }}>
-                                            <FileText size={14} />
-                                            Pages
-                                        </NavLink>
-                                        <NavLink to="/admin/cms?module=menus" className={() => {
-                                            const search = location.search;
-                                            const active = search.includes('module=menus');
-                                            return `flex items-center gap-3 px-3 py-2 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                        }}>
-                                            <Globe size={14} />
-                                            Navigation
-                                        </NavLink>
-                                        <NavLink to="/admin/cms?module=apikeys" className={() => {
-                                            const search = location.search;
-                                            const active = search.includes('module=apikeys');
-                                            return `flex items-center gap-3 px-3 py-2 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                        }}>
-                                            <Key size={14} />
-                                            API Keys
-                                        </NavLink>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                    {hasAccess('Employees') && (
+                        <NavLink to="/admin/promotions" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                            <TrendingUp size={20} />
+                            Promotions
+                        </NavLink>
                     )}
 
-                    <div className="pt-8 mb-4">
-                        <NavLink to="/admin/settings" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
-                            <Settings size={20} />
-                            Admin Settings
+                    {hasAccess('Payroll') && (
+                        <NavLink to="/admin/bonuses" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                            <Gift size={20} />
+                            Bonuses
+                        </NavLink>
+                    )}
+
+
+                    {hasAccess('Compliance') && (
+                        <>
+                            <div className="text-xs font-bold text-slate-500 uppercase px-3 mb-2 mt-6">Risk & Compliance</div>
+                            <NavLink to="/admin/compliance" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                <Shield size={20} />
+                                Compliance
+                            </NavLink>
+                            {['SUPER_ADMIN', 'COO', 'CHIEF_RISK_OFFICER', 'FINANCE_ADMIN', 'HR_ADMIN'].includes(currentUserRole) && (
+                                <NavLink to="/admin/compliance-reports" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                    <FileText size={20} />
+                                    Reports
+                                </NavLink>
+                            )}
+                            <NavLink to="/admin/activity" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                <Activity size={20} />
+                                Activity Log
+                            </NavLink>
+                        </>
+                    )}
+
+                    {(hasAccess('Website CMS') || hasAccess('Settings')) && (
+                        <>
+                            <div className="text-xs font-bold text-slate-500 uppercase px-3 mb-2 mt-6">System</div>
+
+                            {hasAccess('Website CMS') && (
+                                <div className="mb-2">
+                                    <button
+                                        onClick={() => setExpandedCMS(!expandedCMS)}
+                                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${location.pathname.includes('/admin/cms') ? 'bg-brand-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Globe size={20} />
+                                            <span>Website CMS</span>
+                                        </div>
+                                        {expandedCMS ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                    </button>
+
+                                    {expandedCMS && (
+                                        <div className="ml-5 mt-2 transition-all duration-300 ease-in-out">
+
+                                            {/* Global Settings */}
+                                            <div className="mb-1">
+                                                <button
+                                                    onClick={() => toggleCmsSection('global')}
+                                                    className="w-full flex items-center justify-between group px-1 mb-1 mt-3"
+                                                >
+                                                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest group-hover:text-slate-400 transition-colors">Global Settings</div>
+                                                    <ChevronDown size={10} className={`text-slate-600 transition-transform duration-200 ${cmsSectionState.global ? '' : '-rotate-90'}`} />
+                                                </button>
+
+                                                {cmsSectionState.global && (
+                                                    <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
+                                                        <NavLink to="/admin/cms?page=GlobalNav" className={() => {
+                                                            const search = location.search;
+                                                            const active = search.includes('page=GlobalNav');
+                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            Navigation Menu
+                                                        </NavLink>
+                                                        <NavLink to="/admin/cms?page=GlobalSEO" className={() => {
+                                                            const search = location.search;
+                                                            const active = search.includes('page=GlobalSEO');
+                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            SEO Defaults
+                                                        </NavLink>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Collections */}
+                                            <div className="mb-1">
+                                                <button
+                                                    onClick={() => toggleCmsSection('collections')}
+                                                    className="w-full flex items-center justify-between group px-1 mb-1 mt-3"
+                                                >
+                                                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest group-hover:text-slate-400 transition-colors">Collections</div>
+                                                    <ChevronDown size={10} className={`text-slate-600 transition-transform duration-200 ${cmsSectionState.collections ? '' : '-rotate-90'}`} />
+                                                </button>
+
+                                                {cmsSectionState.collections && (
+                                                    <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
+                                                        <NavLink to="/admin/cms?page=ServicesCollection" className={() => {
+                                                            const search = location.search;
+                                                            const active = search.includes('page=ServicesCollection');
+                                                            return `flex items-center gap-2 px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            <FileText size={14} className="opacity-70" />
+                                                            Services
+                                                        </NavLink>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Pages */}
+                                            <div className="mb-1">
+                                                <button
+                                                    onClick={() => toggleCmsSection('pages')}
+                                                    className="w-full flex items-center justify-between group px-1 mb-1 mt-3"
+                                                >
+                                                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest group-hover:text-slate-400 transition-colors">Pages</div>
+                                                    <ChevronDown size={10} className={`text-slate-600 transition-transform duration-200 ${cmsSectionState.pages ? '' : '-rotate-90'}`} />
+                                                </button>
+
+                                                {cmsSectionState.pages && (
+                                                    <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
+                                                        {Object.keys(cmsContent?.pages || {}).map((pageSlug) => {
+                                                            const isHome = pageSlug.toLowerCase() === 'home';
+                                                            const displayLabel = isHome ? 'Home' : pageSlug.charAt(0).toUpperCase() + pageSlug.slice(1).replace(/-/g, ' ');
+
+                                                            return (
+                                                                <NavLink
+                                                                    key={pageSlug}
+                                                                    to={`/admin/cms?page=${pageSlug}`}
+                                                                    className={() => {
+                                                                        const search = location.search;
+                                                                        const active = isHome ? (!search || search.includes(`page=${pageSlug}`)) : search.includes(`page=${pageSlug}`);
+                                                                        return `block px-2 py-1.5 text-xs rounded-md capitalize transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                                    }}
+                                                                >
+                                                                    {displayLabel}
+                                                                </NavLink>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Footer */}
+                                            <div className="mb-1">
+                                                <button
+                                                    onClick={() => toggleCmsSection('footer')}
+                                                    className="w-full flex items-center justify-between group px-1 mb-1 mt-3"
+                                                >
+                                                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest group-hover:text-slate-400 transition-colors">Footer</div>
+                                                    <ChevronDown size={10} className={`text-slate-600 transition-transform duration-200 ${cmsSectionState.footer ? '' : '-rotate-90'}`} />
+                                                </button>
+
+                                                {cmsSectionState.footer && (
+                                                    <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
+                                                        <NavLink to="/admin/cms?page=FooterLayout" className={() => {
+                                                            const search = location.search;
+                                                            const active = search.includes('page=FooterLayout');
+                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            Footer Layout
+                                                        </NavLink>
+
+                                                        <div className="mt-2 mb-1 pl-2 text-[10px] text-slate-600 font-medium tracking-wide">LEGAL PAGES</div>
+                                                        <NavLink to="/admin/cms?page=PrivacyPolicy" className={() => {
+                                                            const search = location.search;
+                                                            const active = search.includes('page=PrivacyPolicy');
+                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            Privacy Policy
+                                                        </NavLink>
+                                                        <NavLink to="/admin/cms?page=TermsOfService" className={() => {
+                                                            const search = location.search;
+                                                            const active = search.includes('page=TermsOfService');
+                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                        }}>
+                                                            Terms of Service
+                                                        </NavLink>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {hasAccess('Settings') && (
+                                <NavLink to="/admin/settings" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
+                                    <Settings size={20} />
+                                    Settings
+                                </NavLink>
+                            )}
+                        </>
+                    )}
+                    <div className="pt-4 mt-2 mb-2 border-t border-slate-800">
+                        <NavLink to="/" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 hover:text-white transition-colors text-slate-400">
+                            <LogOut size={20} />
+                            Exit to Public Site
                         </NavLink>
                     </div>
                 </nav>
-
-                {/* User Info Bar at Bottom */}
-                <div className="mt-auto p-4 border-t border-slate-800 bg-slate-900/50">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-brand-600 flex items-center justify-center text-white font-bold ring-2 ring-slate-800">
-                            {currentUserRole.charAt(0)}
-                        </div>
-                        <div className="flex-grow min-w-0">
-                            <div className="text-sm font-semibold text-white truncate">Administrator</div>
-                            <button
-                                onClick={() => setShowRoleMenu(!showRoleMenu)}
-                                className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded flex items-center gap-1 hover:text-white transition-colors uppercase font-bold tracking-tighter"
-                            >
-                                {currentUserRole.replace('_', ' ')}
-                                <ChevronDown size={8} />
-                            </button>
-                        </div>
-                        <button
-                            onClick={() => switchRole('USER')}
-                            className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
-                            title="Sign Out"
-                        >
-                            <LogOut size={18} />
-                        </button>
-                    </div>
-
-                    {/* Role Quick Switch Menu (for dev/preview) */}
-                    {showRoleMenu && (
-                        <div className="absolute bottom-20 left-4 right-4 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-2 z-50">
-                            <div className="text-[10px] font-bold text-slate-500 uppercase px-2 mb-2 tracking-widest">Switch View Context</div>
-                            <div className="grid grid-cols-1 gap-1">
-                                {roles.map(r => (
-                                    <button
-                                        key={r}
-                                        onClick={() => { switchRole(r); setShowRoleMenu(false); }}
-                                        className={`w-full text-left px-3 py-1.5 text-xs rounded-md transition-colors ${currentUserRole === r ? 'bg-brand-600 text-white' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}
-                                    >
-                                        {r.replace('_', ' ')}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
             </aside>
 
-            {/* Main Content Area */}
-            <main className="flex-grow flex flex-col overflow-hidden relative">
-                {/* Header / Top Bar */}
-                <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 flex-shrink-0 z-40">
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col h-full overflow-hidden">
+                {/* Top Header */}
+                <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 flex-shrink-0 z-20 relative">
+                    {/* View As Info */}
                     <div className="flex items-center gap-4">
                         <GlobalSearchMenu />
+                        {currentUserRole !== 'SUPER_ADMIN' && (
+                            <div className="px-3 py-1 bg-amber-50 border border-amber-200 rounded-md text-amber-700 text-xs font-medium animate-pulse">
+                                View Mode: {currentUserRole}
+                            </div>
+                        )}
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-6">
+
+
+                        {/* Notifications */}
                         <NotificationMenu />
-                        <div className="h-8 w-px bg-slate-200 mx-2" />
-                        <div className="hidden md:block text-right mr-2">
-                            <div className="text-xs font-bold text-slate-900 leading-none">Admin User</div>
-                            <div className="text-[10px] text-slate-400 font-medium uppercase mt-0.5 tracking-wide">{currentUserRole}</div>
-                        </div>
-                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold border border-slate-200">
-                            A
+
+                        {/* User Menu & Role Switcher */}
+                        <div className="flex items-center gap-3">
+                            <div className="text-right hidden sm:block">
+                                <div className="text-sm font-bold text-slate-900">Admin User</div>
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setShowRoleMenu(!showRoleMenu)}
+                                        className="text-xs text-slate-500 hover:text-brand-600 flex items-center justify-end gap-1 ml-auto group"
+                                    >
+                                        {currentUserRole} <ChevronDown size={12} className="group-hover:translate-y-0.5 transition-transform" />
+                                    </button>
+
+                                    {/* Role Dropdown */}
+                                    {showRoleMenu && (
+                                        <>
+                                            <div className="fixed inset-0 z-10" onClick={() => setShowRoleMenu(false)} />
+                                            <div className="absolute right-0 top-6 w-48 bg-white rounded-lg shadow-xl border border-slate-200 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                                                <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase">Switch View As</div>
+                                                {roles.map(role => (
+                                                    <button
+                                                        key={role}
+                                                        onClick={() => {
+                                                            switchRole(role);
+                                                            setShowRoleMenu(false);
+                                                            navigate('/admin/dashboard'); // Reset to dashboard to avoid dead ends
+                                                        }}
+                                                        className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-slate-50 transition-colors ${role === currentUserRole ? 'bg-brand-50 text-brand-700 font-bold' : 'text-slate-700'}`}
+                                                    >
+                                                        {role}
+                                                        {role === currentUserRole && <Check size={14} />}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="relative">
+                                <button
+                                    onClick={() => navigate('/admin/profile')}
+                                    className="w-10 h-10 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold border border-brand-200 hover:ring-2 hover:ring-brand-200 transition-all"
+                                    title="Go to Profile"
+                                >
+                                    AU
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </header>
 
                 {/* Page Content */}
-                <div className="flex-grow overflow-y-auto custom-scrollbar relative">
-                    <Outlet />
-                </div>
-            </main>
-        </div>
+                <main className="flex-1 overflow-y-auto bg-slate-50 p-8 custom-scrollbar">
+                    <div className="max-w-7xl mx-auto">
+                        <Outlet />
+                    </div>
+                </main>
+            </div>
+        </div >
     );
 };

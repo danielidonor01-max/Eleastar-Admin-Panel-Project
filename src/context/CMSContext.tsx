@@ -40,7 +40,7 @@ export interface CMSContextType {
 const CMSContext = createContext<CMSContextType | undefined>(undefined);
 
 export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [cmsContent, setCmsContent] = useState<CMSData | null>(null);
+    const [cmsContent] = useState<CMSData | null>(null);
     const [footerContent, setFooterContent] = useState<FooterContent>(initialFooterContent);
     const [globalContent, setGlobalContent] = useState<GlobalContent>(initialGlobalContent);
     const [apiKeys, setApiKeys] = useState<SystemApiKey[]>(initialApiKeys);
@@ -51,151 +51,31 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const initCMS = async () => {
             try {
                 // Fetch public CMS layout data
-                const [menusRes, settingsRes, homeRes] = await Promise.all([
+                const [menusRes, settingsRes] = await Promise.all([
                     cmsService.getPublicMenus(),
-                    cmsService.getPublicSettingsGroups(),
-                    cmsService.getPublicPageSections('home')
+                    cmsService.getPublicSettingsGroups()
                 ]);
 
                 if (!isMounted) return;
 
-                // Handle Menus (Header & Footer)
                 if (menusRes.success && menusRes.data) {
-                    const menuData = menusRes.data;
+                    const headerMenu = menusRes.data.find((m: any) => m.key === 'header');
 
-                    // Header Navigation
-                    if (menuData.header?.items) {
+                    if (headerMenu) {
                         setGlobalContent(prev => ({
                             ...prev,
-                            navigation: menuData.header.items.map((item: any) => ({
-                                id: String(item.id || item.slug),
-                                label: item.label,
-                                path: item.href || '#',
-                                isVisible: true,
-                                type: 'Internal',
-                                order: item.order || 0,
-                                subItems: item.children?.map((child: any) => ({
-                                    label: child.label,
-                                    slug: child.slug,
-                                    href: child.href
-                                }))
+                            navigation: (headerMenu.items || []).map((item: any) => ({
+                                id: String(item.id),
+                                label: item.title,
+                                path: item.url,
+                                isVisible: item.is_visible
                             }))
-                        }));
-                    }
-
-                    // Footer Navigation & Content
-                    if (menuData.footer) {
-                        const { footer } = menuData;
-                        setFooterContent(prev => ({
-                            ...prev,
-                            navigation: {
-                                ...prev.navigation,
-                                links: (footer.group1 || []).map((l: any) => ({
-                                    id: l.slug,
-                                    label: l.label,
-                                    url: l.href,
-                                    isVisible: true
-                                }))
-                            },
-                            utility: {
-                                ...prev.utility,
-                                links: (footer.group2 || []).map((l: any) => ({
-                                    id: l.slug,
-                                    label: l.label,
-                                    url: l.href,
-                                    isVisible: true
-                                }))
-                            },
-                            social: {
-                                ...prev.social,
-                                links: (footer.socialLinks || []).map((l: any) => ({
-                                    id: l.icon,
-                                    label: l.icon.split('-').pop(), // Simple icon label extract
-                                    url: l.href,
-                                    isVisible: true
-                                }))
-                            },
-                            legal: {
-                                ...prev.legal,
-                                links: (footer.legal || []).map((l: any) => ({
-                                    id: l.slug,
-                                    label: l.label,
-                                    url: l.href,
-                                    isVisible: true
-                                }))
-                            },
-                            copyright: {
-                                ...prev.copyright,
-                                content: footer.copyright || prev.copyright.content
-                            }
                         }));
                     }
                 }
 
                 if (settingsRes.success && settingsRes.data) {
-                    // Map global settings if needed
-                }
-
-                // Handle Page Content (Home)
-                if (homeRes.success && homeRes.data) {
-                    const sections = homeRes.data.sections || [];
-                    const heroSection = sections.find((s: any) => s.type === 'Hero');
-
-                    let heroCards: any[] = [];
-                    if (heroSection && heroSection.content?.slides) {
-                        heroCards = heroSection.content.slides.map((slide: any) => ({
-                            cardTitle: slide.headline,
-                            cardDescription: slide.subheadline,
-                            cardImages: {
-                                mainImage: { url: slide.background_image?.url || '', alt: slide.background_image?.alt || '' },
-                                subImage1: { url: '', alt: '' },
-                                subImage2: { url: '', alt: '' },
-                                subCardColor: 'bg-brand-600'
-                            },
-                            backgroundColor: 'bg-slate-900',
-                            cardColor: 'bg-black/40',
-                            button: {
-                                text: slide.cta_label || 'Learn More',
-                                link: slide.cta_link || '/services',
-                                color: 'text-white',
-                                backgroundColor: 'bg-brand-600',
-                                icon: 'ArrowRight'
-                            }
-                        }));
-                    }
-
-                    // Map other sections as needed...
-                    const contactSection = sections.find((s: any) => s.type === 'Contact');
-                    let contactData = null;
-                    if (contactSection) {
-                        contactData = {
-                            title: contactSection.title || 'Lets Discuss Your Next Project',
-                            titleColor: 'text-white',
-                            backgroundImage: '',
-                            cardColor: 'bg-[#0a3b82]',
-                            description: contactSection.intro || 'Do you have a project in mind? We would love to hear from you.',
-                            textColor: 'text-white',
-                            button: {
-                                color: 'text-white',
-                                backgroundColor: 'bg-black',
-                                text: 'Talk To Us',
-                                icon: 'ArrowRight',
-                                link: '/contact'
-                            }
-                        };
-                    }
-
-                    setCmsContent({
-                        metaData: [],
-                        navData: [],
-                        footerNavData: {} as any,
-                        contactUsCardData: contactData as any,
-                        pages: {
-                            home: {
-                                heroCardData: heroCards
-                            }
-                        }
-                    });
+                    // Placeholder for future footer dynamic binding
                 }
             } catch (err) {
                 console.error("Failed to load CMS layout structure", err);
