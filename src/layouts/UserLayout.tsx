@@ -5,7 +5,7 @@ import { useAdmin } from '../context/AdminContext';
 import { NotificationMenu } from '../components/NotificationMenu';
 
 export const UserLayout: React.FC = () => {
-    const { isAuthenticated, logout, currentUserRole, employees, currentUserId } = useAdmin();
+    const { isAuthenticated, isLoading, logout, currentUserRole, employees, currentUserId } = useAdmin();
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -16,6 +16,17 @@ export const UserLayout: React.FC = () => {
     const userDisplayName = currentUser?.name || "User";
     const userInitials = userDisplayName.split(' ').map(n => n[0]).join('').substring(0, 2);
     const userEmail = currentUser?.email || "user@eleastar.com";
+
+    if (isLoading) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-slate-50">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-3 border-brand-100 border-t-brand-500 rounded-full animate-spin" />
+                    <p className="text-slate-400 font-medium text-xs tracking-widest uppercase">Initializing Portal...</p>
+                </div>
+            </div>
+        );
+    }
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;

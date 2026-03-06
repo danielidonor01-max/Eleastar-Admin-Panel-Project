@@ -13,12 +13,24 @@ export const AdminLayout: React.FC = () => {
         currentUserRole,
         switchRole,
         rolePermissions,
-        isAuthenticated
+        isAuthenticated,
+        isLoading
     } = useAdmin();
     const { cmsContent } = useCMS();
 
     const navigate = useNavigate();
     const location = useLocation();
+
+    if (isLoading) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-slate-50">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
+                    <p className="text-slate-500 font-medium animate-pulse text-sm tracking-wide">Securing Admin Session...</p>
+                </div>
+            </div>
+        );
+    }
 
     if (!isAuthenticated) {
         return <Navigate to="/login" state={{ from: location }} replace />;
