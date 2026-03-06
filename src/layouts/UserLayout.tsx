@@ -17,6 +17,8 @@ export const UserLayout: React.FC = () => {
     const userInitials = userDisplayName.split(' ').map(n => n[0]).join('').substring(0, 2);
     const userEmail = currentUser?.email || "user@eleastar.com";
 
+    const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
     if (isLoading) {
         return (
             <div className="flex h-screen items-center justify-center bg-slate-50">
@@ -35,8 +37,6 @@ export const UserLayout: React.FC = () => {
     if (currentUserRole !== 'USER') {
         return <Navigate to="/admin/dashboard" replace />;
     }
-
-    const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
     return (
         <div className="flex h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">

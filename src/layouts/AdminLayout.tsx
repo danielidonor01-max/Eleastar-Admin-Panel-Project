@@ -18,8 +18,16 @@ export const AdminLayout: React.FC = () => {
     } = useAdmin();
     const { cmsContent } = useCMS();
 
-    const navigate = useNavigate();
-    const location = useLocation();
+    React.useEffect(() => {
+        const isCMS = location.pathname.includes('/admin/cms');
+
+        if (isCMS) {
+            setExpandedCMS(true);
+        } else {
+            // "Global Navigation Consistency": Clicking a non-CMS module should deactivate/collapse Website CMS.
+            setExpandedCMS(false);
+        }
+    }, [location.pathname, location.search]);
 
     if (isLoading) {
         return (
@@ -35,36 +43,6 @@ export const AdminLayout: React.FC = () => {
     if (!isAuthenticated) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
-
-    // UI State for Dropdowns
-    const [showRoleMenu, setShowRoleMenu] = useState(false);
-
-    // Sidebar State
-    const [expandedCMS, setExpandedCMS] = useState(true); // Default open for visibility
-
-    // CMS Sections State (Collapsible)
-    const [cmsSectionState, setCmsSectionState] = useState({
-        global: true,
-        collections: false,
-        pages: true,
-        footer: false
-    });
-
-    const toggleCmsSection = (section: keyof typeof cmsSectionState) => {
-        setCmsSectionState(prev => ({ ...prev, [section]: !prev[section] }));
-    };
-
-    // Auto-expand sidebar sections based on active route
-    React.useEffect(() => {
-        const isCMS = location.pathname.includes('/admin/cms');
-
-        if (isCMS) {
-            setExpandedCMS(true);
-        } else {
-            // "Global Navigation Consistency": Clicking a non-CMS module should deactivate/collapse Website CMS.
-            setExpandedCMS(false);
-        }
-    }, [location.pathname, location.search]);
 
     // Sidebar width based on CMS expansion
     // If CMS is expanded, wide sidebar (280px), else standard (256px)
