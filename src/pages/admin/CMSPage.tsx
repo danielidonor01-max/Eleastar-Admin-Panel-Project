@@ -517,7 +517,7 @@ const MenuBuilderTab: React.FC = () => {
 // Pages Manager Tab
 // ──────────────────────────────────────────────
 const PagesTab: React.FC = () => {
-    const { cmsContent, updatePMSContent, createCMSPage, deleteCMSPage, updateCMSPageStatus } = useCMS();
+    const { updatePMSContent, createCMSPage, deleteCMSPage, updateCMSPageStatus } = useCMS();
     const { showSuccess, showError } = useFeedback();
 
     const [pages, setPages] = useState<CMSPageItem[]>([]);
