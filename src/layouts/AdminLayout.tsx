@@ -224,7 +224,7 @@ export const AdminLayout: React.FC = () => {
                                                 }}>
                                                     Navigation Menu
                                                 </NavLink>
-                                                <NavLink to="/admin/cms?module=pages&page=GlobalSEO" className={() => {
+                                                <NavLink to="/admin/cms?module=settings&page=GlobalSEO" className={() => {
                                                     const active = location.search.includes('page=GlobalSEO');
                                                     return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
                                                 }}>
@@ -316,19 +316,19 @@ export const AdminLayout: React.FC = () => {
                                             {/* FOOTER */}
                                             <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-2 mt-4 px-1">Footer</div>
                                             <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2 mb-4">
-                                                <NavLink to="/admin/cms?module=pages&page=FooterLayout" className={() => {
+                                                <NavLink to="/admin/cms?module=settings&page=FooterLayout" className={() => {
                                                     const active = location.search.includes('page=FooterLayout');
                                                     return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
                                                 }}>
                                                     Footer Layout
                                                 </NavLink>
-                                                <NavLink to="/admin/cms?module=pages&page=PrivacyPolicy" className={() => {
+                                                <NavLink to="/admin/cms?module=settings&page=PrivacyPolicy" className={() => {
                                                     const active = location.search.includes('page=PrivacyPolicy');
                                                     return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
                                                 }}>
                                                     Privacy Policy
                                                 </NavLink>
-                                                <NavLink to="/admin/cms?module=pages&page=TermsOfService" className={() => {
+                                                <NavLink to="/admin/cms?module=settings&page=TermsOfService" className={() => {
                                                     const active = location.search.includes('page=TermsOfService');
                                                     return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
                                                 }}>
