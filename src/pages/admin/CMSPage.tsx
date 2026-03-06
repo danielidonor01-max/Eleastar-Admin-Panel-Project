@@ -4,8 +4,8 @@ import { useCMS } from '../../context/CMSContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import {
     Save, AlertCircle, CheckCircle, Eye, Layout, FileCode, Plus, X,
-    ExternalLink, ChevronRight, ChevronDown, ToggleLeft, ToggleRight,
-    Trash2, Download, Key, Globe, FolderOpen, Menu,
+    ChevronRight, ToggleLeft, ToggleRight,
+    Trash2, Key, Globe, FolderOpen, Menu,
     EyeOff, PlusCircle, RefreshCw, Copy, Edit2, FileText, Lock
 } from 'lucide-react';
 import { DynamicJsonEditor } from '../../components/DynamicJsonEditor';
