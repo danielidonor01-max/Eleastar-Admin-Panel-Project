@@ -230,6 +230,12 @@ export const AdminLayout: React.FC = () => {
                                                 }}>
                                                     SEO Defaults
                                                 </NavLink>
+                                                <NavLink to="/admin/cms?module=media" className={() => {
+                                                    const active = location.search.includes('module=media');
+                                                    return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                }}>
+                                                    Media Library
+                                                </NavLink>
                                             </div>
 
                                             {/* PAGES */}
