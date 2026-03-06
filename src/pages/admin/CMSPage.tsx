@@ -4,9 +4,9 @@ import { useCMS } from '../../context/CMSContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import {
     Save, AlertCircle, CheckCircle, Eye, Layout, FileCode, Plus, X,
-    Globe, Key, Trash2, Edit2, ToggleLeft, ToggleRight, Menu,
-    ExternalLink, Copy, RefreshCw,
-    FileText, FolderOpen, Lock
+    ExternalLink, ChevronRight, ChevronDown, ToggleLeft, ToggleRight,
+    Trash2, Download, Upload, Info, Key, Globe, FolderOpen, Menu,
+    MoreVertical, EyeOff, PlusCircle
 } from 'lucide-react';
 import { DynamicJsonEditor } from '../../components/DynamicJsonEditor';
 import { CMSPreviewPane } from '../../components/CMSPreviewPane';
@@ -533,6 +533,19 @@ const PagesTab: React.FC = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newTitle, setNewTitle] = useState('');
     const [newSlug, setNewSlug] = useState('');
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({ services: true, technologies: true });
+
+    // Hierarchy Configuration
+    const HIERARCHY = {
+        services: ['information-technology', 'research-and-development', 'electronics-manufacturing', 'cloud-solutions'],
+        technologies: ['technology'] // Add others as they appear
+    };
+
+    const TOP_LEVEL_ORDER = ['home', 'services', 'technologies', 'eleastar-and-you', 'about-eleastar', 'contact-us'];
+
+    const toggleGroup = (group: string) => {
+        setExpandedGroups(prev => ({ ...prev, [group]: !prev[group] }));
+    };
 
     const PREVIEW_URL = PUBLIC_LINK || window.location.origin;
 
@@ -668,28 +681,71 @@ const PagesTab: React.FC = () => {
                 {loading ? (
                     <div className="p-4 text-center text-slate-400 text-sm">Loading...</div>
                 ) : (
-                    <ul className="flex-1 overflow-auto p-2 space-y-1">
-                        {pages.map(page => (
-                            <li key={page.slug}>
-                                <div className={`group flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${selectedPage?.slug === page.slug ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50'}`}
-                                    onClick={() => handleSelectPage(page)}>
-                                    <FileText size={14} className="flex-shrink-0 opacity-60" />
-                                    <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-medium truncate capitalize">{page.title}</div>
-                                        <div className="text-[10px] font-mono text-slate-400 truncate">/{page.slug}</div>
+                    <div className="flex-1 overflow-auto p-2 space-y-0.5">
+                        {TOP_LEVEL_ORDER.map(slug => {
+                            const page = pages.find(p => p.slug === slug);
+                            const isParent = HIERARCHY[slug as keyof typeof HIERARCHY];
+                            const isExpanded = expandedGroups[slug];
+
+                            if (!page && !isParent) return null;
+
+                            return (
+                                <div key={slug} className="space-y-0.5">
+                                    {/* Top Level Item */}
+                                    <div
+                                        className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${selectedPage?.slug === slug ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                        onClick={() => page && handleSelectPage(page)}
+                                    >
+                                        {isParent ? (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); toggleGroup(slug); }}
+                                                className="p-0.5 hover:bg-slate-200 rounded transition-colors"
+                                            >
+                                                <ChevronRight size={14} className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                            </button>
+                                        ) : (
+                                            <FileText size={14} className="flex-shrink-0 opacity-60 ml-0.5" />
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-sm font-medium truncate capitalize">{page?.title || slug.replace(/-/g, ' ')}</div>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={e => { e.stopPropagation(); handleToggleStatus(page); }} className="p-1 rounded text-slate-400 hover:text-brand-600" title={page.status === 'live' ? 'Set draft' : 'Publish'}>
-                                            {page.status === 'live' ? <ToggleRight size={12} className="text-green-500" /> : <ToggleLeft size={12} />}
-                                        </button>
-                                        <button onClick={e => { e.stopPropagation(); handleDelete(page.slug); }} className="p-1 rounded text-slate-400 hover:text-red-500" title="Delete Page">
-                                            <Trash2 size={11} />
-                                        </button>
-                                    </div>
+
+                                    {/* Children (Dropdown) */}
+                                    {isParent && isExpanded && (
+                                        <div className="ml-6 space-y-0.5 border-l border-slate-100 pl-2">
+                                            {HIERARCHY[slug as keyof typeof HIERARCHY].map(childSlug => {
+                                                const childPage = pages.find(p => p.slug === childSlug);
+                                                if (!childPage) return null;
+                                                return (
+                                                    <div
+                                                        key={childSlug}
+                                                        className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${selectedPage?.slug === childSlug ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+                                                        onClick={() => handleSelectPage(childPage)}
+                                                    >
+                                                        <FileText size={12} className="flex-shrink-0 opacity-40" />
+                                                        <div className="text-xs font-medium truncate capitalize">{childPage.title}</div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
-                            </li>
+                            );
+                        })}
+
+                        {/* Uncategorized Pages */}
+                        {pages.filter(p => !TOP_LEVEL_ORDER.includes(p.slug) && !Object.values(HIERARCHY).flat().includes(p.slug)).map(page => (
+                            <div
+                                key={page.slug}
+                                className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${selectedPage?.slug === page.slug ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                onClick={() => handleSelectPage(page)}
+                            >
+                                <FileText size={14} className="flex-shrink-0 opacity-60 ml-5" />
+                                <div className="text-sm font-medium truncate capitalize">{page.title}</div>
+                            </div>
                         ))}
-                    </ul>
+                    </div>
                 )}
             </div>
 
@@ -716,32 +772,84 @@ const PagesTab: React.FC = () => {
                             ))}
                         </div>
 
-                        {/* Status bar */}
-                        <div className="flex items-center justify-between px-4 py-1.5 bg-slate-50 border-b border-slate-200 flex-shrink-0 text-xs">
-                            <div className="flex items-center gap-2">
-                                {jsonError ? (
-                                    <span className="flex items-center gap-1 text-red-500 font-semibold"><AlertCircle size={12} /> Syntax Error</span>
-                                ) : isDirty ? (
-                                    <span className="flex items-center gap-1 text-amber-500 font-semibold animate-pulse"><AlertCircle size={12} /> Unsaved Changes</span>
-                                ) : (
-                                    <span className="flex items-center gap-1 text-green-500 font-semibold"><CheckCircle size={12} /> Saved</span>
-                                )}
-                                <span className="text-slate-400">
-                                    • <span className={`font-medium ${selectedPage.status === 'live' ? 'text-green-600' : 'text-slate-400'}`}>
-                                        {selectedPage.status || 'draft'}
-                                    </span>
-                                </span>
+                        {/* Status bar & Actions */}
+                        <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-slate-200 flex-shrink-0">
+                            <div className="flex items-center gap-4">
+                                <div className="flex flex-col">
+                                    <h2 className="text-sm font-bold text-slate-800 capitalize leading-tight">
+                                        {selectedPage.title}
+                                    </h2>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <span className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider ${selectedPage.status === 'live' ? 'text-green-600' : 'text-slate-400'}`}>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${selectedPage.status === 'live' ? 'bg-green-500' : 'bg-slate-300'}`} />
+                                            {selectedPage.status || 'draft'}
+                                        </span>
+                                        {isDirty && !jsonError && (
+                                            <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1">
+                                                <AlertCircle size={10} /> Unsaved
+                                            </span>
+                                        )}
+                                        {jsonError && (
+                                            <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider flex items-center gap-1">
+                                                <AlertCircle size={10} /> Schema Error
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
+
                             <div className="flex items-center gap-2">
-                                <a href={extractPreviewUrl()} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-slate-400 hover:text-brand-600 transition-colors">
-                                    <ExternalLink size={11} /> Live
-                                </a>
+                                {/* Hide/Show Page */}
+                                <button
+                                    onClick={() => handleToggleStatus(selectedPage)}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${selectedPage.status === 'live' ? 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' : 'bg-brand-50 text-brand-700 border-brand-200 hover:bg-brand-100'}`}
+                                >
+                                    {selectedPage.status === 'live' ? <EyeOff size={14} /> : <Eye size={14} />}
+                                    {selectedPage.status === 'live' ? 'Hide' : 'Show'}
+                                </button>
+
+                                {/* Delete Page */}
+                                <button
+                                    onClick={() => handleDelete(selectedPage.slug)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 border border-red-100 hover:bg-red-50 transition-all"
+                                >
+                                    <Trash2 size={14} /> Delete
+                                </button>
+
+                                <div className="w-px h-6 bg-slate-200 mx-1" />
+
+                                {/* Add New Section (Conditional) */}
+                                {(selectedPage.slug === 'services' || HIERARCHY.services.includes(selectedPage.slug)) && (
+                                    <button
+                                        onClick={() => {
+                                            // Feature to add a new section to the JSON model
+                                            const newSections = { ...parsedData, [`section_${Date.now()}`]: { title: 'New Section', content: '' } };
+                                            handleDynamicChange(newSections);
+                                            showSuccess({ title: 'Section Added', message: 'A new section has been added to the editor.' });
+                                        }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-50 text-brand-700 rounded-lg text-xs font-bold border border-brand-200 hover:bg-brand-100 transition-all"
+                                    >
+                                        <PlusCircle size={14} /> New Section
+                                    </button>
+                                )}
+
+                                {/* Add New Page */}
+                                <button
+                                    onClick={() => setShowCreateModal(true)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 text-white rounded-lg text-xs font-bold hover:bg-brand-700 transition-all shadow-sm shadow-brand-200"
+                                >
+                                    <Plus size={14} /> New Page
+                                </button>
+
+                                <div className="w-px h-6 bg-slate-200 mx-1" />
+
+                                {/* Save Button */}
                                 <button
                                     onClick={handleSave}
                                     disabled={!isDirty || !!jsonError}
-                                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all ${!isDirty || !!jsonError ? 'text-slate-400 cursor-not-allowed' : 'bg-brand-600 text-white hover:bg-brand-700'}`}
+                                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-extrabold transition-all ${!isDirty || !!jsonError ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700 shadow-sm shadow-green-200'}`}
                                 >
-                                    <Save size={11} /> Save
+                                    <Save size={14} /> Save Changes
                                 </button>
                             </div>
                         </div>
