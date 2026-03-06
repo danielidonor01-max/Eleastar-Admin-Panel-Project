@@ -53,7 +53,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const initCMS = async () => {
             try {
                 // Fetch public CMS layout data
-                const [menusRes, settingsRes] = await Promise.all([
+                const [menusRes, _settingsRes] = await Promise.all([
                     cmsService.getPublicMenus(),
                     cmsService.getPublicSettingsGroups()
                 ]);
