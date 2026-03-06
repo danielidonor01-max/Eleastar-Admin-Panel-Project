@@ -37,19 +37,19 @@ export const CMSPreviewPane: React.FC<CMSPreviewPaneProps> = ({ url, cmsContent,
     return (
         <div className="w-full h-full flex flex-col bg-slate-100 rounded-b-xl overflow-hidden relative border-t border-slate-200">
             {/* Browser Header Mock */}
-            <div className="bg-slate-200 h-10 flex items-center px-4 flex-shrink-0 border-b border-slate-300">
+            <div className="bg-slate-200 h-10 flex items-center px-4 shrink-0 border-b border-slate-300">
                 <div className="flex gap-1.5 mr-4">
                     <div className="w-3 h-3 rounded-full bg-red-400"></div>
                     <div className="w-3 h-3 rounded-full bg-amber-400"></div>
                     <div className="w-3 h-3 rounded-full bg-green-400"></div>
                 </div>
-                <div className="bg-white px-3 py-1 rounded text-xs text-slate-500 font-mono flex-grow max-w-2xl shadow-inner flex items-center justify-center">
+                <div className="bg-white px-3 py-1 rounded text-xs text-slate-500 font-mono grow max-w-2xl shadow-inner flex items-center justify-center">
                     {url}
                 </div>
             </div>
 
             {/* Iframe Container */}
-            <div className="flex-grow relative bg-white">
+            <div className="grow relative bg-white">
                 {/* Loader overlay behind the iframe */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>

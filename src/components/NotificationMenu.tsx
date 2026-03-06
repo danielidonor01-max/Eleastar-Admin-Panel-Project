@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Bell, Calendar, TrendingUp, Wallet, UserPlus, QrCode, FileText, CheckCheck, Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useAdmin } from '../context/AdminContext';
 import type { AdminNotification, NotificationType } from '../context/AdminContext';
 import { NotificationDetailsModal } from './NotificationDetailsModal';
@@ -100,7 +100,7 @@ export const NotificationMenu: React.FC = () => {
     const FilterPill = ({ label, value }: { label: string, value: typeof activeFilter }) => (
         <button
             onClick={() => setActiveFilter(value)}
-            className={`px-3 py-1 text-xs font-bold rounded-full border transition-all whitespace-nowrap flex-shrink-0 ${activeFilter === value
+            className={`px-3 py-1 text-xs font-bold rounded-full border transition-all whitespace-nowrap shrink-0 ${activeFilter === value
                 ? 'bg-slate-900 text-white border-slate-900'
                 : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                 }`}
@@ -163,7 +163,7 @@ export const NotificationMenu: React.FC = () => {
                             <div className="px-4 pb-3 flex gap-2 overflow-x-auto no-scrollbar mask-gradient pt-1">
                                 <FilterPill label="All" value="All" />
                                 <FilterPill label={`Unread ${unreadCount > 0 ? `(${unreadCount})` : ''}`} value="Unread" />
-                                <div className="w-px h-4 bg-slate-200 mx-1 self-center flex-shrink-0" />
+                                <div className="w-px h-4 bg-slate-200 mx-1 self-center shrink-0" />
                                 <FilterPill label="Leave" value="Leave" />
                                 <FilterPill label="Payroll" value="Payroll" />
                                 <FilterPill label="System" value="System" />
@@ -209,7 +209,7 @@ export const NotificationMenu: React.FC = () => {
                                                             )}
 
                                                             {/* Icon Box */}
-                                                            <div className={`mt-0.5 w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center border ${!n.isRead ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-100 border-slate-100 text-slate-400 grayscale'
+                                                            <div className={`mt-0.5 w-9 h-9 rounded-full shrink-0 flex items-center justify-center border ${!n.isRead ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-100 border-slate-100 text-slate-400 grayscale'
                                                                 }`}>
                                                                 {getIcon(n.type)}
                                                             </div>
@@ -233,7 +233,7 @@ export const NotificationMenu: React.FC = () => {
                                                             <div className="flex flex-col items-end gap-2 h-full justify-start pt-1">
                                                                 {/* Isolated Red Dot */}
                                                                 {!n.isRead && (
-                                                                    <div className="w-2.5 h-2.5 bg-brand-500 rounded-full flex-shrink-0 shadow-sm" />
+                                                                    <div className="w-2.5 h-2.5 bg-brand-500 rounded-full shrink-0 shadow-sm" />
                                                                 )}
                                                             </div>
                                                         </div>

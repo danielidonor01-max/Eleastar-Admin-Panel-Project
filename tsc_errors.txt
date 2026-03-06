@@ -1,9 +1,0 @@
-
-> eleastar-verification@0.0.0 build
-> tsc -b && vite build
-
-src/modules/admin-dashboard/config/dashboard.roles.ts(1,10): error TS1484: 'RoleWidgetMapping' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
-src/modules/admin-dashboard/config/dashboard.widgets.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
-src/modules/admin-dashboard/config/dashboard.widgets.tsx(2,10): error TS1484: 'DashboardWidgetConfig' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
-src/modules/admin-dashboard/types.ts(1,10): error TS1484: 'ReactNode' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
-src/modules/admin-dashboard/widgets/DashboardWidget.tsx(1,17): error TS1484: 'ReactNode' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.

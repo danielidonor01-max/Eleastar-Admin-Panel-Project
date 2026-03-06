@@ -1,15 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import tsconfigPaths from "vite-tsconfig-paths";
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
-  server: {
-    host: '0.0.0.0', // Listen on all addresses
-    allowedHosts: true, // Allow all hosts (tunnel)
-    cors: true, // Enable CORS
-    headers: {
-      'Access-Control-Allow-Origin': '*' // explicit header for robustness
-    }
-  }
+  plugins: [react(), tailwindcss(), tsconfigPaths()]
 })

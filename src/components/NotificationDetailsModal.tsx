@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { X, ExternalLink, Calendar, TrendingUp, Wallet, UserPlus, FileText, QrCode, Bell, AlertCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import type { AdminNotification, NotificationType } from '../services/notificationTypes';
 import { useAdmin } from '../context/AdminContext';
 
@@ -116,7 +116,7 @@ export const NotificationDetailsModal: React.FC<NotificationDetailsModalProps> =
                     {/* Warning if disabled */}
                     {actionConfig.disabled && (
                         <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-lg flex gap-3 text-xs text-amber-700">
-                            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                            <AlertCircle size={16} className="shrink-0 mt-0.5" />
                             <p>{actionConfig.warning}</p>
                         </div>
                     )}

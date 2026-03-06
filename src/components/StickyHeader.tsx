@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldCheck, ChevronDown } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 export const StickyHeader: React.FC = () => {
     const [isServicesOpen, setIsServicesOpen] = useState(false);

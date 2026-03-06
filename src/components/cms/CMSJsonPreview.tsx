@@ -50,7 +50,7 @@ export const CMSJsonPreview: React.FC<CMSJsonPreviewProps> = ({ data, pageName }
             </div>
 
             {/* Code View */}
-            <div className="flex-grow overflow-auto p-4 custom-scrollbar">
+            <div className="grow overflow-auto p-4 custom-scrollbar">
                 <pre className="font-mono text-xs leading-relaxed">
                     <code dangerouslySetInnerHTML={{ __html: syntaxHighlight(jsonString) }} />
                 </pre>

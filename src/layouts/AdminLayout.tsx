@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, Navigate, useLocation } from 'react-router';
 import { LayoutDashboard, Users, Settings, Globe, ChevronDown, ChevronRight, LogOut, Calendar, BarChart2, QrCode, Wallet, FileText, Check, Shield, TrendingUp, Gift, Activity, CheckSquare } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { NotificationMenu } from '../components/NotificationMenu';
@@ -67,7 +67,7 @@ export const AdminLayout: React.FC = () => {
     return (
         <div className="flex h-screen bg-slate-50 font-sans text-slate-900">
 
-            <aside className={`${sidebarWidthClass} bg-slate-900 text-slate-300 flex flex-col h-full flex-shrink-0 transition-all duration-300 ease-in-out`}>
+            <aside className={`${sidebarWidthClass} bg-slate-900 text-slate-300 flex flex-col h-full shrink-0 transition-all duration-300 ease-in-out`}>
                 <div className="h-20 flex flex-col justify-center px-6 border-b border-slate-800">
                     <div className="font-bold text-white tracking-wider flex items-center gap-2">
                         <img src="/assets/logo-horizontal-white.png" alt="Eleastar Admin" className="h-8 object-contain" />
@@ -78,7 +78,7 @@ export const AdminLayout: React.FC = () => {
                     </div>
                 </div>
 
-                <nav className="flex-grow p-4 space-y-1 overflow-y-auto custom-scrollbar">
+                <nav className="grow p-4 space-y-1 overflow-y-auto custom-scrollbar">
                     {hasAccess('Dashboard') && (
                         <>
                             <div className="text-xs font-bold text-slate-500 uppercase px-3 mb-2 mt-2">Core</div>
@@ -366,7 +366,7 @@ export const AdminLayout: React.FC = () => {
             {/* Main Content */}
             <div className="flex-1 flex flex-col h-full overflow-hidden">
                 {/* Top Header */}
-                <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 flex-shrink-0 z-20 relative">
+                <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-20 relative">
                     {/* View As Info */}
                     <div className="flex items-center gap-4">
                         <GlobalSearchMenu />

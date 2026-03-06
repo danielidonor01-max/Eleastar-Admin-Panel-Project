@@ -74,7 +74,7 @@ export const BrandFooter: React.FC = () => {
                     <a href="/login" className="hover:text-white transition-colors border-l border-slate-700 pl-6 ml-auto">
                         Admin Login
                     </a>
-                    <div className="flex-grow text-right md:flex-grow-0 ml-auto">
+                    <div className="grow text-right md:grow-0 ml-auto">
                         <span>Copyright © 2026</span>
                         <span className="mx-2">•</span>
                         <span>RC - 7130026</span>

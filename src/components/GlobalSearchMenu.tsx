@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Search, User, FileText, Globe, X } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { useCMS } from '../context/CMSContext';
@@ -122,7 +122,7 @@ export const GlobalSearchMenu: React.FC = () => {
                             <input
                                 ref={inputRef}
                                 type="text"
-                                className="flex-grow bg-transparent outline-none text-slate-800 font-medium placeholder:font-normal placeholder:text-slate-400"
+                                className="grow bg-transparent outline-none text-slate-800 font-medium placeholder:font-normal placeholder:text-slate-400"
                                 placeholder="Search employees, payroll, or pages..."
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, Navigate, useNavigate, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, Navigate, useNavigate, NavLink, useLocation } from 'react-router';
 import { LogOut, User, LayoutDashboard, Menu, ChevronDown, Calendar, BarChart2, CheckSquare } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { NotificationMenu } from '../components/NotificationMenu';
@@ -51,7 +51,7 @@ export const UserLayout: React.FC = () => {
 
             {/* Sidebar */}
             <aside className={`
-                fixed lg:static inset-y-0 left-0 z-30 w-64 bg-slate-900 text-slate-300 flex flex-col h-full flex-shrink-0 transition-transform duration-300
+                fixed lg:static inset-y-0 left-0 z-30 w-64 bg-slate-900 text-slate-300 flex flex-col h-full shrink-0 transition-transform duration-300
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}>
                 <div className="h-16 flex items-center px-6 border-b border-slate-800">
@@ -64,7 +64,7 @@ export const UserLayout: React.FC = () => {
                     </div>
                 </div>
 
-                <nav className="flex-grow p-4 space-y-1">
+                <nav className="grow p-4 space-y-1">
                     <NavLink
                         to="/user/dashboard"
                         onClick={() => setSidebarOpen(false)}
@@ -124,7 +124,7 @@ export const UserLayout: React.FC = () => {
             {/* Main Content Wrapper */}
             <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
                 {/* Header */}
-                <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0">
+                <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={toggleSidebar}

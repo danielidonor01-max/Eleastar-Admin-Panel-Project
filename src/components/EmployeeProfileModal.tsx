@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, User, QrCode, DollarSign, Clock, FileText, Mail, Phone, Briefcase, MapPin, Globe, Edit2, Save, TrendingUp } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import type { Employee } from '../data/mockData';
 import { useAdmin } from '../context/AdminContext';
 import { PUBLIC_LINK } from '../config';
@@ -61,7 +61,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header Background */}
-                <div className="bg-gradient-to-r from-[#0B1229] to-[#1a2342] absolute top-0 left-0 right-0 h-[180px] z-0" />
+                <div className="bg-linear-to-r from-[#0B1229] to-[#1a2342] absolute top-0 left-0 right-0 h-[180px] z-0" />
 
                 {/* Action Buttons */}
                 <div className="absolute top-6 right-6 z-50 flex gap-2">

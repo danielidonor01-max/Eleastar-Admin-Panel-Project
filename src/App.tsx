@@ -1,64 +1,50 @@
-import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import  { Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AdminProvider } from './context/AdminContext';
 import { CMSProvider } from './context/CMSContext';
 import PreviewBadge from './components/PreviewBadge';
 import { GlobalLoadingFallback } from './components/GlobalLoadingFallback';
 
-// ----------------------------------------------------------------------
-// Layouts (Loaded synchronously so the outer shell renders immediately)
-// ----------------------------------------------------------------------
+
+
 import { AdminLayout } from './layouts/AdminLayout';
 import { UserLayout } from './layouts/UserLayout';
+import { Home } from './routes/Home';
+import { About } from './routes/About';
+import { Services } from './routes/Services';
+import { Technologies } from './routes/Technologies';
+import { EleastarAndYou } from './routes/EleastarAndYou';
+import { ServiceDetail } from './routes/ServiceDetail';
+import { VerificationPage } from './routes/VerificationPage';
+import { CareersPage } from './routes/CareersPage';
+import { Contact } from './routes/Contact';
+import { LoginPage } from './routes/LoginPage';
+import { DynamicPage } from './routes/DynamicPage';
+import { AdminDashboard } from './modules/admin-dashboard/pages/AdminDashboard';
+import { NotificationsPage } from './routes/admin/NotificationsPage';
+import { Employees } from './routes/admin/Employees';
+import { PayrollPage } from './routes/admin/PayrollPage';
+import { QRPage } from './routes/admin/QRPage';
+import { RecruitmentPage } from './routes/admin/RecruitmentPage';
+import { LeaveManagement } from './routes/admin/LeaveManagement';
+import { PerformancePage } from './routes/admin/PerformancePage';
+import { CMSPage } from './routes/admin/CMSPage';
+import { AdminTasksPage } from './routes/admin/AdminTasksPage';
+import { SettingsPage } from './routes/admin/SettingsPage';
+import { ProfilePage } from './routes/admin/ProfilePage';
+import { ActivityLogPage } from './routes/admin/ActivityLogPage';
+import { PromotionsPage } from './routes/admin/PromotionsPage';
+import { DepartmentSettings } from './routes/admin/DepartmentSettings';
+import { BonusPage } from './routes/admin/BonusPage';
+import { AnalyticsDashboard } from './routes/admin/AnalyticsDashboard';
+import { ComplianceReportsPage } from './routes/admin/ComplianceReportsPage';
+import { UserDashboard } from './routes/user/UserDashboard';
+import { UserProfilePage } from './routes/user/UserProfilePage';
 
-// ----------------------------------------------------------------------
-// Lazy Loaded Public Pages
-// ----------------------------------------------------------------------
-const Home = React.lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
-const About = React.lazy(() => import('./pages/About').then(m => ({ default: m.About })));
-const Services = React.lazy(() => import('./pages/Services').then(m => ({ default: m.Services })));
-const Technologies = React.lazy(() => import('./pages/Technologies').then(m => ({ default: m.Technologies })));
-const EleastarAndYou = React.lazy(() => import('./pages/EleastarAndYou').then(m => ({ default: m.EleastarAndYou })));
-const ServiceDetail = React.lazy(() => import('./pages/ServiceDetail').then(m => ({ default: m.ServiceDetail })));
-const VerificationPage = React.lazy(() => import('./pages/VerificationPage').then(m => ({ default: m.VerificationPage })));
-const CareersPage = React.lazy(() => import('./pages/CareersPage').then(m => ({ default: m.CareersPage })));
-const Contact = React.lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
-const LoginPage = React.lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
-const DynamicPage = React.lazy(() => import('./pages/DynamicPage').then(m => ({ default: m.DynamicPage })));
-
-// ----------------------------------------------------------------------
-// Lazy Loaded Admin Pages
-// ----------------------------------------------------------------------
-const AdminDashboard = React.lazy(() => import('./modules/admin-dashboard/pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
-const Employees = React.lazy(() => import('./pages/admin/Employees').then(m => ({ default: m.Employees })));
-const QRPage = React.lazy(() => import('./pages/admin/QRPage').then(m => ({ default: m.QRPage })));
-const PayrollPage = React.lazy(() => import('./pages/admin/PayrollPage').then(m => ({ default: m.PayrollPage })));
-const RecruitmentPage = React.lazy(() => import('./pages/admin/RecruitmentPage').then(m => ({ default: m.RecruitmentPage })));
-const CMSPage = React.lazy(() => import('./pages/admin/CMSPage').then(m => ({ default: m.CMSPage })));
-const LeaveManagement = React.lazy(() => import('./pages/admin/LeaveManagement').then(m => ({ default: m.LeaveManagement })));
-const PerformancePage = React.lazy(() => import('./pages/admin/PerformancePage').then(m => ({ default: m.PerformancePage })));
-const SettingsPage = React.lazy(() => import('./pages/admin/SettingsPage').then(m => ({ default: m.SettingsPage })));
-const NotificationsPage = React.lazy(() => import('./pages/admin/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
-// Removed unused CompliancePage default import and duplicate lazy load declaration
-const CompliancePageDefault = React.lazy(() => import('./pages/admin/CompliancePage'));
-const ActivityLogPage = React.lazy(() => import('./pages/admin/ActivityLogPage').then(m => ({ default: m.ActivityLogPage })));
-const PromotionsPage = React.lazy(() => import('./pages/admin/PromotionsPage').then(m => ({ default: m.PromotionsPage })));
-const DepartmentSettings = React.lazy(() => import('./pages/admin/DepartmentSettings').then(m => ({ default: m.DepartmentSettings })));
-const BonusPage = React.lazy(() => import('./pages/admin/BonusPage').then(m => ({ default: m.BonusPage })));
-const AnalyticsDashboard = React.lazy(() => import('./pages/admin/AnalyticsDashboard').then(m => ({ default: m.AnalyticsDashboard })));
-const AdminTasksPage = React.lazy(() => import('./pages/admin/AdminTasksPage').then(m => ({ default: m.AdminTasksPage })));
-const ComplianceReportsPage = React.lazy(() => import('./pages/admin/ComplianceReportsPage').then(m => ({ default: m.ComplianceReportsPage })));
-const ProfilePage = React.lazy(() => import('./pages/admin/ProfilePage').then(m => ({ default: m.ProfilePage })));
-
-// ----------------------------------------------------------------------
-// Lazy Loaded User Pages
-// ----------------------------------------------------------------------
-const UserDashboard = React.lazy(() => import('./pages/user/UserDashboard').then(m => ({ default: m.UserDashboard })));
-const UserProfilePage = React.lazy(() => import('./pages/user/UserProfilePage').then(m => ({ default: m.UserProfilePage })));
-const LeavePage = React.lazy(() => import('./pages/user/LeavePage').then(m => ({ default: m.LeavePage })));
-const PerformanceReviewPage = React.lazy(() => import('./pages/user/PerformanceReviewPage').then(m => ({ default: m.PerformanceReviewPage })));
-const UserTasksPage = React.lazy(() => import('./pages/user/UserTasksPage').then(m => ({ default: m.UserTasksPage })));
+import { LeavePage } from './routes/user/LeavePage';
+import { UserTasksPage } from './routes/user/UserTasksPage';
+import { PerformanceReviewPage } from './routes/user/PerformanceReviewPage';
 
 function App() {
   return (
@@ -99,7 +85,7 @@ function App() {
                 <Route path="tasks" element={<AdminTasksPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="profile" element={<ProfilePage />} />
-                <Route path="compliance" element={<CompliancePageDefault />} />
+                <Route path="compliance" element={<ComplianceReportsPage />} />
                 <Route path="activity" element={<ActivityLogPage />} />
                 <Route path="promotions" element={<PromotionsPage />} />
                 <Route path="salary-structures" element={<DepartmentSettings />} />

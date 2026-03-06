@@ -89,7 +89,7 @@ export const CMSPreviewPane: React.FC<CMSPreviewPaneProps> = ({ url, cmsContent,
             </div>
 
             {/* Iframe Container */}
-            <div className="flex-grow relative bg-white">
+            <div className="grow relative bg-white">
                 {isLoading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                         <div className="flex flex-col items-center gap-3">

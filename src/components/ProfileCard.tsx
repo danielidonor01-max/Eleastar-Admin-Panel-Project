@@ -23,7 +23,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ employee }) => {
 
                 {/* Photo Container */}
                 <div className="relative mb-6">
-                    <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-slate-100 to-slate-200 ring-4 ring-white shadow-lg overflow-hidden">
+                    <div className="w-32 h-32 rounded-full p-1 bg-linear-to-tr from-slate-100 to-slate-200 ring-4 ring-white shadow-lg overflow-hidden">
                         <img
                             src={employee.photoUrl}
                             alt={`${employee.name}`}

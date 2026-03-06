@@ -1,6 +1,0 @@
-
-> eleastar-verification@0.0.0 build
-> tsc -b && vite build
-
-src/modules/admin-dashboard/config/dashboard.widgets.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
-src/modules/admin-dashboard/hooks/useRoleDashboard.ts(4,38): error TS6196: 'DashboardTab' is declared but never used.

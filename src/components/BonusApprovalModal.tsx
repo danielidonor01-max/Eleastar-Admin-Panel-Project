@@ -61,7 +61,7 @@ export const BonusApprovalModal: React.FC<BonusApprovalModalProps> = ({
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
 
                 {/* Header */}
-                <div className={`p-6 text-white flex justify-between items-start ${mode === 'approve' ? 'bg-gradient-to-r from-brand-600 to-brand-800' : 'bg-red-600'}`}>
+                <div className={`p-6 text-white flex justify-between items-start ${mode === 'approve' ? 'bg-linear-to-r from-brand-600 to-brand-800' : 'bg-red-600'}`}>
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             {mode === 'approve' ? <ShieldCheck size={24} /> : <AlertTriangle size={24} />}
