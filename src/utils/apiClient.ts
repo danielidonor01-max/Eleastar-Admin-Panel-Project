@@ -45,7 +45,7 @@ export const apiClient = async (endpoint: string, options: ApiClientOptions = {}
     // Handle 401 Unauthorized
     if (response.status === 401 && requireAuth) {
         // We assume token might be refreshed or handled
-        const refreshToken = Cookies.get('refresh_token');
+        const refreshToken = Cookies.get('admin_refresh_token');
 
         if (!refreshToken) {
             // Force logout if no refresh token
@@ -71,20 +71,20 @@ export const apiClient = async (endpoint: string, options: ApiClientOptions = {}
                     const newRefresh = refreshData.data.refresh_token || refreshToken;
 
                     Cookies.set('admin_token', newToken, { expires: 1, secure: window.location.protocol === 'https:', sameSite: 'strict' });
-                    Cookies.set('refresh_token', newRefresh, { expires: 7, secure: window.location.protocol === 'https:', sameSite: 'strict' });
+                    Cookies.set('admin_refresh_token', newRefresh, { expires: 1, secure: window.location.protocol === 'https:', sameSite: 'strict' });
 
                     isRefreshing = false;
                     onRefreshed(newToken);
                 } else {
                     // Refresh failed, logout
                     Cookies.remove('admin_token');
-                    Cookies.remove('refresh_token');
+                    Cookies.remove('admin_refresh_token');
                     window.location.href = '/login';
                     return response;
                 }
             } catch (error) {
                 Cookies.remove('admin_token');
-                Cookies.remove('refresh_token');
+                Cookies.remove('admin_refresh_token');
                 window.location.href = '/login';
                 isRefreshing = false;
                 return response;

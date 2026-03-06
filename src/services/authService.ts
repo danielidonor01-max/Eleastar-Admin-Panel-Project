@@ -49,6 +49,7 @@ export const authService = {
                 };
 
                 Cookies.set('admin_token', token, { expires: 1, secure: window.location.protocol === 'https:', sameSite: 'strict' });
+                Cookies.set('admin_refresh_token', data.data?.refresh_token || data.refresh_token || token, { expires: 1, secure: window.location.protocol === 'https:', sameSite: 'strict' });
                 localStorage.setItem('user_id', loggedInUser.id);
 
                 return {
