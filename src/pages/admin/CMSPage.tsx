@@ -57,24 +57,35 @@ export interface CMSPageItem {
 // Helper: copy to clipboard
 // ──────────────────────────────────────────────
 // ──────────────────────────────────────────────
-// SEO Settings Modal
+// Per-Page SEO Inline Panel
 // ──────────────────────────────────────────────
-const SEOSettingsModal: React.FC<{
+const PageSEOPanel: React.FC<{
     page: CMSPageItem;
-    onClose: () => void;
     onSave: (payload: any) => Promise<void>;
-}> = ({ page, onClose, onSave }) => {
+}> = ({ page, onSave }) => {
     const [title, setTitle] = useState(page.meta_title || '');
     const [description, setDescription] = useState(page.meta_description || '');
     const [keywords, setKeywords] = useState((page as any).meta_keywords || '');
     const [author, setAuthor] = useState((page as any).meta_author || 'Eleastar Technologies Ltd.');
-
-    // OG Tags
     const [ogTitle, setOgTitle] = useState((page as any).og_title || '');
     const [ogDescription, setOgDescription] = useState((page as any).og_description || '');
     const [ogImageUrl, setOgImageUrl] = useState((page as any).og_image_url || '');
-
+    const [noIndex, setNoIndex] = useState((page as any).no_index || false);
     const [saving, setSaving] = useState(false);
+    const [dirty, setDirty] = useState(false);
+
+    // Re-sync when the selected page changes
+    useEffect(() => {
+        setTitle(page.meta_title || '');
+        setDescription(page.meta_description || '');
+        setKeywords((page as any).meta_keywords || '');
+        setAuthor((page as any).meta_author || 'Eleastar Technologies Ltd.');
+        setOgTitle((page as any).og_title || '');
+        setOgDescription((page as any).og_description || '');
+        setOgImageUrl((page as any).og_image_url || '');
+        setNoIndex((page as any).no_index || false);
+        setDirty(false);
+    }, [page.slug]);
 
     const handleSave = async () => {
         setSaving(true);
@@ -86,101 +97,134 @@ const SEOSettingsModal: React.FC<{
                 meta_author: author,
                 og_title: ogTitle,
                 og_description: ogDescription,
-                og_image_url: ogImageUrl
+                og_image_url: ogImageUrl,
+                no_index: noIndex,
             });
-            onClose();
-        } catch { /* error handled by parent */ } finally { setSaving(false); }
+            setDirty(false);
+        } catch { /* handled by parent */ } finally { setSaving(false); }
     };
 
+    const mark = () => setDirty(true);
+
     return (
-        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                    <div>
-                        <h3 className="text-lg font-bold text-slate-800">SEO & Social Metadata</h3>
-                        <p className="text-xs text-slate-500 font-inter">Configure how "{page.slug}" appears in search engines and social media.</p>
+        <div className="flex-1 overflow-auto bg-slate-50/20">
+            <div className="max-w-4xl mx-auto p-8 space-y-6">
+
+                {/* SERP Preview */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="px-6 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                        <Globe size={14} className="text-slate-400" />
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Google Search Preview</span>
                     </div>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors" title="Close">
-                        <X size={20} />
-                    </button>
-                </div>
-
-                <div className="flex-1 overflow-auto p-6 space-y-8">
-                    {/* Search Engine Result Preview */}
-                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                        <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider mb-2 block font-inter">Google Search Preview</span>
-                        <div className="space-y-1">
-                            <div className="text-[#1a0dab] text-xl hover:underline cursor-pointer truncate font-inter">{title || page.title || 'Page Title'}</div>
-                            <div className="text-[#006621] text-sm truncate font-inter">eleastar.com › {page.slug}</div>
-                            <div className="text-[#545454] text-sm line-clamp-2 leading-relaxed font-inter">
-                                {description || 'No description provided. This is how your page will appear in search results.'}
-                            </div>
+                    <div className="px-6 py-5 space-y-1">
+                        <div className="text-[#1a0dab] text-xl hover:underline cursor-pointer truncate">
+                            {title || page.title || 'Page Title — Eleastar'}
                         </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Meta Section */}
-                        <div className="space-y-4">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Globe size={14} /> Basic SEO
-                            </h4>
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1 font-inter uppercase tracking-tight">Focus Keywords</label>
-                                    <input value={keywords} onChange={e => setKeywords(e.target.value)} placeholder="e.g. technology, innovation, Nigeria" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all font-inter" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1 font-inter uppercase tracking-tight">Author / Publisher</label>
-                                    <input value={author} onChange={e => setAuthor(e.target.value)} placeholder="Author" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all font-inter" />
-                                </div>
-                                <div className="pt-2">
-                                    <label className="block text-xs font-bold text-slate-700 mb-1 font-inter uppercase tracking-tight">Meta Title Override</label>
-                                    <input value={title} onChange={e => setTitle(e.target.value)} placeholder={page.title} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all font-inter" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1 font-inter uppercase tracking-tight">Meta Description</label>
-                                    <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Brief summary of the page content..." className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all resize-none font-inter" />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Social Section */}
-                        <div className="space-y-4">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Eye size={14} /> Social Share (OG)
-                            </h4>
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1 font-inter uppercase tracking-tight">OG Image URL</label>
-                                    <div className="flex gap-2">
-                                        <input value={ogImageUrl} onChange={e => setOgImageUrl(e.target.value)} placeholder="/images/share.jpg" className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all font-inter" />
-                                        {ogImageUrl && <img src={ogImageUrl} alt="Preview" className="w-10 h-10 rounded border border-slate-200 object-cover" />}
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1 font-inter uppercase tracking-tight">OG Title</label>
-                                    <input value={ogTitle} onChange={e => setOgTitle(e.target.value)} placeholder={title || page.title} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all font-inter" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1 font-inter uppercase tracking-tight">OG Description</label>
-                                    <textarea value={ogDescription} onChange={e => setOgDescription(e.target.value)} rows={3} placeholder={description || "Social description..."} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all resize-none font-inter" />
-                                </div>
-                            </div>
+                        <div className="text-[#006621] text-sm">eleastar.com › {page.slug}</div>
+                        <div className="text-[#545454] text-sm line-clamp-2 leading-relaxed">
+                            {description || 'No meta description set. Add one below to control how this page appears in search results.'}
                         </div>
                     </div>
                 </div>
 
-                <div className="px-6 py-4 border-t border-slate-100 flex gap-3 justify-end bg-slate-50/50">
-                    <button onClick={onClose} disabled={saving} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors">
-                        Cancel
-                    </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Basic SEO */}
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <Globe size={14} /> Basic SEO
+                        </h4>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-tight">Meta Title</label>
+                            <input value={title} onChange={e => { setTitle(e.target.value); mark(); }}
+                                placeholder={page.title}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all" />
+                            <p className="text-[10px] text-slate-400 mt-1">{title.length}/60 chars recommended</p>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-tight">Meta Description</label>
+                            <textarea value={description} onChange={e => { setDescription(e.target.value); mark(); }}
+                                rows={3} placeholder="Brief summary of this page..."
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all resize-none" />
+                            <p className="text-[10px] text-slate-400 mt-1">{description.length}/160 chars recommended</p>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-tight">Focus Keywords</label>
+                            <input value={keywords} onChange={e => { setKeywords(e.target.value); mark(); }}
+                                placeholder="e.g. ERP, workforce, Nigeria"
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-tight">Author / Publisher</label>
+                            <input value={author} onChange={e => { setAuthor(e.target.value); mark(); }}
+                                placeholder="Eleastar Technologies Ltd."
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all" />
+                        </div>
+                        <div className="flex items-center justify-between pt-1">
+                            <div>
+                                <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">No-Index</span>
+                                <p className="text-[10px] text-slate-400">Prevent search engines from indexing this page</p>
+                            </div>
+                            <button
+                                onClick={() => { setNoIndex(!noIndex); mark(); }}
+                                className={`relative w-11 h-6 rounded-full transition-colors ${noIndex ? 'bg-red-500' : 'bg-slate-200'}`}
+                                title={noIndex ? 'Click to allow indexing' : 'Click to block indexing'}
+                            >
+                                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${noIndex ? 'translate-x-5' : 'translate-x-0'}`} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Social Share (OG) */}
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <Eye size={14} /> Social Share (OG)
+                        </h4>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-tight">OG Image URL</label>
+                            <div className="flex gap-2">
+                                <input value={ogImageUrl} onChange={e => { setOgImageUrl(e.target.value); mark(); }}
+                                    placeholder="https://eleastar.com/og.jpg"
+                                    className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all" />
+                                {ogImageUrl && <img src={ogImageUrl} alt="OG" className="w-10 h-10 rounded-lg border border-slate-200 object-cover flex-shrink-0" />}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-tight">OG Title</label>
+                            <input value={ogTitle} onChange={e => { setOgTitle(e.target.value); mark(); }}
+                                placeholder={title || page.title}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-tight">OG Description</label>
+                            <textarea value={ogDescription} onChange={e => { setOgDescription(e.target.value); mark(); }}
+                                rows={3} placeholder={description || 'Social share description...'}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all resize-none" />
+                        </div>
+
+                        {/* OG Preview Card */}
+                        {(ogImageUrl || ogTitle || ogDescription) && (
+                            <div className="border border-slate-200 rounded-xl overflow-hidden text-xs">
+                                {ogImageUrl && <img src={ogImageUrl} alt="OG preview" className="w-full h-24 object-cover" />}
+                                <div className="p-3">
+                                    <div className="text-[10px] uppercase text-slate-400 mb-0.5">eleastar.com</div>
+                                    <div className="font-bold text-slate-800 truncate">{ogTitle || title || page.title}</div>
+                                    <div className="text-slate-500 line-clamp-2 mt-0.5">{ogDescription || description}</div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Save */}
+                <div className="flex justify-end">
                     <button
                         onClick={handleSave}
-                        disabled={saving}
-                        className="px-6 py-2 bg-brand-600 text-white text-sm font-bold rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-all shadow-md shadow-brand-100 flex items-center gap-2 font-inter"
+                        disabled={saving || !dirty}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm ${saving || !dirty ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none' : 'bg-brand-600 text-white hover:bg-brand-700'
+                            }`}
                     >
                         {saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
-                        Save SEO Changes
+                        {saving ? 'Saving...' : 'Save SEO'}
                     </button>
                 </div>
             </div>
@@ -896,14 +940,13 @@ const PagesTab: React.FC = () => {
     const [pages, setPages] = useState<CMSPageItem[]>([]);
     const [selectedPage, setSelectedPage] = useState<CMSPageItem | null>(null);
     const [loadingSections, setLoadingSections] = useState(false);
-    const [activeView, setActiveView] = useState<'editor' | 'preview' | 'json'>('editor');
+    const [activeView, setActiveView] = useState<'content' | 'seo' | 'preview' | 'json'>('content');
     const [jsonInput, setJsonInput] = useState('{}');
     const [parsedData, setParsedData] = useState<any>({});
     const [isDirty, setIsDirty] = useState(false);
     const [jsonError, setJsonError] = useState<string | null>(null);
 
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [showSEOModal, setShowSEOModal] = useState(false);
     const [newTitle, setNewTitle] = useState('');
     const [newSlug, setNewSlug] = useState('');
 
@@ -1049,16 +1092,25 @@ const PagesTab: React.FC = () => {
             {/* Content Editor Area */}
             <div className="flex-1 flex flex-col overflow-hidden px-8 pb-8">
                 {/* Editor Tabs row */}
-                <div className="flex items-center gap-12 border-b border-slate-100 mb-6">
-                    {(['editor', 'json', 'preview'] as const).map(v => (
+                <div className="flex items-center gap-8 border-b border-slate-100 mb-6">
+                    {([
+                        { key: 'content', label: 'Visual Editor', icon: <Layout size={16} /> },
+                        { key: 'seo', label: 'SEO', icon: <Globe size={16} /> },
+                        { key: 'json', label: 'JSON Syntax', icon: <FileCode size={16} /> },
+                        { key: 'preview', label: 'Preview', icon: <Eye size={16} /> },
+                    ] as const).map(({ key, label, icon }) => (
                         <button
-                            key={v}
-                            onClick={() => setActiveView(v)}
-                            className={`flex items-center gap-2 py-4 text-sm font-medium transition-all relative ${activeView === v ? 'text-brand-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            key={key}
+                            onClick={() => setActiveView(key)}
+                            className={`flex items-center gap-2 py-4 text-sm font-medium transition-all relative ${activeView === key ? 'text-brand-600' : 'text-slate-500 hover:text-slate-700'
+                                }`}
                         >
-                            {v === 'editor' ? <Layout size={18} /> : v === 'json' ? <FileCode size={18} /> : <Eye size={18} />}
-                            {v === 'editor' ? 'Visual Editor' : v === 'json' ? 'Json Syntax' : 'Preview'}
-                            {activeView === v && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-600 rounded-full" />}
+                            {icon}
+                            {label}
+                            {key === 'seo' && selectedPage?.meta_title && (
+                                <span className="w-2 h-2 rounded-full bg-green-500 ml-0.5" title="SEO configured" />
+                            )}
+                            {activeView === key && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-600 rounded-full" />}
                         </button>
                     ))}
                 </div>
@@ -1093,13 +1145,6 @@ const PagesTab: React.FC = () => {
                                     className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold border border-brand-100 text-brand-600 hover:bg-brand-50 transition-all font-inter"
                                 >
                                     <Plus size={18} /> Add New Page
-                                </button>
-
-                                <button
-                                    onClick={() => setShowSEOModal(true)}
-                                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold border border-brand-100 text-brand-600 hover:bg-brand-50 transition-all font-inter"
-                                >
-                                    <Globe size={18} /> SEO Settings
                                 </button>
 
                                 {isServicesPage && (
@@ -1141,39 +1186,47 @@ const PagesTab: React.FC = () => {
                         </div>
 
                         {/* Editor Content */}
-                        <div className="flex-1 overflow-auto bg-slate-50/20">
-                            {activeView === 'editor' && (
-                                <div className="max-w-4xl mx-auto p-12">
-                                    {loadingSections ? (
-                                        <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
-                                            <div className="w-10 h-10 border-4 border-slate-100 border-t-brand-600 rounded-full animate-spin" />
-                                            <p className="text-sm font-medium">Loading Page Content...</p>
-                                        </div>
-                                    ) : (
-                                        <div className="bg-white border border-slate-100 rounded-2xl p-10 shadow-sm shadow-slate-200/50">
-                                            <DynamicJsonEditor
-                                                data={parsedData}
-                                                onChange={handleDynamicChange}
-                                                label={selectedPage.slug}
-                                                level={0}
-                                            />
-                                        </div>
-                                    )}
+                        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+                            {activeView === 'content' && (
+                                <div className="flex-1 overflow-auto">
+                                    <div className="max-w-4xl mx-auto p-12">
+                                        {loadingSections ? (
+                                            <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
+                                                <div className="w-10 h-10 border-4 border-slate-100 border-t-brand-600 rounded-full animate-spin" />
+                                                <p className="text-sm font-medium">Loading Page Content...</p>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-white border border-slate-100 rounded-2xl p-10 shadow-sm shadow-slate-200/50">
+                                                <DynamicJsonEditor
+                                                    data={parsedData}
+                                                    onChange={handleDynamicChange}
+                                                    label={selectedPage.slug}
+                                                    level={0}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
+                            {activeView === 'seo' && (
+                                <PageSEOPanel
+                                    page={selectedPage}
+                                    onSave={handleSaveSEO}
+                                />
+                            )}
                             {activeView === 'json' && (
-                                <div className="h-full bg-[#1e1e1e]">
+                                <div className="flex-1 bg-[#1e1e1e] overflow-auto">
                                     <textarea
                                         title="JSON content"
                                         value={jsonInput}
                                         onChange={handleJsonChange}
-                                        className="w-full h-full p-8 font-mono text-sm leading-relaxed resize-none bg-transparent text-slate-300 focus:outline-none"
+                                        className="w-full h-full min-h-[400px] p-8 font-mono text-sm leading-relaxed resize-none bg-transparent text-slate-300 focus:outline-none"
                                         spellCheck={false}
                                     />
                                 </div>
                             )}
                             {activeView === 'preview' && (
-                                <div className="h-full">
+                                <div className="flex-1">
                                     <CMSPreviewPane url={extractPreviewUrl()} cmsContent={parsedData} pageName={selectedPage?.slug || ''} />
                                 </div>
                             )}
@@ -1218,14 +1271,6 @@ const PagesTab: React.FC = () => {
                 </div>
             )}
 
-            {/* SEO Settings Modal */}
-            {showSEOModal && selectedPage && (
-                <SEOSettingsModal
-                    page={selectedPage}
-                    onClose={() => setShowSEOModal(false)}
-                    onSave={handleSaveSEO}
-                />
-            )}
         </div>
     );
 };
