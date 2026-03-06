@@ -18,6 +18,27 @@ export const AdminLayout: React.FC = () => {
     } = useAdmin();
     const { cmsContent } = useCMS();
 
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    // UI State for Dropdowns
+    const [showRoleMenu, setShowRoleMenu] = useState(false);
+
+    // Sidebar State
+    const [expandedCMS, setExpandedCMS] = useState(true); // Default open for visibility
+
+    // CMS Sections State (Collapsible)
+    const [cmsSectionState, setCmsSectionState] = useState({
+        global: true,
+        collections: false,
+        pages: true,
+        footer: false
+    });
+
+    const toggleCmsSection = (section: keyof typeof cmsSectionState) => {
+        setCmsSectionState(prev => ({ ...prev, [section]: !prev[section] }));
+    };
+
     React.useEffect(() => {
         const isCMS = location.pathname.includes('/admin/cms');
 
