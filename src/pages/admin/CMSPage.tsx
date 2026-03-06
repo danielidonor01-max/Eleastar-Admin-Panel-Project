@@ -663,7 +663,6 @@ const SettingsTab: React.FC<{ section?: string }> = ({ section = 'GlobalSEO' }) 
     // ── Footer / content sub-section state ──
     const [footerParsed, setFooterParsed] = useState<any>({});
     const [footerDirty, setFooterDirty] = useState(false);
-    const [footerJsonError, setFooterJsonError] = useState<string | null>(null);
     const [loadingFooter, setLoadingFooter] = useState(false);
 
     // Slug map for footer/legal pages
@@ -770,7 +769,6 @@ const SettingsTab: React.FC<{ section?: string }> = ({ section = 'GlobalSEO' }) 
                                             data={footerParsed}
                                             onChange={(newData) => {
                                                 setFooterParsed(newData);
-                                                setFooterJson(JSON.stringify(newData, null, 2));
                                                 setFooterDirty(true);
                                             }}
                                             label={section}
