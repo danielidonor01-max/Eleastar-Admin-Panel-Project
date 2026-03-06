@@ -4,6 +4,7 @@ import { useCMS } from '../context/CMSContext';
 import { StickyHeader } from '../components/StickyHeader';
 import { BrandFooter } from '../components/BrandFooter';
 import { ContactUsCard } from '../components/cms/ContactUsCard';
+import { PageSEO } from '../components/cms/PageSEO';
 
 export const DynamicPage: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
@@ -59,6 +60,7 @@ export const DynamicPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-white flex flex-col font-sans">
+            <PageSEO slug={safeSlug} fallbackDescription={seoData?.description} />
             <StickyHeader />
 
             <main className="flex-grow w-full flex flex-col">

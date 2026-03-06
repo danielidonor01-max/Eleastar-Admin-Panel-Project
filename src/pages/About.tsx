@@ -4,6 +4,7 @@ import { StickyHeader } from '../components/StickyHeader';
 import { BrandFooter } from '../components/BrandFooter';
 import type { CMSAboutHeroData } from '../types/cms';
 import { ContactUsCard } from '../components/cms/ContactUsCard';
+import { PageSEO } from '../components/cms/PageSEO';
 
 const AboutHeroRenderer: React.FC<{ data: CMSAboutHeroData }> = ({ data }) => (
     <section className="relative h-[80vh] min-h-[600px] overflow-hidden bg-slate-900 text-white flex items-center">
@@ -36,6 +37,7 @@ export const About: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-white flex flex-col font-sans">
+            <PageSEO slug="about" />
             <StickyHeader />
             <main className="flex-grow w-full">
                 {aboutData?.aboutEleastarHeroData && <AboutHeroRenderer data={aboutData.aboutEleastarHeroData} />}

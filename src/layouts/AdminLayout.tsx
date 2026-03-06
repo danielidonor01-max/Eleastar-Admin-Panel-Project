@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, Settings, Globe, ChevronDown, ChevronRight, LogOut, Calendar, BarChart2, QrCode, Wallet, FileText, Check, Shield, TrendingUp, Gift, Activity, CheckSquare } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
-import { useCMS } from '../context/CMSContext';
 import { NotificationMenu } from '../components/NotificationMenu';
 import { GlobalSearchMenu } from '../components/GlobalSearchMenu';
 import type { AdminRole } from '../data/mockData';
@@ -16,7 +15,7 @@ export const AdminLayout: React.FC = () => {
         isAuthenticated,
         isLoading
     } = useAdmin();
-    const { cmsContent } = useCMS();
+    // const { cmsContent } = useCMS();
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -26,43 +25,16 @@ export const AdminLayout: React.FC = () => {
 
     // Sidebar State
     const [expandedCMS, setExpandedCMS] = useState(true); // Default open for visibility
+    const [expandedServices, setExpandedServices] = useState(false);
 
-    // CMS Sections State (Collapsible)
-    const [cmsSectionState, setCmsSectionState] = useState({
-        global: true,
-        collections: false,
-        pages: true,
-        footer: false
-    });
 
-    const toggleCmsSection = (section: keyof typeof cmsSectionState) => {
-        setCmsSectionState(prev => ({ ...prev, [section]: !prev[section] }));
-    };
 
     React.useEffect(() => {
         const isCMS = location.pathname.includes('/admin/cms');
-        const params = new URLSearchParams(location.search);
-        const page = params.get('page');
-
         if (isCMS) {
-            // Only auto-expand if we just arrived or if the page param changes
             setExpandedCMS(true);
-
-            // Auto-expand the correct section based on the page param
-            if (page) {
-                if (['GlobalNav', 'GlobalSEO'].includes(page)) {
-                    setCmsSectionState(prev => ({ ...prev, global: true }));
-                } else if (['ServicesCollection'].includes(page)) {
-                    setCmsSectionState(prev => ({ ...prev, collections: true }));
-                } else if (['FooterLayout', 'PrivacyPolicy', 'TermsOfService'].includes(page)) {
-                    setCmsSectionState(prev => ({ ...prev, footer: true }));
-                } else {
-                    // It's likely a page slug
-                    setCmsSectionState(prev => ({ ...prev, pages: true }));
-                }
-            }
         }
-    }, [location.pathname, location.search]);
+    }, [location.pathname]);
 
     if (isLoading) {
         return (
@@ -243,131 +215,125 @@ export const AdminLayout: React.FC = () => {
 
                                     {expandedCMS && (
                                         <div className="ml-5 mt-2 transition-all duration-300 ease-in-out">
-
-                                            {/* Global Settings */}
-                                            <div className="mb-1">
-                                                <button
-                                                    onClick={() => toggleCmsSection('global')}
-                                                    className="w-full flex items-center justify-between group px-1 mb-1 mt-3"
-                                                >
-                                                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest group-hover:text-slate-400 transition-colors">Global Settings</div>
-                                                    <ChevronDown size={10} className={`text-slate-600 transition-transform duration-200 ${cmsSectionState.global ? '' : '-rotate-90'}`} />
-                                                </button>
-
-                                                {cmsSectionState.global && (
-                                                    <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
-                                                        <NavLink to="/admin/cms?module=menus&page=GlobalNav" className={() => {
-                                                            const search = location.search;
-                                                            const active = search.includes('page=GlobalNav');
-                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                                        }}>
-                                                            Navigation Menu
-                                                        </NavLink>
-                                                        <NavLink to="/admin/cms?module=pages&page=GlobalSEO" className={() => {
-                                                            const search = location.search;
-                                                            const active = search.includes('page=GlobalSEO');
-                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                                        }}>
-                                                            SEO Defaults
-                                                        </NavLink>
-                                                    </div>
-                                                )}
+                                            {/* GLOBAL SETTINGS */}
+                                            <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-2 mt-4 px-1">Global Settings</div>
+                                            <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2 mb-4">
+                                                <NavLink to="/admin/cms?module=menus&page=GlobalNav" className={() => {
+                                                    const active = location.search.includes('page=GlobalNav');
+                                                    return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                }}>
+                                                    Navigation Menu
+                                                </NavLink>
+                                                <NavLink to="/admin/cms?module=pages&page=GlobalSEO" className={() => {
+                                                    const active = location.search.includes('page=GlobalSEO');
+                                                    return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                }}>
+                                                    SEO Defaults
+                                                </NavLink>
                                             </div>
 
-                                            {/* Collections */}
-                                            <div className="mb-1">
-                                                <button
-                                                    onClick={() => toggleCmsSection('collections')}
-                                                    className="w-full flex items-center justify-between group px-1 mb-1 mt-3"
-                                                >
-                                                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest group-hover:text-slate-400 transition-colors">Collections</div>
-                                                    <ChevronDown size={10} className={`text-slate-600 transition-transform duration-200 ${cmsSectionState.collections ? '' : '-rotate-90'}`} />
-                                                </button>
+                                            {/* PAGES */}
+                                            <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-2 mt-4 px-1">Pages</div>
+                                            <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2 mb-4">
+                                                <NavLink to="/admin/cms?module=pages&page=home" className={() => {
+                                                    const active = location.search.includes('page=home') || (!location.search.includes('page=') && location.pathname.includes('/admin/cms'));
+                                                    return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                }}>
+                                                    Home
+                                                </NavLink>
 
-                                                {cmsSectionState.collections && (
-                                                    <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
-                                                        <NavLink to="/admin/cms?module=pages&page=ServicesCollection" className={() => {
-                                                            const search = location.search;
-                                                            const active = search.includes('page=ServicesCollection');
-                                                            return `flex items-center gap-2 px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                                        }}>
-                                                            <FileText size={14} className="opacity-70" />
-                                                            Services
-                                                        </NavLink>
-                                                    </div>
-                                                )}
+                                                <div className="relative">
+                                                    <button
+                                                        onClick={() => setExpandedServices(!expandedServices)}
+                                                        className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-md transition-all ${location.search.includes('page=services') || location.search.includes('page=information-technology') || location.search.includes('page=research-and-development') || location.search.includes('page=electronics-manufacturing') || location.search.includes('page=cloud-solutions') ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                                                    >
+                                                        <span>Services</span>
+                                                        {expandedServices ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                                                    </button>
+
+                                                    {expandedServices && (
+                                                        <div className="ml-3 mt-1 space-y-0.5 border-l border-slate-700">
+                                                            <NavLink to="/admin/cms?module=pages&page=services" className={() => {
+                                                                const active = location.search.includes('page=services');
+                                                                return `block px-3 py-1.5 text-[11px] rounded-md transition-all ${active ? 'text-brand-300 font-medium' : 'text-slate-500 hover:text-slate-300'}`;
+                                                            }}>
+                                                                Overview
+                                                            </NavLink>
+                                                            <NavLink to="/admin/cms?module=pages&page=information-technology" className={() => {
+                                                                const active = location.search.includes('page=information-technology');
+                                                                return `block px-3 py-1.5 text-[11px] rounded-md transition-all ${active ? 'text-brand-300 font-medium' : 'text-slate-500 hover:text-slate-300'}`;
+                                                            }}>
+                                                                Information Technology
+                                                            </NavLink>
+                                                            <NavLink to="/admin/cms?module=pages&page=research-and-development" className={() => {
+                                                                const active = location.search.includes('page=research-and-development');
+                                                                return `block px-3 py-1.5 text-[11px] rounded-md transition-all ${active ? 'text-brand-300 font-medium' : 'text-slate-500 hover:text-slate-300'}`;
+                                                            }}>
+                                                                Research & Development
+                                                            </NavLink>
+                                                            <NavLink to="/admin/cms?module=pages&page=electronics-manufacturing" className={() => {
+                                                                const active = location.search.includes('page=electronics-manufacturing');
+                                                                return `block px-3 py-1.5 text-[11px] rounded-md transition-all ${active ? 'text-brand-300 font-medium' : 'text-slate-500 hover:text-slate-300'}`;
+                                                            }}>
+                                                                Electronics Manufacturing
+                                                            </NavLink>
+                                                            <NavLink to="/admin/cms?module=pages&page=cloud-solutions" className={() => {
+                                                                const active = location.search.includes('page=cloud-solutions');
+                                                                return `block px-3 py-1.5 text-[11px] rounded-md transition-all ${active ? 'text-brand-300 font-medium' : 'text-slate-500 hover:text-slate-300'}`;
+                                                            }}>
+                                                                Cloud Solutions
+                                                            </NavLink>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <NavLink to="/admin/cms?module=pages&page=technology" className={() => {
+                                                    const active = location.search.includes('page=technology');
+                                                    return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                }}>
+                                                    Technologies
+                                                </NavLink>
+                                                <NavLink to="/admin/cms?module=pages&page=eleastar-and-you" className={() => {
+                                                    const active = location.search.includes('page=eleastar-and-you');
+                                                    return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                }}>
+                                                    Eleastar & You
+                                                </NavLink>
+                                                <NavLink to="/admin/cms?module=pages&page=about-eleastar" className={() => {
+                                                    const active = location.search.includes('page=about-eleastar');
+                                                    return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                }}>
+                                                    About Eleastar
+                                                </NavLink>
+                                                <NavLink to="/admin/cms?module=pages&page=contact-us" className={() => {
+                                                    const active = location.search.includes('page=contact-us');
+                                                    return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                }}>
+                                                    Contact Us
+                                                </NavLink>
                                             </div>
 
-                                            {/* Pages */}
-                                            <div className="mb-1">
-                                                <button
-                                                    onClick={() => toggleCmsSection('pages')}
-                                                    className="w-full flex items-center justify-between group px-1 mb-1 mt-3"
-                                                >
-                                                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest group-hover:text-slate-400 transition-colors">Pages</div>
-                                                    <ChevronDown size={10} className={`text-slate-600 transition-transform duration-200 ${cmsSectionState.pages ? '' : '-rotate-90'}`} />
-                                                </button>
-
-                                                {cmsSectionState.pages && (
-                                                    <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
-                                                        {Object.keys(cmsContent?.pages || {}).map((pageSlug) => {
-                                                            const isHome = pageSlug.toLowerCase() === 'home';
-                                                            const displayLabel = isHome ? 'Home' : pageSlug.charAt(0).toUpperCase() + pageSlug.slice(1).replace(/-/g, ' ');
-
-                                                            return (
-                                                                <NavLink
-                                                                    key={pageSlug}
-                                                                    to={`/admin/cms?module=pages&page=${pageSlug}`}
-                                                                    className={() => {
-                                                                        const search = location.search;
-                                                                        const active = isHome ? (!search || search.includes(`page=${pageSlug}`)) : search.includes(`page=${pageSlug}`);
-                                                                        return `block px-2 py-1.5 text-xs rounded-md capitalize transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                                                    }}
-                                                                >
-                                                                    {displayLabel}
-                                                                </NavLink>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Footer */}
-                                            <div className="mb-1">
-                                                <button
-                                                    onClick={() => toggleCmsSection('footer')}
-                                                    className="w-full flex items-center justify-between group px-1 mb-1 mt-3"
-                                                >
-                                                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest group-hover:text-slate-400 transition-colors">Footer</div>
-                                                    <ChevronDown size={10} className={`text-slate-600 transition-transform duration-200 ${cmsSectionState.footer ? '' : '-rotate-90'}`} />
-                                                </button>
-
-                                                {cmsSectionState.footer && (
-                                                    <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
-                                                        <NavLink to="/admin/cms?module=pages&page=FooterLayout" className={() => {
-                                                            const search = location.search;
-                                                            const active = search.includes('page=FooterLayout');
-                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                                        }}>
-                                                            Footer Layout
-                                                        </NavLink>
-                                                        <div className="mt-2 mb-1 pl-2 text-[10px] text-slate-600 font-medium tracking-wide">LEGAL PAGES</div>
-                                                        <NavLink to="/admin/cms?module=pages&page=PrivacyPolicy" className={() => {
-                                                            const search = location.search;
-                                                            const active = search.includes('page=PrivacyPolicy');
-                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                                        }}>
-                                                            Privacy Policy
-                                                        </NavLink>
-                                                        <NavLink to="/admin/cms?module=pages&page=TermsOfService" className={() => {
-                                                            const search = location.search;
-                                                            const active = search.includes('page=TermsOfService');
-                                                            return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                                        }}>
-                                                            Terms of Service
-                                                        </NavLink>
-                                                    </div>
-                                                )}
+                                            {/* FOOTER */}
+                                            <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-2 mt-4 px-1">Footer</div>
+                                            <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2 mb-4">
+                                                <NavLink to="/admin/cms?module=pages&page=FooterLayout" className={() => {
+                                                    const active = location.search.includes('page=FooterLayout');
+                                                    return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                }}>
+                                                    Footer Layout
+                                                </NavLink>
+                                                <NavLink to="/admin/cms?module=pages&page=PrivacyPolicy" className={() => {
+                                                    const active = location.search.includes('page=PrivacyPolicy');
+                                                    return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                }}>
+                                                    Privacy Policy
+                                                </NavLink>
+                                                <NavLink to="/admin/cms?module=pages&page=TermsOfService" className={() => {
+                                                    const active = location.search.includes('page=TermsOfService');
+                                                    return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
+                                                }}>
+                                                    Terms of Service
+                                                </NavLink>
                                             </div>
                                         </div>
                                     )}

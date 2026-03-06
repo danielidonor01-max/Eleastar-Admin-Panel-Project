@@ -4,6 +4,7 @@ import { StickyHeader } from '../components/StickyHeader';
 import { BrandFooter } from '../components/BrandFooter';
 import type { CMSServicesListData, CMSServiceItemData } from '../types/cms';
 import { ContactUsCard } from '../components/cms/ContactUsCard';
+import { PageSEO } from '../components/cms/PageSEO';
 
 const ServiceListHero: React.FC<{ data: CMSServicesListData }> = ({ data }) => {
     return (
@@ -63,6 +64,7 @@ export const Services: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-white font-sans flex flex-col">
+            <PageSEO slug="services" />
             <StickyHeader />
             <main className="flex-grow w-full">
                 {servicesListData.map((serviceGroup, idx) => (

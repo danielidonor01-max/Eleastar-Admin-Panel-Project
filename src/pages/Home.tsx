@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import type { CMSHomeHeroCardData } from '../types/cms';
 import { ContactUsCard } from '../components/cms/ContactUsCard';
+import { PageSEO } from '../components/cms/PageSEO';
 
 const HeroRenderer: React.FC<{ cards: CMSHomeHeroCardData[] }> = ({ cards }) => {
     const [activeIndex, setActiveIndex] = useState(0);
@@ -99,6 +100,7 @@ export const Home: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-white flex flex-col font-sans selection:bg-brand-200">
+            <PageSEO slug="home" />
             <StickyHeader />
             <main className="flex-grow w-full">
                 {homeData?.heroCardData && <HeroRenderer cards={homeData.heroCardData} />}

@@ -13,24 +13,26 @@ export interface CMSContextType {
     apiKeys: SystemApiKey[];
 
     // New CMS Actions (Pages & Menus)
-    createCMSPage: (payload: any) => Promise<void>;
-    updateCMSPage: (slug: string, payload: any) => Promise<void>;
-    deleteCMSPage: (slug: string) => Promise<void>;
-    updateCMSPageStatus: (slug: string, status: 'live' | 'draft') => Promise<void>;
+    createCMSPage: (payload: any) => Promise<any>;
+    updateCMSPage: (slug: string, payload: any) => Promise<any>;
+    deleteCMSPage: (slug: string) => Promise<any>;
+    updateCMSPageStatus: (slug: string, status: 'live' | 'draft') => Promise<any>;
     getPageSections: (slug: string) => Promise<any>;
-    updatePMSContent: (id: string, content: any) => Promise<void>;
-    createCMSSection: (payload: any) => Promise<void>;
-    deleteCMSSection: (sectionId: string | number) => Promise<void>;
+    updatePMSContent: (id: string, content: any) => Promise<any>;
+    createCMSSection: (payload: any) => Promise<any>;
+    deleteCMSSection: (sectionId: string | number) => Promise<any>;
 
     getCMSMenus: () => Promise<any>;
     getMenuWithItems: (key: string) => Promise<any>;
-    createMenuItem: (payload: any) => Promise<void>;
-    updateMenuItem: (id: string | number, payload: any) => Promise<void>;
-    deleteMenuItem: (id: string | number) => Promise<void>;
-    updateMenuItemVisibility: (id: string | number, is_visible: boolean) => Promise<void>;
+    createMenuItem: (payload: any) => Promise<any>;
+    updateMenuItem: (id: string | number, payload: any) => Promise<any>;
+    deleteMenuItem: (id: string | number) => Promise<any>;
+    updateMenuItemVisibility: (id: string | number, is_visible: boolean) => Promise<any>;
 
-    updateFooterContent: (section: keyof FooterContent, data: Partial<FooterSection>) => Promise<void>;
-    updateGlobal: (section: keyof GlobalContent, data: any) => Promise<void>;
+    updateFooterContent: (section: keyof FooterContent, data: Partial<FooterSection>) => Promise<any>;
+    updateGlobal: (section: keyof GlobalContent, data: any) => Promise<any>;
+    updateSEOMetadata: (slug: string, payload: any) => Promise<any>;
+    refreshCMSData: () => Promise<void>;
 
     // API Keys Management
     addApiKey: (apiKey: Omit<SystemApiKey, 'id' | 'tenantId' | 'createdAt' | 'status'>) => void;
@@ -40,7 +42,7 @@ export interface CMSContextType {
 const CMSContext = createContext<CMSContextType | undefined>(undefined);
 
 export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [cmsContent] = useState<CMSData | null>(null);
+    const [cmsContent, setCmsContent] = useState<CMSData | null>(null);
     const [footerContent, setFooterContent] = useState<FooterContent>(initialFooterContent);
     const [globalContent, setGlobalContent] = useState<GlobalContent>(initialGlobalContent);
     const [apiKeys, setApiKeys] = useState<SystemApiKey[]>(initialApiKeys);
@@ -59,24 +61,31 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 if (!isMounted) return;
 
                 if (menusRes.success && menusRes.data) {
-                    const headerMenu = menusRes.data.find((m: any) => m.key === 'header');
+                    const menusArray = Array.isArray(menusRes.data)
+                        ? menusRes.data
+                        : Object.values(menusRes.data);
+
+                    const headerMenu: any = menusArray.find((m: any) => m.key === 'header');
 
                     if (headerMenu) {
                         setGlobalContent(prev => ({
                             ...prev,
                             navigation: (headerMenu.items || []).map((item: any) => ({
                                 id: String(item.id),
-                                label: item.title,
+                                label: item.title || item.label,
                                 path: item.url,
-                                isVisible: item.is_visible
+                                isVisible: item.is_visible !== false
                             }))
                         }));
                     }
                 }
 
-                if (settingsRes.success && settingsRes.data) {
-                    // Placeholder for future footer dynamic binding
+                // Fetch metadata/pages if in portal context or fallback
+                const pagesRes = await cmsService.getCMSPages();
+                if (pagesRes.success && pagesRes.data) {
+                    setCmsContent(pagesRes.data);
                 }
+
             } catch (err) {
                 console.error("Failed to load CMS layout structure", err);
             }
@@ -85,16 +94,24 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return () => { isMounted = false; };
     }, []);
 
+    const refreshCMSData = async () => {
+        const res = await cmsService.getCMSPages();
+        if (res.success && res.data) {
+            setCmsContent(res.data);
+        }
+    };
+
     // ---- CMS Pages ----
     const createCMSPage = async (payload: any) => {
         const res = await cmsService.createCMSPage(payload);
         if (res.success) {
-            // Optionally refresh list or update state
+            await refreshCMSData();
         }
+        return res;
     };
-    const updateCMSPage = async (slug: string, payload: any) => { await cmsService.updateCMSPage(slug, payload); };
-    const deleteCMSPage = async (slug: string) => { await cmsService.deleteCMSPage(slug); };
-    const updateCMSPageStatus = async (slug: string, status: 'live' | 'draft') => { await cmsService.updateCMSPageStatus(slug, status); };
+    const updateCMSPage = async (slug: string, payload: any) => { return await cmsService.updateCMSPage(slug, payload); };
+    const deleteCMSPage = async (slug: string) => { return await cmsService.deleteCMSPage(slug); };
+    const updateCMSPageStatus = async (slug: string, status: 'live' | 'draft') => { return await cmsService.updateCMSPageStatus(slug, status); };
 
     // ---- CMS Sections ----
     const getPageSections = async (slug: string) => { return await cmsService.getPageSections(slug); };
@@ -113,9 +130,11 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // ---- Footer & Global ----
     const updateFooterContent = async (section: keyof FooterContent, data: Partial<FooterSection>) => {
         setFooterContent(prev => ({ ...prev, [section]: { ...prev[section], ...data } }));
+        return { success: true };
     };
     const updateGlobal = async (section: keyof GlobalContent, data: any) => {
         setGlobalContent(prev => ({ ...prev, [section]: data }));
+        return { success: true };
     };
 
     // ---- API Keys ----
@@ -133,13 +152,22 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setApiKeys(prev => prev.map(key => key.id === id ? { ...key, status: key.status === 'active' ? 'disabled' : 'active' } : key));
     };
 
+    const updateSEOMetadata = async (slug: string, payload: any) => {
+        const res = await cmsService.updateCMSPage(slug, payload); // Using updateCMSPage as it handles meta fields
+        if (res.success) {
+            await refreshCMSData();
+        }
+        return res;
+    };
+
     return (
         <CMSContext.Provider value={{
             cmsContent, footerContent, globalContent, apiKeys,
             createCMSPage, updateCMSPage, deleteCMSPage, updateCMSPageStatus,
             getPageSections, updatePMSContent, createCMSSection, deleteCMSSection,
             getCMSMenus, getMenuWithItems, createMenuItem, updateMenuItem, deleteMenuItem, updateMenuItemVisibility,
-            updateFooterContent, updateGlobal, addApiKey, toggleApiKeyStatus, setFooterContent
+            updateFooterContent, updateGlobal, addApiKey, toggleApiKeyStatus, setFooterContent,
+            updateSEOMetadata, refreshCMSData
         }}>
             {children}
         </CMSContext.Provider>

@@ -1,10 +1,12 @@
 import React from 'react';
 import { StickyHeader } from '../components/StickyHeader';
 import { BrandFooter } from '../components/BrandFooter';
+import { PageSEO } from '../components/cms/PageSEO';
 
 export const Technologies: React.FC = () => {
     return (
         <div className="min-h-screen bg-white flex flex-col font-sans">
+            <PageSEO slug="technologies" />
             <StickyHeader />
             <main className="flex-grow w-full max-w-7xl mx-auto px-6 py-20">
                 <h1 className="text-4xl font-bold mb-6">Our Technologies</h1>

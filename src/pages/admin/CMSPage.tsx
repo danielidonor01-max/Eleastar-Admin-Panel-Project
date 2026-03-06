@@ -4,9 +4,9 @@ import { useCMS } from '../../context/CMSContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import {
     Save, AlertCircle, CheckCircle, Eye, Layout, FileCode, Plus, X,
-    ChevronRight, ToggleLeft, ToggleRight,
+    ToggleLeft, ToggleRight,
     Trash2, Key, Globe, FolderOpen, Menu,
-    EyeOff, PlusCircle, RefreshCw, Copy, Edit2, FileText, Lock
+    EyeOff, PlusCircle, RefreshCw, Copy, Edit2, Lock as LockIcon
 } from 'lucide-react';
 import { DynamicJsonEditor } from '../../components/DynamicJsonEditor';
 import { CMSPreviewPane } from '../../components/CMSPreviewPane';
@@ -16,9 +16,9 @@ import { cmsService } from '../../services/cmsService';
 // ──────────────────────────────────────────────
 // Sub-module types
 // ──────────────────────────────────────────────
-type CMSModule = 'pages' | 'menus' | 'apikeys';
+export type CMSModule = 'pages' | 'menus' | 'apikeys' | 'settings';
 
-interface CMSApiKey {
+export interface CMSApiKey {
     id: string | number;
     name: string;
     key?: string;
@@ -26,7 +26,7 @@ interface CMSApiKey {
     created_at?: string;
 }
 
-interface CMSMenuItem {
+export interface CMSMenuItem {
     id: string | number;
     label: string;
     url: string;
@@ -36,14 +36,14 @@ interface CMSMenuItem {
     children?: CMSMenuItem[];
 }
 
-interface CMSMenu {
+export interface CMSMenu {
     id: string | number;
     name: string;
     key: string;
     items?: CMSMenuItem[];
 }
 
-interface CMSPageItem {
+export interface CMSPageItem {
     id?: string | number;
     title: string;
     slug: string;
@@ -56,6 +56,138 @@ interface CMSPageItem {
 // ──────────────────────────────────────────────
 // Helper: copy to clipboard
 // ──────────────────────────────────────────────
+// ──────────────────────────────────────────────
+// SEO Settings Modal
+// ──────────────────────────────────────────────
+const SEOSettingsModal: React.FC<{
+    page: CMSPageItem;
+    onClose: () => void;
+    onSave: (payload: any) => Promise<void>;
+}> = ({ page, onClose, onSave }) => {
+    const [title, setTitle] = useState(page.meta_title || '');
+    const [description, setDescription] = useState(page.meta_description || '');
+    const [keywords, setKeywords] = useState((page as any).meta_keywords || '');
+    const [author, setAuthor] = useState((page as any).meta_author || 'Eleastar Technologies Ltd.');
+
+    // OG Tags
+    const [ogTitle, setOgTitle] = useState((page as any).og_title || '');
+    const [ogDescription, setOgDescription] = useState((page as any).og_description || '');
+    const [ogImageUrl, setOgImageUrl] = useState((page as any).og_image_url || '');
+
+    const [saving, setSaving] = useState(false);
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            await onSave({
+                meta_title: title,
+                meta_description: description,
+                meta_keywords: keywords,
+                meta_author: author,
+                og_title: ogTitle,
+                og_description: ogDescription,
+                og_image_url: ogImageUrl
+            });
+            onClose();
+        } catch { /* error handled by parent */ } finally { setSaving(false); }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-800">SEO & Social Metadata</h3>
+                        <p className="text-xs text-slate-500 font-inter">Configure how "{page.slug}" appears in search engines and social media.</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors" title="Close">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-auto p-6 space-y-8">
+                    {/* Search Engine Result Preview */}
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                        <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider mb-2 block font-inter">Google Search Preview</span>
+                        <div className="space-y-1">
+                            <div className="text-[#1a0dab] text-xl hover:underline cursor-pointer truncate font-inter">{title || page.title || 'Page Title'}</div>
+                            <div className="text-[#006621] text-sm truncate font-inter">eleastar.com › {page.slug}</div>
+                            <div className="text-[#545454] text-sm line-clamp-2 leading-relaxed font-inter">
+                                {description || 'No description provided. This is how your page will appear in search results.'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Meta Section */}
+                        <div className="space-y-4">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <Globe size={14} /> Basic SEO
+                            </h4>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1 font-inter uppercase tracking-tight">Focus Keywords</label>
+                                    <input value={keywords} onChange={e => setKeywords(e.target.value)} placeholder="e.g. technology, innovation, Nigeria" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all font-inter" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1 font-inter uppercase tracking-tight">Author / Publisher</label>
+                                    <input value={author} onChange={e => setAuthor(e.target.value)} placeholder="Author" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all font-inter" />
+                                </div>
+                                <div className="pt-2">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1 font-inter uppercase tracking-tight">Meta Title Override</label>
+                                    <input value={title} onChange={e => setTitle(e.target.value)} placeholder={page.title} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all font-inter" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1 font-inter uppercase tracking-tight">Meta Description</label>
+                                    <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Brief summary of the page content..." className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all resize-none font-inter" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Social Section */}
+                        <div className="space-y-4">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <Eye size={14} /> Social Share (OG)
+                            </h4>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1 font-inter uppercase tracking-tight">OG Image URL</label>
+                                    <div className="flex gap-2">
+                                        <input value={ogImageUrl} onChange={e => setOgImageUrl(e.target.value)} placeholder="/images/share.jpg" className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all font-inter" />
+                                        {ogImageUrl && <img src={ogImageUrl} alt="Preview" className="w-10 h-10 rounded border border-slate-200 object-cover" />}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1 font-inter uppercase tracking-tight">OG Title</label>
+                                    <input value={ogTitle} onChange={e => setOgTitle(e.target.value)} placeholder={title || page.title} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all font-inter" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1 font-inter uppercase tracking-tight">OG Description</label>
+                                    <textarea value={ogDescription} onChange={e => setOgDescription(e.target.value)} rows={3} placeholder={description || "Social description..."} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all resize-none font-inter" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="px-6 py-4 border-t border-slate-100 flex gap-3 justify-end bg-slate-50/50">
+                    <button onClick={onClose} disabled={saving} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors">
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="px-6 py-2 bg-brand-600 text-white text-sm font-bold rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-all shadow-md shadow-brand-100 flex items-center gap-2 font-inter"
+                    >
+                        {saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
+                        Save SEO Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 function copyToClipboard(text: string, onDone?: () => void) {
     navigator.clipboard.writeText(text).then(() => onDone && onDone());
 }
@@ -188,7 +320,7 @@ const ApiKeysTab: React.FC = () => {
                     <div className="p-8 text-center text-slate-400 text-sm">Loading...</div>
                 ) : keys.length === 0 ? (
                     <div className="p-8 text-center text-slate-400 text-sm flex flex-col items-center gap-2">
-                        <Lock size={32} className="text-slate-300" />
+                        <LockIcon size={32} className="text-slate-300" />
                         No API keys yet. Create one above.
                     </div>
                 ) : (
@@ -514,14 +646,125 @@ const MenuBuilderTab: React.FC = () => {
 };
 
 // ──────────────────────────────────────────────
+// Global Settings Tab
+// ──────────────────────────────────────────────
+const SettingsTab: React.FC = () => {
+    const { globalContent, updateGlobal } = useCMS();
+    const { showSuccess, showError } = useFeedback();
+
+    // Local State for forms
+    const [siteName, setSiteName] = useState(globalContent.siteName || '');
+    const [metaDesc, setMetaDesc] = useState(globalContent.metaDescription || '');
+    const [metaKeys, setMetaKeys] = useState(globalContent.metaKeywords || '');
+    const [saving, setSaving] = useState(false);
+
+    const handleSaveSEO = async () => {
+        setSaving(true);
+        try {
+            await updateGlobal('siteName', siteName);
+            await updateGlobal('metaDescription', metaDesc);
+            await updateGlobal('metaKeywords', metaKeys);
+            showSuccess({ title: 'Settings Saved', message: 'Global SEO defaults updated.' });
+        } catch (e: any) {
+            showError({ title: 'Save Failed', message: e.message });
+        } finally { setSaving(false); }
+    };
+
+    return (
+        <div className="h-full flex flex-col bg-slate-50 p-6 overflow-auto">
+            <div className="max-w-4xl mx-auto w-full space-y-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 className="text-2xl font-bold text-slate-800">Global Settings</h2>
+                        <p className="text-slate-500 text-sm">Configure site-wide defaults and core business information.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* SEO Card */}
+                    <div className="md:col-span-2 space-y-6">
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                                <Globe size={18} className="text-brand-600" />
+                                <h3 className="font-bold text-slate-800">Global SEO Defaults</h3>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1 tracking-tight">Default Site Name</label>
+                                    <input value={siteName} onChange={e => setSiteName(e.target.value)} placeholder="Eleastar" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none transition-all" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1 tracking-tight">Default Meta Description</label>
+                                    <textarea value={metaDesc} onChange={e => setMetaDesc(e.target.value)} rows={3} placeholder="Provide a site-wide fallback description..." className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none transition-all resize-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1 tracking-tight">Global Keywords</label>
+                                    <input value={metaKeys} onChange={e => setMetaKeys(e.target.value)} placeholder="ERP, Workforce, Innovation" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none transition-all" />
+                                </div>
+                                <div className="pt-4">
+                                    <button
+                                        onClick={handleSaveSEO}
+                                        disabled={saving}
+                                        className="px-6 py-2 bg-brand-600 text-white text-sm font-bold rounded-lg hover:bg-brand-700 transition-all flex items-center gap-2 shadow-sm"
+                                    >
+                                        {saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
+                                        Save Default SEO
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Search Preview Tooltip */}
+                        <div className="bg-brand-900 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-10">
+                                <AlertCircle size={80} />
+                            </div>
+                            <div className="relative z-10">
+                                <h4 className="text-lg font-bold mb-2">SEO Tip</h4>
+                                <p className="text-brand-100 text-sm leading-relaxed mb-4">
+                                    Individual page settings will ALWAYS override these defaults. Use this section for content that should appear when a specific page hasn't been configured yet.
+                                </p>
+                                <div className="bg-white/10 rounded-lg p-3 text-xs font-mono">
+                                    Current Template: siteName | pageTitle
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Quick Info Sidebar */}
+                    <div className="space-y-6">
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                            <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Layout size={18} /> Asset Defaults</h4>
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between group cursor-pointer">
+                                    <span className="text-sm text-slate-600">Favicon</span>
+                                    <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 group-hover:bg-brand-50 transition-all">
+                                        <Edit2 size={16} />
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between group cursor-pointer">
+                                    <span className="text-sm text-slate-600">Site Logo</span>
+                                    <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 group-hover:bg-brand-50 transition-all">
+                                        <Edit2 size={16} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ──────────────────────────────────────────────
 // Pages Manager Tab
 // ──────────────────────────────────────────────
 const PagesTab: React.FC = () => {
-    const { updatePMSContent, createCMSPage, deleteCMSPage, updateCMSPageStatus } = useCMS();
+    const { updatePMSContent, createCMSPage, deleteCMSPage, updateCMSPageStatus, updateSEOMetadata } = useCMS();
     const { showSuccess, showError } = useFeedback();
 
     const [pages, setPages] = useState<CMSPageItem[]>([]);
-    const [loading, setLoading] = useState(false);
     const [selectedPage, setSelectedPage] = useState<CMSPageItem | null>(null);
     const [loadingSections, setLoadingSections] = useState(false);
     const [activeView, setActiveView] = useState<'editor' | 'preview' | 'json'>('editor');
@@ -531,42 +774,21 @@ const PagesTab: React.FC = () => {
     const [jsonError, setJsonError] = useState<string | null>(null);
 
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showSEOModal, setShowSEOModal] = useState(false);
     const [newTitle, setNewTitle] = useState('');
     const [newSlug, setNewSlug] = useState('');
-    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({ services: true, technologies: true });
-
-    // Hierarchy Configuration
-    const HIERARCHY = {
-        services: ['information-technology', 'research-and-development', 'electronics-manufacturing', 'cloud-solutions'],
-        technologies: ['technology'] // Add others as they appear
-    };
-
-    const TOP_LEVEL_ORDER = ['home', 'services', 'technologies', 'eleastar-and-you', 'about-eleastar', 'contact-us'];
-
-    const toggleGroup = (group: string) => {
-        setExpandedGroups(prev => ({ ...prev, [group]: !prev[group] }));
-    };
 
     const PREVIEW_URL = PUBLIC_LINK || window.location.origin;
 
     const loadPages = useCallback(async () => {
-        setLoading(true);
         try {
             const res = await cmsService.getCMSPages();
             if (res.success && res.data) {
                 const raw = Array.isArray(res.data) ? res.data : (res.data as any)?.data || [];
                 setPages(raw);
-
-                // Initial deep-link selection
-                const params = new URLSearchParams(window.location.search);
-                const pageParam = params.get('page');
-                if (pageParam && !selectedPage) {
-                    const target = raw.find((p: any) => p.slug === pageParam);
-                    if (target) setSelectedPage(target);
-                }
             }
-        } catch { } finally { setLoading(false); }
-    }, [selectedPage]);
+        } catch { }
+    }, []);
 
     const loadSections = useCallback(async (slug: string) => {
         setLoadingSections(true);
@@ -589,6 +811,8 @@ const PagesTab: React.FC = () => {
             if (target && target.slug !== selectedPage?.slug) {
                 setSelectedPage(target);
             }
+        } else if (!pageParam && selectedPage) {
+            setSelectedPage(null);
         }
     }, [location.search, pages, selectedPage]);
 
@@ -597,12 +821,6 @@ const PagesTab: React.FC = () => {
     useEffect(() => {
         if (selectedPage) loadSections(selectedPage.slug);
     }, [selectedPage, loadSections]);
-
-    const handleSelectPage = (page: CMSPageItem) => {
-        setSelectedPage(page);
-        setIsDirty(false);
-        setJsonError(null);
-    };
 
     const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setJsonInput(e.target.value);
@@ -624,37 +842,59 @@ const PagesTab: React.FC = () => {
         if (!selectedPage || jsonError) return;
         try {
             await updatePMSContent(selectedPage.slug, parsedData);
-            showSuccess({ title: 'Saved', message: `${selectedPage.title} sections updated.` });
+            showSuccess({ title: 'Published', message: `${selectedPage.title} changes are now live.` });
             setIsDirty(false);
-        } catch (e: any) { showError({ title: 'Save Failed', message: e.message }); }
+        } catch (e: any) { showError({ title: 'Publish Failed', message: e.message }); }
     };
 
     const handleCreate = async () => {
         if (!newTitle || !newSlug) return;
         try {
-            await createCMSPage({ title: newTitle, slug: newSlug.toLowerCase().replace(/\s+/g, '-') });
-            setShowCreateModal(false); setNewTitle(''); setNewSlug('');
-            await loadPages();
-        } catch { }
+            const res = await createCMSPage({ title: newTitle, slug: newSlug.toLowerCase().replace(/\s+/g, '-') });
+            if (res.success) {
+                setShowCreateModal(false); setNewTitle(''); setNewSlug('');
+                await loadPages();
+                showSuccess({ title: 'Page Created', message: `Page "${newTitle}" has been added.` });
+            } else {
+                showError({ title: 'Creation Failed', message: res.error || 'Unable to create page.' });
+            }
+        } catch (e: any) { showError({ title: 'Error', message: e.message }); }
     };
 
     const handleDelete = async (slug: string) => {
         if (!window.confirm(`Delete page "${slug}"? This cannot be undone.`)) return;
         try {
-            await deleteCMSPage(slug);
-            setPages(prev => prev.filter(p => p.slug !== slug));
-            if (selectedPage?.slug === slug) setSelectedPage(null);
-            showSuccess({ title: 'Deleted', message: `Page removed.` });
+            const res = await deleteCMSPage(slug);
+            if (res.success) {
+                setPages(prev => prev.filter(p => p.slug !== slug));
+                if (selectedPage?.slug === slug) setSelectedPage(null);
+                showSuccess({ title: 'Deleted', message: `Page removed.` });
+            }
         } catch (e: any) { showError({ title: 'Error', message: e.message }); }
     };
 
     const handleToggleStatus = async (page: CMSPageItem) => {
         const next = page.status === 'live' ? 'draft' : 'live';
         try {
-            await updateCMSPageStatus(page.slug, next);
-            setPages(prev => prev.map(p => p.slug === page.slug ? { ...p, status: next } : p));
-            showSuccess({ title: 'Status Updated', message: `Page set to ${next}.` });
+            const res = await updateCMSPageStatus(page.slug, next);
+            if (res.success) {
+                setPages(prev => prev.map(p => p.slug === page.slug ? { ...p, status: next } : p));
+                showSuccess({ title: 'Status Updated', message: `Page set to ${next}.` });
+            }
         } catch (e: any) { showError({ title: 'Error', message: e.message }); }
+    };
+
+    const handleSaveSEO = async (payload: any) => {
+        if (!selectedPage) return;
+        try {
+            const res = await updateSEOMetadata(selectedPage.slug, payload);
+            if (res.success) {
+                showSuccess({ title: 'SEO Updated', message: 'Metadata has been saved successfully.' });
+                await loadPages(); // Refresh the list to get new SEO values
+            }
+        } catch (e: any) {
+            showError({ title: 'SEO Save Failed', message: e.message });
+        }
     };
 
     const extractPreviewUrl = () => {
@@ -664,204 +904,124 @@ const PagesTab: React.FC = () => {
         return `${PREVIEW_URL}/${slug}`;
     };
 
+    const isServicesPage = selectedPage?.slug === 'services' ||
+        ['information-technology', 'research-and-development', 'electronics-manufacturing', 'cloud-solutions'].includes(selectedPage?.slug || '');
+
     return (
-        <div className="flex h-[calc(100vh-200px)]">
-            {/* Page List Sidebar */}
-            <div className="w-64 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
-                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase text-slate-500 tracking-wider">Pages</span>
-                    <button
-                        onClick={() => setShowCreateModal(true)}
-                        className="w-6 h-6 rounded-full bg-brand-600 text-white flex items-center justify-center hover:bg-brand-700 transition-colors"
-                        title="New Page"
-                    >
-                        <Plus size={12} />
-                    </button>
+        <div className="flex flex-col h-full bg-white">
+            {/* Website CMS Header */}
+            <div className="px-8 py-6 flex-shrink-0">
+                <div className="flex items-center justify-between mb-1">
+                    <h1 className="text-2xl font-bold text-slate-900">Website CMS</h1>
                 </div>
-                {loading ? (
-                    <div className="p-4 text-center text-slate-400 text-sm">Loading...</div>
-                ) : (
-                    <div className="flex-1 overflow-auto p-2 space-y-0.5">
-                        {TOP_LEVEL_ORDER.map(slug => {
-                            const page = pages.find(p => p.slug === slug);
-                            const isParent = HIERARCHY[slug as keyof typeof HIERARCHY];
-                            const isExpanded = expandedGroups[slug];
-
-                            if (!page && !isParent) return null;
-
-                            return (
-                                <div key={slug} className="space-y-0.5">
-                                    {/* Top Level Item */}
-                                    <div
-                                        className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${selectedPage?.slug === slug ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50'}`}
-                                        onClick={() => page && handleSelectPage(page)}
-                                    >
-                                        {isParent ? (
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); toggleGroup(slug); }}
-                                                className="p-0.5 hover:bg-slate-200 rounded transition-colors"
-                                            >
-                                                <ChevronRight size={14} className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                                            </button>
-                                        ) : (
-                                            <FileText size={14} className="flex-shrink-0 opacity-60 ml-0.5" />
-                                        )}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="text-sm font-medium truncate capitalize">{page?.title || slug.replace(/-/g, ' ')}</div>
-                                        </div>
-                                    </div>
-
-                                    {/* Children (Dropdown) */}
-                                    {isParent && isExpanded && (
-                                        <div className="ml-6 space-y-0.5 border-l border-slate-100 pl-2">
-                                            {HIERARCHY[slug as keyof typeof HIERARCHY].map(childSlug => {
-                                                const childPage = pages.find(p => p.slug === childSlug);
-                                                if (!childPage) return null;
-                                                return (
-                                                    <div
-                                                        key={childSlug}
-                                                        className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${selectedPage?.slug === childSlug ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
-                                                        onClick={() => handleSelectPage(childPage)}
-                                                    >
-                                                        <FileText size={12} className="flex-shrink-0 opacity-40" />
-                                                        <div className="text-xs font-medium truncate capitalize">{childPage.title}</div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-
-                        {/* Uncategorized Pages */}
-                        {pages.filter(p => !TOP_LEVEL_ORDER.includes(p.slug) && !Object.values(HIERARCHY).flat().includes(p.slug)).map(page => (
-                            <div
-                                key={page.slug}
-                                className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${selectedPage?.slug === page.slug ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50'}`}
-                                onClick={() => handleSelectPage(page)}
-                            >
-                                <FileText size={14} className="flex-shrink-0 opacity-60 ml-5" />
-                                <div className="text-sm font-medium truncate capitalize">{page.title}</div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                <p className="text-sm text-slate-500">Manage your public-facing website content from one place.</p>
             </div>
 
-            {/* Page Content Editor */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-                {!selectedPage ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-3">
-                        <FolderOpen size={36} className="text-slate-200" />
-                        <p className="text-sm">Select a page to edit its sections.</p>
-                        <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-1.5 text-sm px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-semibold">
-                            <Plus size={14} /> Create First Page
+            {/* Content Editor Area */}
+            <div className="flex-1 flex flex-col overflow-hidden px-8 pb-8">
+                {/* Editor Tabs row */}
+                <div className="flex items-center gap-12 border-b border-slate-100 mb-6">
+                    {(['editor', 'json', 'preview'] as const).map(v => (
+                        <button
+                            key={v}
+                            onClick={() => setActiveView(v)}
+                            className={`flex items-center gap-2 py-4 text-sm font-medium transition-all relative ${activeView === v ? 'text-brand-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            {v === 'editor' ? <Layout size={18} /> : v === 'json' ? <FileCode size={18} /> : <Eye size={18} />}
+                            {v === 'editor' ? 'Visual Editor' : v === 'json' ? 'Json Syntax' : 'Preview'}
+                            {activeView === v && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-600 rounded-full" />}
                         </button>
+                    ))}
+                </div>
+
+                {!selectedPage ? (
+                    <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-3 border-2 border-dashed border-slate-100 rounded-2xl">
+                        <FolderOpen size={48} className="text-slate-100" />
+                        <p className="text-base font-medium">Select a page from the sidebar to start editing</p>
                     </div>
                 ) : (
-                    <>
-                        {/* Toolbar */}
-                        <div className="flex gap-0 border-b border-slate-200 bg-slate-50 flex-shrink-0">
-                            {(['editor', 'json', 'preview'] as const).map(v => (
-                                <button key={v} onClick={() => setActiveView(v)}
-                                    className={`flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-colors capitalize ${activeView === v ? 'bg-white text-brand-600 border-t-2 border-t-brand-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}>
-                                    {v === 'editor' ? <Layout size={14} /> : v === 'json' ? <FileCode size={14} /> : <Eye size={14} />}
-                                    {v === 'editor' ? 'Visual Editor' : v === 'json' ? 'JSON Syntax' : 'Preview'}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Status bar & Actions */}
-                        <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-slate-200 flex-shrink-0">
-                            <div className="flex items-center gap-4">
-                                <div className="flex flex-col">
-                                    <h2 className="text-sm font-bold text-slate-800 capitalize leading-tight">
-                                        {selectedPage.title}
-                                    </h2>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                        <span className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider ${selectedPage.status === 'live' ? 'text-green-600' : 'text-slate-400'}`}>
-                                            <div className={`w-1.5 h-1.5 rounded-full ${selectedPage.status === 'live' ? 'bg-green-500' : 'bg-slate-300'}`} />
-                                            {selectedPage.status || 'draft'}
-                                        </span>
-                                        {isDirty && !jsonError && (
-                                            <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1">
-                                                <AlertCircle size={10} /> Unsaved
-                                            </span>
-                                        )}
-                                        {jsonError && (
-                                            <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider flex items-center gap-1">
-                                                <AlertCircle size={10} /> Schema Error
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                {/* Hide/Show Page */}
+                    <div className="flex-1 flex flex-col min-h-0 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        {/* Action Bar */}
+                        <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100">
+                            <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => handleToggleStatus(selectedPage)}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${selectedPage.status === 'live' ? 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' : 'bg-brand-50 text-brand-700 border-brand-200 hover:bg-brand-100'}`}
+                                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all font-inter"
                                 >
-                                    {selectedPage.status === 'live' ? <EyeOff size={14} /> : <Eye size={14} />}
+                                    {selectedPage.status === 'live' ? <EyeOff size={18} className="text-slate-500" /> : <Eye size={18} className="text-slate-500" />}
                                     {selectedPage.status === 'live' ? 'Hide' : 'Show'}
                                 </button>
 
-                                {/* Delete Page */}
                                 <button
-                                    onClick={() => handleDelete(selectedPage.slug)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 border border-red-100 hover:bg-red-50 transition-all"
+                                    onClick={() => handleDelete(selectedPage!.slug)}
+                                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold border border-red-100 text-red-600 hover:bg-red-50 transition-all font-inter"
                                 >
-                                    <Trash2 size={14} /> Delete
+                                    <Trash2 size={18} /> Delete
                                 </button>
 
-                                <div className="w-px h-6 bg-slate-200 mx-1" />
+                                <button
+                                    onClick={() => setShowCreateModal(true)}
+                                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold border border-brand-100 text-brand-600 hover:bg-brand-50 transition-all font-inter"
+                                >
+                                    <Plus size={18} /> Add New Page
+                                </button>
 
-                                {/* Add New Section (Conditional) */}
-                                {(selectedPage.slug === 'services' || HIERARCHY.services.includes(selectedPage.slug)) && (
+                                <button
+                                    onClick={() => setShowSEOModal(true)}
+                                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold border border-brand-100 text-brand-600 hover:bg-brand-50 transition-all font-inter"
+                                >
+                                    <Globe size={18} /> SEO Settings
+                                </button>
+
+                                {isServicesPage && (
                                     <button
                                         onClick={() => {
-                                            // Feature to add a new section to the JSON model
                                             const newSections = { ...parsedData, [`section_${Date.now()}`]: { title: 'New Section', content: '' } };
                                             handleDynamicChange(newSections);
                                             showSuccess({ title: 'Section Added', message: 'A new section has been added to the editor.' });
                                         }}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-50 text-brand-700 rounded-lg text-xs font-bold border border-brand-200 hover:bg-brand-100 transition-all"
+                                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold border border-brand-100 text-brand-600 hover:bg-brand-50 transition-all font-inter"
                                     >
-                                        <PlusCircle size={14} /> New Section
+                                        <PlusCircle size={18} /> Add New Section
                                     </button>
                                 )}
 
-                                {/* Add New Page */}
-                                <button
-                                    onClick={() => setShowCreateModal(true)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 text-white rounded-lg text-xs font-bold hover:bg-brand-700 transition-all shadow-sm shadow-brand-200"
-                                >
-                                    <Plus size={14} /> New Page
-                                </button>
+                                <div className="w-px h-8 bg-slate-100 mx-2" />
 
-                                <div className="w-px h-6 bg-slate-200 mx-1" />
-
-                                {/* Save Button */}
                                 <button
                                     onClick={handleSave}
                                     disabled={!isDirty || !!jsonError}
-                                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-extrabold transition-all ${!isDirty || !!jsonError ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700 shadow-sm shadow-green-200'}`}
+                                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all shadow-md font-inter ${!isDirty || !!jsonError ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none' : 'bg-brand-600 text-white hover:bg-brand-700 shadow-brand-100'}`}
                                 >
-                                    <Save size={14} /> Save Changes
+                                    <Save size={18} /> Publish Changes
                                 </button>
+                            </div>
+
+                            {/* Status Indicators */}
+                            <div className="flex items-center gap-4">
+                                {isDirty && (
+                                    <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 text-xs font-bold rounded-full border border-amber-100 animate-pulse">
+                                        <AlertCircle size={14} /> Unsaved Changes
+                                    </span>
+                                )}
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full ${selectedPage.status === 'live' ? 'bg-green-500' : 'bg-slate-400'}`} />
+                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{selectedPage.status || 'draft'}</span>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Content Area */}
-                        <div className="flex-1 overflow-auto bg-slate-50/30">
+                        {/* Editor Content */}
+                        <div className="flex-1 overflow-auto bg-slate-50/20">
                             {activeView === 'editor' && (
-                                <div className="max-w-3xl mx-auto p-6">
+                                <div className="max-w-4xl mx-auto p-12">
                                     {loadingSections ? (
-                                        <div className="text-center text-slate-400 text-sm py-10">Loading sections...</div>
+                                        <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
+                                            <div className="w-10 h-10 border-4 border-slate-100 border-t-brand-600 rounded-full animate-spin" />
+                                            <p className="text-sm font-medium">Loading Page Content...</p>
+                                        </div>
                                     ) : (
-                                        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm text-left">
+                                        <div className="bg-white border border-slate-100 rounded-2xl p-10 shadow-sm shadow-slate-200/50">
                                             <DynamicJsonEditor
                                                 data={parsedData}
                                                 onChange={handleDynamicChange}
@@ -873,19 +1033,23 @@ const PagesTab: React.FC = () => {
                                 </div>
                             )}
                             {activeView === 'json' && (
-                                <textarea
-                                    value={jsonInput}
-                                    onChange={handleJsonChange}
-                                    className={`w-full h-full p-6 font-mono text-sm leading-relaxed resize-none focus:outline-none ${jsonError ? 'bg-red-50/30 text-red-900' : 'bg-transparent text-slate-800'}`}
-                                    spellCheck={false}
-                                    placeholder="Page sections JSON..."
-                                />
+                                <div className="h-full bg-[#1e1e1e]">
+                                    <textarea
+                                        title="JSON content"
+                                        value={jsonInput}
+                                        onChange={handleJsonChange}
+                                        className="w-full h-full p-8 font-mono text-sm leading-relaxed resize-none bg-transparent text-slate-300 focus:outline-none"
+                                        spellCheck={false}
+                                    />
+                                </div>
                             )}
                             {activeView === 'preview' && (
-                                <CMSPreviewPane url={extractPreviewUrl()} cmsContent={parsedData} pageName={selectedPage?.slug || ''} />
+                                <div className="h-full">
+                                    <CMSPreviewPane url={extractPreviewUrl()} cmsContent={parsedData} pageName={selectedPage?.slug || ''} />
+                                </div>
                             )}
                         </div>
-                    </>
+                    </div>
                 )}
             </div>
 
@@ -924,9 +1088,19 @@ const PagesTab: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* SEO Settings Modal */}
+            {showSEOModal && selectedPage && (
+                <SEOSettingsModal
+                    page={selectedPage}
+                    onClose={() => setShowSEOModal(false)}
+                    onSave={handleSaveSEO}
+                />
+            )}
         </div>
     );
 };
+
 
 // ──────────────────────────────────────────────
 // Main CMS Page
@@ -944,37 +1118,14 @@ export const CMSPage: React.FC = () => {
         }
     }, [location.search]);
 
-    const tabs: { id: CMSModule; label: string; icon: React.ReactNode; description: string }[] = [
-        { id: 'pages', label: 'Pages', icon: <FileText size={16} />, description: 'Manage website pages and their section content.' },
-        { id: 'menus', label: 'Navigation', icon: <Globe size={16} />, description: 'Build and edit header & footer menus.' },
-        { id: 'apikeys', label: 'API Keys', icon: <Key size={16} />, description: 'Generate and manage public CMS access keys.' },
-    ];
-
     return (
         <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-slate-50">
-            {/* Module Switcher Header */}
-            <div className="bg-white border-b border-slate-200 px-6 pt-5 flex-shrink-0">
-                <h1 className="text-2xl font-extrabold text-slate-800 mb-1">Website CMS</h1>
-                <p className="text-sm text-slate-500 mb-4">Manage your public-facing website content from one place.</p>
-                <div className="flex gap-1">
-                    {tabs.map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveModule(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-lg text-sm font-semibold border-b-2 transition-all ${activeModule === tab.id ? 'bg-white border-brand-600 text-brand-700' : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-50'}`}
-                        >
-                            {tab.icon}
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
             {/* Module Content */}
             <div className="flex-1 overflow-hidden bg-slate-50/50">
                 {activeModule === 'pages' && <PagesTab />}
                 {activeModule === 'menus' && <MenuBuilderTab />}
                 {activeModule === 'apikeys' && <ApiKeysTab />}
+                {activeModule === 'settings' && <SettingsTab />}
             </div>
         </div>
     );
