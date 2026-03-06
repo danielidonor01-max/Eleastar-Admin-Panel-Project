@@ -41,12 +41,26 @@ export const AdminLayout: React.FC = () => {
 
     React.useEffect(() => {
         const isCMS = location.pathname.includes('/admin/cms');
+        const params = new URLSearchParams(location.search);
+        const page = params.get('page');
 
         if (isCMS) {
+            // Only auto-expand if we just arrived or if the page param changes
             setExpandedCMS(true);
-        } else {
-            // "Global Navigation Consistency": Clicking a non-CMS module should deactivate/collapse Website CMS.
-            setExpandedCMS(false);
+
+            // Auto-expand the correct section based on the page param
+            if (page) {
+                if (['GlobalNav', 'GlobalSEO'].includes(page)) {
+                    setCmsSectionState(prev => ({ ...prev, global: true }));
+                } else if (['ServicesCollection'].includes(page)) {
+                    setCmsSectionState(prev => ({ ...prev, collections: true }));
+                } else if (['FooterLayout', 'PrivacyPolicy', 'TermsOfService'].includes(page)) {
+                    setCmsSectionState(prev => ({ ...prev, footer: true }));
+                } else {
+                    // It's likely a page slug
+                    setCmsSectionState(prev => ({ ...prev, pages: true }));
+                }
+            }
         }
     }, [location.pathname, location.search]);
 
@@ -242,14 +256,14 @@ export const AdminLayout: React.FC = () => {
 
                                                 {cmsSectionState.global && (
                                                     <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
-                                                        <NavLink to="/admin/cms?page=GlobalNav" className={() => {
+                                                        <NavLink to="/admin/cms?module=menus&page=GlobalNav" className={() => {
                                                             const search = location.search;
                                                             const active = search.includes('page=GlobalNav');
                                                             return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
                                                         }}>
                                                             Navigation Menu
                                                         </NavLink>
-                                                        <NavLink to="/admin/cms?page=GlobalSEO" className={() => {
+                                                        <NavLink to="/admin/cms?module=pages&page=GlobalSEO" className={() => {
                                                             const search = location.search;
                                                             const active = search.includes('page=GlobalSEO');
                                                             return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
@@ -272,7 +286,7 @@ export const AdminLayout: React.FC = () => {
 
                                                 {cmsSectionState.collections && (
                                                     <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
-                                                        <NavLink to="/admin/cms?page=ServicesCollection" className={() => {
+                                                        <NavLink to="/admin/cms?module=pages&page=ServicesCollection" className={() => {
                                                             const search = location.search;
                                                             const active = search.includes('page=ServicesCollection');
                                                             return `flex items-center gap-2 px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
@@ -303,7 +317,7 @@ export const AdminLayout: React.FC = () => {
                                                             return (
                                                                 <NavLink
                                                                     key={pageSlug}
-                                                                    to={`/admin/cms?page=${pageSlug}`}
+                                                                    to={`/admin/cms?module=pages&page=${pageSlug}`}
                                                                     className={() => {
                                                                         const search = location.search;
                                                                         const active = isHome ? (!search || search.includes(`page=${pageSlug}`)) : search.includes(`page=${pageSlug}`);
@@ -330,23 +344,22 @@ export const AdminLayout: React.FC = () => {
 
                                                 {cmsSectionState.footer && (
                                                     <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2">
-                                                        <NavLink to="/admin/cms?page=FooterLayout" className={() => {
+                                                        <NavLink to="/admin/cms?module=pages&page=FooterLayout" className={() => {
                                                             const search = location.search;
                                                             const active = search.includes('page=FooterLayout');
                                                             return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
                                                         }}>
                                                             Footer Layout
                                                         </NavLink>
-
                                                         <div className="mt-2 mb-1 pl-2 text-[10px] text-slate-600 font-medium tracking-wide">LEGAL PAGES</div>
-                                                        <NavLink to="/admin/cms?page=PrivacyPolicy" className={() => {
+                                                        <NavLink to="/admin/cms?module=pages&page=PrivacyPolicy" className={() => {
                                                             const search = location.search;
                                                             const active = search.includes('page=PrivacyPolicy');
                                                             return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
                                                         }}>
                                                             Privacy Policy
                                                         </NavLink>
-                                                        <NavLink to="/admin/cms?page=TermsOfService" className={() => {
+                                                        <NavLink to="/admin/cms?module=pages&page=TermsOfService" className={() => {
                                                             const search = location.search;
                                                             const active = search.includes('page=TermsOfService');
                                                             return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;

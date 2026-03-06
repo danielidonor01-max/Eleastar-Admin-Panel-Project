@@ -260,12 +260,20 @@ const MenuBuilderTab: React.FC = () => {
                 const data = res.data;
                 const arr: CMSMenu[] = Array.isArray(data) ? data : Object.values(data || {});
                 setMenus(arr);
-                if (arr.length > 0 && !selectedMenu) {
+
+                // Initial selection based on URL
+                const params = new URLSearchParams(window.location.search);
+                const pageParam = params.get('page');
+                if (pageParam) {
+                    const target = arr.find(m => m.key === pageParam);
+                    if (target) setSelectedMenu(target);
+                    else if (arr.length > 0 && !selectedMenu) setSelectedMenu(arr[0]);
+                } else if (arr.length > 0 && !selectedMenu) {
                     setSelectedMenu(arr[0]);
                 }
             }
         } catch { } finally { setLoading(false); }
-    }, []);
+    }, [selectedMenu]);
 
     const loadMenuItems = useCallback(async (key: string) => {
         setLoadingItems(true);
@@ -280,6 +288,17 @@ const MenuBuilderTab: React.FC = () => {
     }, []);
 
     useEffect(() => { loadMenus(); }, [loadMenus]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const pageParam = params.get('page');
+        if (pageParam && menus.length > 0) {
+            const target = menus.find(m => m.key === pageParam);
+            if (target && target.id !== selectedMenu?.id) {
+                setSelectedMenu(target);
+            }
+        }
+    }, [location.search, menus, selectedMenu]);
 
     useEffect(() => {
         if (selectedMenu) loadMenuItems(selectedMenu.key);
@@ -522,12 +541,19 @@ const PagesTab: React.FC = () => {
         try {
             const res = await cmsService.getCMSPages();
             if (res.success && res.data) {
-                // Backend may return array or object { data: [...] }
                 const raw = Array.isArray(res.data) ? res.data : (res.data as any)?.data || [];
                 setPages(raw);
+
+                // Initial deep-link selection
+                const params = new URLSearchParams(window.location.search);
+                const pageParam = params.get('page');
+                if (pageParam && !selectedPage) {
+                    const target = raw.find((p: any) => p.slug === pageParam);
+                    if (target) setSelectedPage(target);
+                }
             }
         } catch { } finally { setLoading(false); }
-    }, [cmsContent]);
+    }, [selectedPage]);
 
     const loadSections = useCallback(async (slug: string) => {
         setLoadingSections(true);
@@ -541,6 +567,17 @@ const PagesTab: React.FC = () => {
             }
         } catch { } finally { setLoadingSections(false); }
     }, []);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const pageParam = params.get('page');
+        if (pageParam && pages.length > 0) {
+            const target = pages.find(p => p.slug === pageParam);
+            if (target && target.slug !== selectedPage?.slug) {
+                setSelectedPage(target);
+            }
+        }
+    }, [location.search, pages, selectedPage]);
 
     useEffect(() => { loadPages(); }, [loadPages]);
 
