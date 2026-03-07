@@ -1,7 +1,7 @@
 import  { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { AdminProvider } from './context/AdminContext';
+import { AdminProvider } from '@/context/admin';
 import { CMSProvider } from './context/CMSContext';
 import PreviewBadge from './components/PreviewBadge';
 import { GlobalLoadingFallback } from './components/GlobalLoadingFallback';
@@ -22,23 +22,26 @@ import { Contact } from './routes/Contact';
 import { LoginPage } from './routes/LoginPage';
 import { DynamicPage } from './routes/DynamicPage';
 import { AdminDashboard } from './modules/admin-dashboard/pages/AdminDashboard';
-import { NotificationsPage } from './routes/admin/NotificationsPage';
-import { Employees } from './routes/admin/Employees';
-import { PayrollPage } from './routes/admin/PayrollPage';
-import { QRPage } from './routes/admin/QRPage';
-import { RecruitmentPage } from './routes/admin/RecruitmentPage';
-import { LeaveManagement } from './routes/admin/LeaveManagement';
-import { PerformancePage } from './routes/admin/PerformancePage';
-import { CMSPage } from './routes/admin/CMSPage';
-import { AdminTasksPage } from './routes/admin/AdminTasksPage';
-import { SettingsPage } from './routes/admin/SettingsPage';
-import { ProfilePage } from './routes/admin/ProfilePage';
-import { ActivityLogPage } from './routes/admin/ActivityLogPage';
-import { PromotionsPage } from './routes/admin/PromotionsPage';
-import { DepartmentSettings } from './routes/admin/DepartmentSettings';
-import { BonusPage } from './routes/admin/BonusPage';
-import { AnalyticsDashboard } from './routes/admin/AnalyticsDashboard';
-import { ComplianceReportsPage } from './routes/admin/ComplianceReportsPage';
+import {
+    NotificationsPage,
+    Employees,
+    PayrollPage,
+    QRPage,
+    RecruitmentPage,
+    LeaveManagement,
+    PerformancePage,
+    CMSPage,
+    AdminTasksPage,
+    SettingsPage,
+    ProfilePage,
+    ActivityLogPage,
+    PromotionsPage,
+    DepartmentSettings,
+    BonusPage,
+    AnalyticsDashboard,
+    ComplianceReportsPage,
+    FinanceLedgerPage
+} from '@/routes/admin';
 import { UserDashboard } from './routes/user/UserDashboard';
 import { UserProfilePage } from './routes/user/UserProfilePage';
 
@@ -90,6 +93,7 @@ function App() {
                 <Route path="promotions" element={<PromotionsPage />} />
                 <Route path="salary-structures" element={<DepartmentSettings />} />
                 <Route path="bonuses" element={<BonusPage />} />
+                <Route path="finance" element={<FinanceLedgerPage />} />
                 <Route path="analytics" element={<AnalyticsDashboard />} />
                 <Route path="compliance-reports" element={<ComplianceReportsPage />} />
                 {/* Fallback for unimplemented admin routes */}

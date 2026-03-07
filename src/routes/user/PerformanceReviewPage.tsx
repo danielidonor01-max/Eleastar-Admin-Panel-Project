@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAdmin } from '../../context/AdminContext';
+import { useAdmin } from '@/context/admin';
 import { Target, TrendingUp, Award, Calendar, Play, X, CheckCircle2 } from 'lucide-react';
 
 export const PerformanceReviewPage: React.FC = () => {

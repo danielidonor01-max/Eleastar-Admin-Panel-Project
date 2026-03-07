@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, Navigate, useLocation } from 'react-router';
 import { LayoutDashboard, Users, Settings, Globe, ChevronDown, ChevronRight, LogOut, Calendar, BarChart2, QrCode, Wallet, FileText, Check, Shield, TrendingUp, Gift, Activity, CheckSquare } from 'lucide-react';
-import { useAdmin } from '../context/AdminContext';
+import { useAdmin } from '@/context/admin';
 import { NotificationMenu } from '../components/NotificationMenu';
 import { GlobalSearchMenu } from '../components/GlobalSearchMenu';
-import type { AdminRole } from '../data/mockData';
-import type { ModuleType } from '../context/AdminContext';
+import type { AdminRole, ModuleType } from '@/types';
 
 export const AdminLayout: React.FC = () => {
     const {

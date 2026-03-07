@@ -87,7 +87,7 @@ export const DynamicPage: React.FC = () => {
 
                 {/* Content Area */}
                 <section className="py-24 px-6 grow flex items-center justify-center bg-slate-50">
-                    {(!pageData || Object.keys(pageData).length === 0 || (Object.keys(pageData).length === 1 && pageData.heroCardData?.length === 0)) ? (
+                    {(!pageData || Object.keys(pageData as object).length === 0 || (Object.keys(pageData as object).length === 1 && ((pageData as Record<string, unknown>).heroCardData as unknown[] | undefined)?.length === 0)) ? (
                         <div className="max-w-2xl text-center">
                             <h2 className="text-2xl font-bold text-slate-700 mb-4">Blank Canvas</h2>
                             <p className="text-slate-500 leading-relaxed">

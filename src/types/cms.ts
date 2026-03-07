@@ -1,3 +1,11 @@
+// =============================================================================
+// CMS — Public Contract Types & Admin Section Types
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Public CMS Contract (used by CMSContext / frontend renderer)
+// ---------------------------------------------------------------------------
+
 export interface CMSImage {
     url: string;
     alt?: string;
@@ -34,7 +42,7 @@ export interface CMSNavItem {
 
 export interface CMSFooterNavData {
     group1: CMSNavItem[];
-    socialLinks: { icon: string; href: string; }[];
+    socialLinks: { icon: string; href: string }[];
     copyright: string;
     rc: string;
     footerLogo: string;
@@ -91,7 +99,8 @@ export interface CMSServiceItemData {
     TextTitle1: string;
     TextTitle2: string;
     TextDescription: string;
-    image: string; // The schema has this as a string URL
+    /** URL string for the service image */
+    image: string;
     imageAlt: string;
 }
 
@@ -114,8 +123,7 @@ export interface CMSPagesData {
     services?: {
         servicesListData: CMSServicesListData[];
     };
-    // Let's allow flexibility for other pages
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export interface CMSData {
@@ -124,4 +132,545 @@ export interface CMSData {
     footerNavData: CMSFooterNavData;
     contactUsCardData: CMSContactUsCardData;
     pages: CMSPagesData;
+}
+
+// ---------------------------------------------------------------------------
+// Admin CMS Section Types (editable page content managed in admin panel)
+// ---------------------------------------------------------------------------
+
+export type SectionType =
+    | 'Hero'
+    | 'About'
+    | 'Approach'
+    | 'Services'
+    | 'KnowMore'
+    | 'NewestTech'
+    | 'Contact'
+    | 'News'
+    | 'CEOQuote'
+    // About page
+    | 'AboutHero'
+    | 'OurMission'
+    | 'TeamNarrative'
+    | 'MeetTeam'
+    | 'JoinTeam'
+    // Services page
+    | 'ServicesHero'
+    | 'ServiceBlock'
+    | 'ContactCTA'
+    | 'ServiceDetailHero'
+    | 'ServiceDetailOverview'
+    | 'ServiceDetailOffering'
+    | 'ServiceDetailContact'
+    | 'CareersHero';
+
+export type CMSPageSlug =
+    | 'Home'
+    | 'About'
+    | 'Services'
+    | 'IndustrialSolutions'
+    | 'InformationTechnology'
+    | 'ResearchAndDevelopment'
+    | 'ElectronicsManufacturing'
+    | 'SpecificITServices'
+    | 'PrivacyPolicy'
+    | 'TermsOfService'
+    | 'Careers';
+
+/** Common base fields shared by all CMS content sections */
+export interface BaseSection {
+    id: string;
+    type: SectionType;
+    page: CMSPageSlug;
+    isVisible: boolean;
+    /** 1-indexed display order within the page */
+    order: number;
+    lastUpdated: string;
+    status: 'Published' | 'Draft';
+}
+
+// ---------------------------------------------------------------------------
+// Home Page Sections
+// ---------------------------------------------------------------------------
+
+export interface HeroSection extends BaseSection {
+    type: 'Hero';
+    cards: {
+        id: string;
+        headline: string;
+        subheadline: string;
+        ctaLabel: string;
+        ctaLink: string;
+        imageUrl: string;
+        altText?: string;
+    }[];
+}
+
+export interface AboutSection extends BaseSection {
+    type: 'About';
+    title: string;
+    text: string;
+    ctaLabel: string;
+    ctaLink: string;
+    imageUrl: string;
+    altText?: string;
+}
+
+export interface ServicesSection extends BaseSection {
+    type: 'Services';
+    title: string;
+    subtitle: string;
+    services: {
+        id: string;
+        title: string;
+        description: string;
+    }[];
+    ctaLabel: string;
+    ctaLink: string;
+}
+
+export interface KnowMoreSection extends BaseSection {
+    type: 'KnowMore';
+    title: string;
+    highlight: string;
+    description: string;
+    ctaLabel: string;
+    ctaLink: string;
+    imageUrl: string;
+    altText?: string;
+}
+
+export interface ApproachSection extends BaseSection {
+    type: 'Approach';
+    title: string;
+    subtitle: string;
+    steps: {
+        id: string;
+        title: string;
+        description: string;
+    }[];
+    ctaLabel: string;
+    ctaLink: string;
+}
+
+export interface NewestTechSection extends BaseSection {
+    type: 'NewestTech';
+    title: string;
+    subtitle: string;
+    description: string;
+    ctaLabel: string;
+    ctaLink: string;
+    showAndroid: boolean;
+    showIOS: boolean;
+    imageUrl: string;
+    altText?: string;
+}
+
+export interface ContactSection extends BaseSection {
+    type: 'Contact';
+    title: string;
+    subtitle: string;
+    intro: string;
+    privacyText: string;
+}
+
+export interface NewsSection extends BaseSection {
+    type: 'News';
+    title: string;
+    newsItems: {
+        id: string;
+        title: string;
+        summary: string;
+        category: string;
+        imageUrl: string;
+        link: string;
+    }[];
+    ctaLabel: string;
+    ctaLink: string;
+}
+
+export interface CEOQuoteSection extends BaseSection {
+    type: 'CEOQuote';
+    title: string;
+    quote: string;
+    authorName: string;
+    authorTitle: string;
+    imageUrl: string;
+    altText?: string;
+}
+
+/** Discriminated union of all homepage content sections */
+export type HomepageSection =
+    | HeroSection
+    | AboutSection
+    | ServicesSection
+    | KnowMoreSection
+    | ApproachSection
+    | NewestTechSection
+    | ContactSection
+    | NewsSection
+    | CEOQuoteSection;
+
+// ---------------------------------------------------------------------------
+// About Page Sections
+// ---------------------------------------------------------------------------
+
+export interface AboutHeroSection extends BaseSection {
+    type: 'AboutHero';
+    title: string;
+    subtitle: string;
+    description: string;
+    imageUrl: string;
+    altText?: string;
+}
+
+export interface OurMissionSection extends BaseSection {
+    type: 'OurMission';
+    title?: string;
+    missionTitle: string;
+    missionText: string;
+    visionTitle: string;
+    visionText: string;
+    imageUrl: string;
+    altText?: string;
+}
+
+export interface TeamNarrativeSection extends BaseSection {
+    type: 'TeamNarrative';
+    title: string;
+    text: string;
+    imageUrl: string;
+    altText?: string;
+}
+
+export interface TeamMember {
+    id: string;
+    name: string;
+    role: string;
+    imageUrl: string;
+    altText?: string;
+    bio?: string;
+    generatedAt?: string;
+    processedAt?: string;
+    paidAt?: string;
+    transactionId?: string;
+    linkedinUrl?: string;
+}
+
+export interface MeetTeamSection extends BaseSection {
+    type: 'MeetTeam';
+    title: string;
+    subtitle: string;
+    members: TeamMember[];
+}
+
+export interface JoinTeamCTASection extends BaseSection {
+    type: 'JoinTeam';
+    title: string;
+    text: string;
+    ctaLabel: string;
+    ctaLink: string;
+    imageUrl: string;
+    altText?: string;
+}
+
+export interface ContactCTASection extends BaseSection {
+    type: 'ContactCTA';
+    title: string;
+    text: string;
+    ctaLabel: string;
+    ctaLink: string;
+}
+
+// ---------------------------------------------------------------------------
+// Services Page Sections
+// ---------------------------------------------------------------------------
+
+export interface ServicesHeroSection extends BaseSection {
+    type: 'ServicesHero';
+    page: 'Services';
+    title: string;
+    headline: string;
+    description: string;
+    imageUrl: string;
+    altText?: string;
+}
+
+export interface ServiceBlockSection extends BaseSection {
+    type: 'ServiceBlock';
+    page: 'Services';
+    serviceTitle: string;
+    /** Supports newline-separated or HTML multi-paragraph content */
+    description: string;
+    ctaLabel: string;
+    ctaLink: string;
+    imageUrl: string;
+    altText?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Service Detail Page Sections
+// ---------------------------------------------------------------------------
+
+export type ServiceDetailPage =
+    | 'IndustrialSolutions'
+    | 'InformationTechnology'
+    | 'ResearchAndDevelopment'
+    | 'ElectronicsManufacturing'
+    | 'SpecificITServices';
+
+export interface ServiceDetailHeroSection extends BaseSection {
+    type: 'ServiceDetailHero';
+    page: ServiceDetailPage;
+    title: string;
+    intro: string;
+}
+
+export interface ServiceDetailOverviewSection extends BaseSection {
+    type: 'ServiceDetailOverview';
+    page: ServiceDetailPage;
+    imageUrl: string;
+    altText: string;
+}
+
+export interface ServiceDetailOfferingSection extends BaseSection {
+    type: 'ServiceDetailOffering';
+    page: ServiceDetailPage;
+    number: string;
+    title: string;
+    description: string;
+    imageUrl: string;
+    altText?: string;
+    ctaLabel?: string;
+    ctaLink?: string;
+}
+
+export interface ServiceDetailContactSection extends BaseSection {
+    type: 'ServiceDetailContact';
+    page: ServiceDetailPage;
+    title: string;
+    description: string;
+    ctaLabel: string;
+    ctaLink: string;
+}
+
+// ---------------------------------------------------------------------------
+// Careers Page Section
+// ---------------------------------------------------------------------------
+
+export interface CareersHeroSection extends BaseSection {
+    type: 'CareersHero';
+    page: 'Careers';
+    title: string;
+    body: string;
+    imageUrl?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Master CMS Section Union
+// ---------------------------------------------------------------------------
+
+/** Discriminated union of every possible CMS content section */
+export type CMSSection =
+    | HeroSection
+    | AboutSection
+    | ApproachSection
+    | ServicesSection
+    | KnowMoreSection
+    | NewestTechSection
+    | ContactSection
+    | NewsSection
+    | CEOQuoteSection
+    | AboutHeroSection
+    | OurMissionSection
+    | TeamNarrativeSection
+    | MeetTeamSection
+    | JoinTeamCTASection
+    | ContactCTASection
+    | ServicesHeroSection
+    | ServiceBlockSection
+    | ServiceDetailHeroSection
+    | ServiceDetailOverviewSection
+    | ServiceDetailOfferingSection
+    | ServiceDetailContactSection
+    | CareersHeroSection;
+
+// ---------------------------------------------------------------------------
+// Global Site Settings & Pages
+// ---------------------------------------------------------------------------
+
+export interface GlobalContent {
+    tenantId: string;
+    siteName: string;
+    logoUrl: string;
+    faviconUrl: string;
+    navigation: {
+        id: string;
+        label: string;
+        path: string;
+        type: 'Internal' | 'External';
+        isVisible: boolean;
+        order: number;
+    }[];
+    seoDefaults: {
+        siteTitle: string;
+        siteDescription: string;
+        ogImage: string;
+        twitterHandle?: string;
+    };
+    contactInfo: {
+        email: string;
+        phone: string;
+        address: string;
+    };
+    socialLinks: {
+        linkedin: string;
+        facebook: string;
+        twitter: string;
+        instagram: string;
+    };
+    metaDescription: string;
+    metaKeywords: string;
+}
+
+export interface PageMetadata {
+    /** Matches a Page ID, e.g. 'Home' */
+    id: string;
+    tenantId: string;
+    /** Canonical path */
+    path: string;
+    metaTitle: string;
+    metaDescription: string;
+    ogTitle: string;
+    ogDescription: string;
+    ogImage: string;
+    noIndex: boolean;
+}
+
+export interface SEOMetadata {
+    title: string;
+    description: string;
+    ogTitle: string;
+    ogDescription: string;
+    ogImage: string;
+    noIndex: boolean;
+}
+
+export interface CMSPage {
+    id: string;
+    tenantId: string;
+    slug: string;
+    name: string;
+    status: 'Published' | 'Draft';
+    seo: SEOMetadata;
+    sections: CMSSection[];
+    lastUpdated: string;
+}
+
+// ---------------------------------------------------------------------------
+// Services Collection
+// ---------------------------------------------------------------------------
+
+export interface ServiceContentBlock {
+    id: string;
+    type: 'Feature' | 'Benefit' | 'Process' | 'Standard';
+    title1: string;
+    title2?: string;
+    description: string;
+    imageUrl?: string;
+    imageAlt?: string;
+    order: number;
+}
+
+export interface ServiceItem {
+    id: string;
+    tenantId: string;
+    slug: string;
+    title: string;
+    shortDescription: string;
+    /** URL or Lucide icon name */
+    icon: string;
+    bannerImage: string;
+    bannerAlt: string;
+    contentBlocks: ServiceContentBlock[];
+    seo?: Partial<PageMetadata>;
+    status: 'Published' | 'Draft';
+    lastUpdated: string;
+}
+
+export type ServiceCollection = ServiceItem[];
+
+// ---------------------------------------------------------------------------
+// Footer
+// ---------------------------------------------------------------------------
+
+export interface FooterLink {
+    id: string;
+    label: string;
+    url: string;
+    isVisible: boolean;
+}
+
+export interface FooterSection {
+    id: string;
+    lastUpdated: string;
+    title?: string;
+    links?: FooterLink[];
+    /** For legal text, copyright RC number, etc. */
+    content?: string;
+}
+
+export interface FooterContent {
+    navigation: FooterSection;
+    utility: FooterSection;
+    social: FooterSection;
+    legal: FooterSection;
+    copyright: FooterSection;
+}
+
+// ---------------------------------------------------------------------------
+// CMS Admin Module Types (route-local types used in the CMS admin page)
+// ---------------------------------------------------------------------------
+
+export type CMSModule = 'pages' | 'menus' | 'apikeys' | 'settings' | 'media';
+
+export interface CMSApiKey {
+    id: string;
+    name: string;
+    key: string;
+    is_active: boolean;
+    created_at: string;
+}
+
+export interface CMSMenuItem {
+    id: string;
+    label: string;
+    url: string;
+    order: number;
+    is_visible: boolean;
+    parent_id?: string;
+    children?: CMSMenuItem[];
+}
+
+export interface CMSMenu {
+    id: string;
+    name: string;
+    key: string;
+    items: CMSMenuItem[];
+}
+
+export interface CMSPageItem {
+    id: string;
+    title: string;
+    slug: string;
+    status: 'live' | 'draft';
+    meta_title: string;
+    meta_description: string;
+    meta_keywords: string;
+    meta_author: string;
+    og_title: string;
+    og_description: string;
+    og_image_url: string;
+    no_index: boolean;
+    
 }

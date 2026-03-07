@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router';
-import { useAdmin } from '../../context/AdminContext';
+import { useAdmin } from '@/context/admin';
 import { Calendar, FileDown, CreditCard, TrendingUp, Clock, User, ArrowRight, Briefcase } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { generatePayslipPDF } from '../../utils/generatePayslip';

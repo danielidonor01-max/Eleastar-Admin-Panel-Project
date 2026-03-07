@@ -1,12 +1,11 @@
-import React from 'react';
 import { useCMS } from '../context/CMSContext';
 import { StickyHeader } from '../components/StickyHeader';
 import { BrandFooter } from '../components/BrandFooter';
-import type { CMSAboutHeroData } from '../types/cms';
+import type { CMSAboutHeroData } from '@/types/cms';
 import { ContactUsCard } from '../components/cms/ContactUsCard';
 import { PageSEO } from '../components/cms/PageSEO';
 
-const AboutHeroRenderer: React.FC<{ data: CMSAboutHeroData }> = ({ data }) => (
+const AboutHeroRenderer = ({ data }: { data: CMSAboutHeroData }) => (
     <section className="relative h-[80vh] min-h-[600px] overflow-hidden bg-slate-900 text-white flex items-center">
         <div className="absolute inset-0">
             <img
@@ -29,7 +28,7 @@ const AboutHeroRenderer: React.FC<{ data: CMSAboutHeroData }> = ({ data }) => (
     </section>
 );
 
-export const About: React.FC = () => {
+export const About = () => {
     const { cmsContent } = useCMS();
 
     const aboutData = cmsContent?.pages?.about;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, Navigate, useNavigate, NavLink, useLocation } from 'react-router';
 import { LogOut, User, LayoutDashboard, Menu, ChevronDown, Calendar, BarChart2, CheckSquare } from 'lucide-react';
-import { useAdmin } from '../context/AdminContext';
+import { useAdmin } from '@/context/admin';
 import { NotificationMenu } from '../components/NotificationMenu';
 
 export const UserLayout: React.FC = () => {

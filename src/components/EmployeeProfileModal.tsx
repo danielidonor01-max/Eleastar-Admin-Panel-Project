@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, User, QrCode, DollarSign, Clock, FileText, Mail, Phone, Briefcase, MapPin, Globe, Edit2, Save, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import type { Employee } from '../data/mockData';
-import { useAdmin } from '../context/AdminContext';
+import { useAdmin } from '@/context/admin';
 import { PUBLIC_LINK } from '../config';
 import QRCode from 'react-qr-code';
 

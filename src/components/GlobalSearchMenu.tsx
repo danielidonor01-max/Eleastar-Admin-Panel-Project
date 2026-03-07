@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { Search, User, FileText, Globe, X } from 'lucide-react';
-import { useAdmin } from '../context/AdminContext';
+import { useAdmin } from '@/context/admin';
 import { useCMS } from '../context/CMSContext';
 import { employees } from '../data/mockData';
 

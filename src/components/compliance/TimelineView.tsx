@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ActivityLog } from '../../context/AdminContext';
+import type { ActivityLog } from '@/context/admin';
 import { CheckCircle, AlertTriangle, XCircle, Clock, Shield } from 'lucide-react';
 
 interface TimelineViewProps {
@@ -70,9 +70,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({ logs }) => {
                                     <span>
                                         User: <span className="font-semibold text-slate-700">{log.userId || 'System'}</span>
                                     </span>
-                                    {log.metadata?.ids && (
+                                    {Array.isArray((log.metadata as Record<string, unknown>)?.ids) && (
                                         <span>
-                                            Affected: <span className="font-mono bg-slate-200 px-1 rounded">{log.metadata.ids.length} items</span>
+                                            Affected: <span className="font-mono bg-slate-200 px-1 rounded">{(log.metadata as { ids: unknown[] }).ids.length} items</span>
                                         </span>
                                     )}
                                 </div>

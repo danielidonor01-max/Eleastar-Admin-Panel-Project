@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Shield, Lock, Unlock, RefreshCw, AlertCircle, CheckCircle, Edit2, Plus, X } from 'lucide-react';
-import { useAdmin } from '../../context/AdminContext';
+import { useAdmin } from '@/context/admin';
 import type { AdminRole, Employee } from '../../data/mockData';
 import { useFeedback } from '../../context/FeedbackContext';
 

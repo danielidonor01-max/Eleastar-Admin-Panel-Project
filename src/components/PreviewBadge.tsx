@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAdmin } from '../context/AdminContext';
+import { useAdmin } from '@/context/admin';
 
 const PreviewBadge: React.FC = () => {
     const { isAuthenticated } = useAdmin();

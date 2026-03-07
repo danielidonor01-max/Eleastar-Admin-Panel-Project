@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useAdmin } from '../../context/AdminContext';
+import { useAdmin } from '@/context/admin';
 import { useFeedback } from '../../context/FeedbackContext';
 import { CheckCircle2, Clock, Play, Upload, X, AlertCircle, FileImage } from 'lucide-react';
 import type { Task } from '../../data/mockData';

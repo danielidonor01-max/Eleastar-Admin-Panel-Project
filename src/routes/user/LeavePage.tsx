@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAdmin } from '../../context/AdminContext';
+import { useAdmin } from '@/context/admin';
 import { Calendar, Clock, CheckCircle, Plus, X, AlertCircle } from 'lucide-react';
 
 export const LeavePage: React.FC = () => {

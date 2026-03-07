@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAdmin } from '../../context/AdminContext';
+import { useAdmin } from '@/context/admin';
 import { Save, Linkedin, Facebook, Instagram, Phone, Mail, Camera, ShieldCheck } from 'lucide-react';
 
 

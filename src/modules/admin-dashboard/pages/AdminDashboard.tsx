@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAdmin } from '../../../context/AdminContext';
+import { useAdmin } from '@/context/admin';
 import { useRoleDashboard } from '../hooks/useRoleDashboard';
 import { DashboardWidget } from '../widgets/DashboardWidget';
 

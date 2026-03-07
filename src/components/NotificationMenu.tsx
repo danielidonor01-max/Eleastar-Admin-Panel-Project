@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Bell, Calendar, TrendingUp, Wallet, UserPlus, QrCode, FileText, CheckCheck, Search } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { useAdmin } from '../context/AdminContext';
-import type { AdminNotification, NotificationType } from '../context/AdminContext';
+import { useAdmin, type AdminNotification, type NotificationType } from '@/context/admin';
 import { NotificationDetailsModal } from './NotificationDetailsModal';
 
 export const NotificationMenu: React.FC = () => {

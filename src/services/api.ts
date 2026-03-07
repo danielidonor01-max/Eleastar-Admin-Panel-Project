@@ -1,10 +1,3 @@
-/**
- * API Configuration
- * 
- * This file serves as the base configuration for simulated service calls.
- * Because the backend is out of scope, this file simply exports generic ApiResponse
- * types and mock delays.
- */
 export interface ApiResponse<T> {
     data: T;
     success: boolean;

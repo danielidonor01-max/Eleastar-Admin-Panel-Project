@@ -1,8 +1,20 @@
 import React, { createContext, useContext, useState } from 'react';
 import { initialReviewCycles, initialPerformanceReviews, initialLedgerEntries, initialDepartments, initialPromotionRequests, initialEligibilityRules, initialTasks } from '../data/mockData';
-import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, BonusType, BonusRequest, LedgerEntry, Department, PromotionRequest, PromotionEligibilityRule, PayrollCycle, AdminRole, Task } from '../data/mockData';
+import type { Employee, Job, LeaveRequest, ReviewCycle, PerformanceReview, BonusType, BonusRequest, LedgerEntry, Department, PromotionRequest, PromotionEligibilityRule, PayrollCycle, AdminRole, Task, ContractInfo, ContractDocument } from '../data/mockData';
 
-import * as reportService from '../services/reportService';
+import type {
+    AdminContextType,
+    ActivityLog,
+    AdminNotification,
+    EmailLog,
+    ModuleType,
+    NotificationType,
+    NotificationChannel
+} from './admin/types';
+import { INITIAL_PERMISSIONS, INITIAL_NOTIFICATIONS } from './admin/constants';
+export type { PayrollCycleType, AdminRole, ActivityLog, AdminNotification, NotificationType, NotificationChannel, EmailLog, ModuleType } from './admin/types';
+
+import { createReportActions } from './admin/actions/reportActions';
 import { authService } from '../services/authService';
 import { employeeService } from '../services/employeeService';
 import { notificationService } from '../services/notificationService';
@@ -15,218 +27,11 @@ import { financeService } from '../services/financeService';
 import { departmentService } from '../services/departmentService';
 import { promotionService } from '../services/promotionService';
 import { bonusService } from '../services/bonusService';
-
-// Extended Types
-// Extended Types
-export type PayrollCycleType = PayrollCycle; // Export for reportUtils
-export type { AdminRole }; // Re-export for compatibility
-
-export interface ActivityLog {
-    id: string;
-    user: string;
-    actorName?: string; // Dashboard compatibility
-    actorRole?: string; // Dashboard compatibility
-    userId?: string; // For reportUtils compatibility
-    action: string;
-    actionType?: string; // Dashboard compatibility
-    timestamp: string;
-    details?: string;
-    role: string; // Added role tracking
-    // For reportUtils compatibility
-    entityId?: string;
-    entityType?: string;
-    metadata?: any;
-    status?: string;
-}
-
-
-
-import type { AdminNotification, NotificationType, NotificationChannel, EmailLog } from '../services/notificationTypes';
-export type { AdminNotification, NotificationType, NotificationChannel, EmailLog };
-
-
-// Role & Permissions Types
-
-export type ModuleType = 'Dashboard' | 'Employees' | 'QR & ID' | 'Payroll' | 'Recruitment' | 'Website CMS' | 'Settings' | 'Leave' | 'Performance' | 'Compliance' | 'System Users';
-
-export interface AdminContextType {
-    isLoading: boolean; // Global loading state
-    employees: Employee[];
-    jobs: Job[];
-    activityLogs: ActivityLog[];
-    payrollStatus: PayrollCycle;
-    ceoSignature: string | null;
-    currentTenantId: string;
-
-    // Auth
-    requestAuth: (level: 'CMS' | 'SENSITIVE', description: string, onConfirm: () => void) => void;
-
-    // CMS related state has been moved to CMSContext
-    // AdminContext now focuses only on core admin business logic (Employees, Payroll, etc.)
-
-
-
-    // AdminNotification State
-    notifications: AdminNotification[];
-    markNotificationAsRead: (id: string) => void;
-    markAllNotificationsAsRead: () => void;
-
-    unreadCount: number;
-
-    // Leave Management
-    leaveRequests: LeaveRequest[];
-    requestLeave: (userId: string, request: Omit<LeaveRequest, 'id' | 'tenantId' | 'employeeId' | 'status' | 'requestedAt'>) => Promise<void>;
-    approveLeave: (requestId: string) => Promise<{ success: boolean; error?: string }>;
-    rejectLeave: (requestId: string, reason: string) => Promise<void>;
-
-    // Performance Management
-    reviewCycles: ReviewCycle[];
-    performanceReviews: PerformanceReview[];
-    createReviewCycle: (cycle: Omit<ReviewCycle, 'id' | 'tenantId' | 'status'>) => Promise<void>;
-    submitSelfReview: (id: string, selfReview: string, rating: number) => Promise<void>;
-    updatePerformanceReview: (id: string, updates: Partial<PerformanceReview>) => Promise<void>;
-    approvePerformanceReview: (id: string, finalData: Partial<PerformanceReview>) => Promise<void>;
-    startReviewCycle: (id: string) => Promise<void>;
-    requestRevision: (id: string, feedback: string) => Promise<void>;
-
-    // AdminNotification Engine
-    emailLogs: EmailLog[]; // Expose logs
-    dispatchNotification: (
-        payload: { title: string; message: string; type: NotificationType; link: string },
-        target: { userId?: string; roles?: AdminRole[] },
-        channels?: NotificationChannel[]
-    ) => void;
-
-    // Role State
-    currentUserRole: AdminRole;
-    currentUserId: string | null; // Track specific logged-in user
-    rolePermissions: Record<AdminRole, ModuleType[]>;
-
-    // Actions
-    updateEmployee: (id: string, updates: Partial<Employee>) => void;
-    updateUserProfile: (updates: Partial<Employee>) => void; // Safe update for self
-    addEmployee: (employee: Omit<Employee, 'tenantId'> & { password?: string; password_confirmation?: string; role_id?: number }) => Promise<void> | void;
-    deleteEmployee: (id: string) => void;
-    updateEmployeeContract: (id: string, contract: any) => void;
-    uploadContractDocument: (id: string, doc: any) => void;
-    regenerateQR: (ids: string[]) => void;
-    toggleQRStatus: (id: string, status: 'active' | 'suspended') => void;
-    updatePayrollStatus: (status: PayrollCycle['status']) => void;
-    addPayrollAdjustment: (empId: string, type: 'Bonus' | 'Fine' | 'Deduction', amount: number, reason: string) => void;
-    bulkPayrollAdjustment: (empIds: string[], type: 'Bonus' | 'Fine' | 'Deduction', amount: number, reason: string) => void;
-    logAction: (action: string, details?: string, ...args: any[]) => void;
-    updateCeoSignature: (url: string) => Promise<void>;
-    addJob: (job: Omit<Job, 'tenantId'>) => void;
-    updateJob: (id: string, updates: Partial<Job>) => void;
-    deleteJob: (id: string) => void;
-
-    // Role Actions
-    switchRole: (role: AdminRole) => void;
-    updateRolePermissions: (role: AdminRole, modules: ModuleType[]) => void;
-
-    // Bonus Management
-    bonusTypes: BonusType[];
-    bonusRequests: BonusRequest[];
-    createBonusType: (bonus: Omit<BonusType, 'id' | 'tenantId'>) => Promise<void>;
-    updateBonusType: (id: string, updates: Partial<BonusType>) => Promise<void>;
-
-    requestBonus: (employeeId: string, bonusTypeId: string, amount: number, reason: string) => Promise<void>;
-    approveBonus: (requestId: string, approvedBy: string) => Promise<void>;
-    rejectBonus: (requestId: string, reason: string) => Promise<void>;
-
-    // Authentication
-    isAuthenticated: boolean;
-    login: (email: string, pass: string) => Promise<{ role?: AdminRole, requiresOtp?: boolean }>;
-    verifyOTP: (email: string, otp: string) => Promise<AdminRole | undefined>;
-    logout: () => void;
-    // Password Management
-    generateSystemPassword: () => string;
-    sendEmail: (to: string, subject: string, body: string) => void;
-
-    // Compliance Reports
-    generatePayrollSummaryReport: (cycleId?: string) => any[];
-    generateApprovalTrailReport: (cycleId: string) => any[];
-    generateBonusAdjustmentReport: (cycleId: string) => any[];
-    generatePayrollVarianceReport: (currentCycleId: string, previousCycleId: string) => any[];
-    generateSalaryHistoryReport: (employeeId?: string, startDate?: string, endDate?: string) => any[];
-    generatePromotionHistoryReport: (startDate?: string, endDate?: string) => any[];
-    generateUserAccessReport: () => any[];
-    generateCriticalActionReport: (startDate?: string, endDate?: string) => any[];
-    generateAttestationPack: (period: { start: string; end: string }, reportTypes: string[]) => any;
-    logReportAccess: (reportType: string, filters: any) => void;
-
-    // Finance & Ledger
-    ledgerEntries: LedgerEntry[];
-    approveLedgerFunding: (cycleId: string, pin: string) => Promise<{ success: boolean; error?: string }>;
-    executeLedgerBatch: (cycleId: string) => Promise<{ success: boolean; error?: string }>;
-
-    // Departments (Role/Salary Bands)
-    departments: Department[];
-    saveDepartment: (dept: Department) => Promise<void>;
-    deleteDepartment: (id: string) => Promise<void>;
-
-    // Promotions
-    promotionRequests: PromotionRequest[];
-    eligibilityRules: PromotionEligibilityRule[];
-    requestPromotion: (req: Omit<PromotionRequest, 'id' | 'tenantId' | 'status' | 'requestedAt'>) => Promise<void>;
-    approvePromotion: (requestId: string) => Promise<void>;
-    rejectPromotion: (requestId: string, reason: string) => Promise<void>;
-    saveEligibilityRule: (rule: PromotionEligibilityRule) => Promise<void>;
-    evaluateEligibility: (employeeId: string, newRole: string) => { isEligible: boolean; reasons: string[]; scores: any };
-
-    // Payroll Actions
-    cooReviewPayroll: () => void;
-    cfoApprovePayroll: () => void;
-    updateEmployeeSalary: (empId: string, newSalary: number, reason: string, effectiveDate: string) => void;
-
-
-    // Task Management
-    tasks: Task[];
-    createTask: (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => void;
-    updateTaskStatus: (taskId: string, status: Task['status']) => void;
-    submitTaskEvidence: (taskId: string, notes: string, b64Evidence: string[]) => void;
-
-    // Decoupled Refreshers
-    refreshLeaveRequests: () => Promise<void>;
-    refreshReviewCycles: () => Promise<void>;
-    refreshLedgerEntries: () => Promise<void>;
-    refreshDepartments: () => Promise<void>;
-    refreshPromotions: () => Promise<void>;
-    refreshBonuses: () => Promise<void>;
-    refreshJobs: () => Promise<void>;
-    refreshPayrollStatus: () => Promise<void>;
-    refreshPayroll: () => Promise<void>;
-}
-
-const AdminContext = createContext<AdminContextType | undefined>(undefined);
-
-// Initial Permissions Configuration
-const INITIAL_PERMISSIONS: Record<AdminRole, ModuleType[]> = {
-    'SUPER_ADMIN': ['Dashboard', 'Employees', 'QR & ID', 'Payroll', 'Recruitment', 'Website CMS', 'Settings', 'Leave', 'Performance', 'Compliance', 'System Users'],
-    'COO': ['Dashboard', 'Employees', 'QR & ID', 'Payroll', 'Recruitment', 'Website CMS', 'Leave', 'Performance', 'Compliance'],
-    'HR_ADMIN': ['Dashboard', 'Employees', 'Recruitment', 'QR & ID', 'Leave', 'Performance'],
-    'MANAGEMENT_ADMIN': ['Dashboard', 'Employees', 'Leave', 'Performance', 'Compliance'],
-    'FINANCE_ADMIN': ['Dashboard', 'Payroll'],
-    'PAYROLL_ADMIN': ['Dashboard', 'Payroll'],
-    'TECHNICIAN': ['Dashboard', 'QR & ID', 'System Users'],
-    'WEB_ADMIN': ['Dashboard', 'Website CMS', 'Settings'],
-    'VIEWER': ['Dashboard'],
-    'CHIEF_RISK_OFFICER': ['Dashboard', 'Compliance'],
-    'USER': [] // Standard users have no admin module access
-};
-
-// Mock Notifications
-const INITIAL_NOTIFICATIONS: AdminNotification[] = [
-    { id: '1', title: 'System Alert', type: 'System', message: 'New admin session started', timestamp: new Date().toISOString(), isRead: false, link: '/admin/dashboard' },
-    { id: '2', title: 'Onboarding', type: 'HR', message: 'New employee onboarded: Sarah Jenkins', timestamp: new Date(Date.now() - 3600000).toISOString(), isRead: false, link: '/admin/employees' },
-    { id: '3', title: 'Payroll Update', type: 'Payroll', message: 'January Payroll cycle opened', timestamp: new Date(Date.now() - 86400000).toISOString(), isRead: true, link: '/admin/payroll' },
-    { id: '4', title: 'Application Received', type: 'Recruitment', message: '5 new applications for Frontend Dev', timestamp: new Date(Date.now() - 172800000).toISOString(), isRead: false, link: '/admin/recruitment' },
-    { id: '5', title: 'QR Maintenance', type: 'QR', message: 'Bulk QR regeneration completed', timestamp: new Date(Date.now() - 250000000).toISOString(), isRead: true, link: '/admin/qr' }
-];
-
 import type { AuthLevel } from '../components/PinAuthorizationModal';
 import { PinAuthorizationModal } from '../components/PinAuthorizationModal';
 import { useFeedback } from './FeedbackContext';
+
+const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { showSuccess, showError, showInfo } = useFeedback();
@@ -661,7 +466,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     };
 
-    const updateEmployeeContract = async (id: string, contract: any) => {
+    const updateEmployeeContract = async (id: string, contract: Partial<ContractInfo>) => {
         setIsLoading(true);
         try {
             // Mock implementation for now
@@ -673,7 +478,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     };
 
-    const uploadContractDocument = async (id: string, doc: any) => {
+    const uploadContractDocument = async (id: string, doc: Omit<ContractDocument, 'id' | 'uploadedAt' | 'uploadedBy'>) => {
         setIsLoading(true);
         try {
             // Mock implementation for now
@@ -1669,73 +1474,28 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }));
     }, [employees, currentUserRole, currentUserId]);
 
-    // ===== COMPLIANCE REPORTS =====
-
-    // @ts-ignore
-    const generatePayrollSummaryReport = (cycleId?: string) => {
-        logReportAccess('Payroll Summary', { cycleId });
-        return reportService.generatePayrollSummaryReport(employees, payrollStatus, cycleId);
-    };
-
-    // @ts-ignore
-    const generateApprovalTrailReport = (cycleId: string) => {
-        logReportAccess('Approval Trail', { cycleId });
-        return reportService.generateApprovalTrailReport(activityLogs, cycleId);
-    };
-
-    // @ts-ignore
-    const generateBonusAdjustmentReport = (cycleId: string) => {
-        logReportAccess('Bonus Adjustment', { cycleId });
-        // @ts-ignore
-        return reportService.generateBonusAdjustmentReport(employees, payrollStatus, bonusRequests || [], cycleId);
-    };
-
-    // @ts-ignore
-    const generatePayrollVarianceReport = (currentCycleId: string, previousCycleId: string) => {
-        logReportAccess('Payroll Variance', { currentCycleId, previousCycleId });
-        const previousCycleData = { id: previousCycleId, adjustments: [] }; // Mock previous cycle
-        return reportService.generatePayrollVarianceReport(employees, payrollStatus, previousCycleData, currentCycleId, previousCycleId);
-    };
-
-    // @ts-ignore
-    const generateSalaryHistoryReport = (employeeId?: string, startDate?: string, endDate?: string) => {
-        logReportAccess('Salary History', { employeeId, startDate, endDate });
-        return reportService.generateSalaryHistoryReport(employees, activityLogs, employeeId, startDate, endDate);
-    };
-
-    // @ts-ignore
-    const generatePromotionHistoryReport = (startDate?: string, endDate?: string) => {
-        logReportAccess('Promotion History', { startDate, endDate });
-        // @ts-ignore
-        return reportService.generatePromotionHistoryReport(employees, promotionRequests || [], startDate, endDate);
-    };
-
-    // @ts-ignore
-    const generateUserAccessReport = () => {
-        logReportAccess('USER Access', {});
-        return reportService.generateUserAccessReport(employees, activityLogs);
-    };
-
-    // @ts-ignore
-    const generateCriticalActionReport = (startDate?: string, endDate?: string) => {
-        logReportAccess('Critical Action', { startDate, endDate });
-        return reportService.generateCriticalActionReport(activityLogs, startDate, endDate);
-    };
-
-    // @ts-ignore
-    const generateAttestationPack = (period: { start: string; end: string }, reportTypes: string[]) => {
-        logReportAccess('Attestation Pack', { period, reportTypes });
-        return {
-            period,
-            reportTypes,
-            generatedAt: new Date().toISOString(),
-            generatedBy: currentUserId || 'System'
-        };
-    };
-
-    const logReportAccess = (reportType: string, filters: any) => {
-        logAction('CREATE', `System Accessed ${reportType} report. Status: SUCCESS. Ref: report-${reportType}. Filters: ${JSON.stringify(filters)}`);
-    };
+    // ===== COMPLIANCE REPORTS (from reportActions) =====
+    const reportActions = createReportActions({
+        employees,
+        payrollStatus,
+        activityLogs,
+        bonusRequests,
+        promotionRequests,
+        currentUserId,
+        logAction
+    });
+    const {
+        generatePayrollSummaryReport,
+        generateApprovalTrailReport,
+        generateBonusAdjustmentReport,
+        generatePayrollVarianceReport,
+        generateSalaryHistoryReport,
+        generatePromotionHistoryReport,
+        generateUserAccessReport,
+        generateCriticalActionReport,
+        generateAttestationPack,
+        logReportAccess
+    } = reportActions;
     // ===== END COMPLIANCE REPORTS =====
 
     // --- Finance Actions ---

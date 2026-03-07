@@ -1,5 +1,5 @@
 import { type ApiResponse, delay } from './api';
-import type { AdminRole } from '../data/mockData';
+import type { AdminRole } from '@/types';
 import { apiClient } from '../utils/apiClient';
 import Cookies from 'js-cookie';
 
@@ -62,10 +62,10 @@ export const authService = {
                     message: data.message || 'Login successful'
                 };
             } else {
-                return { success: false, data: null as any, error: data.message || 'Invalid credentials' };
+                return { success: false, data: null as unknown as LoginResponse, error: data.message || 'Invalid credentials' };
             }
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+        } catch (error: unknown) {
+            return { success: false, data: null as unknown as LoginResponse, error: error.message };
         }
     },
 

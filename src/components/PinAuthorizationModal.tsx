@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Lock, AlertCircle, Check, X } from 'lucide-react';
 
 export type AuthLevel = 'CMS' | 'SENSITIVE';
@@ -12,29 +12,34 @@ interface PinAuthorizationModalProps {
     title?: string;
 }
 
-export const PinAuthorizationModal: React.FC<PinAuthorizationModalProps> = ({
+export const PinAuthorizationModal = ({
     isOpen,
     onClose,
     onSuccess,
     requiredLevel,
     description,
     title = 'Authorization Required'
-}) => {
+}: PinAuthorizationModalProps) => {
     const [pin, setPin] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [attempts, setAttempts] = useState(0);
 
-    // Hardcoded PINs (System Level)
     const AUTH_CODES = {
-        'CMS': 'AAAAA',       // Level 2 Management (SEO, Content)
-        'SENSITIVE': 'CCCCC'  // Level 2 Finance (Payroll, HR)
+        'CMS': 'AAAAA',
+        'SENSITIVE': 'CCCCC'
     };
 
     useEffect(() => {
         if (isOpen) {
-            setPin('');
-            setError(null);
-            setAttempts(0);
+            setTimeout(() => {
+                setPin('');
+            }, 0);
+            setTimeout(() => {
+                setError(null);
+            }, 0);
+            setTimeout(() => {
+                setAttempts(0);
+            }, 0);
         }
     }, [isOpen]);
 
@@ -61,7 +66,7 @@ export const PinAuthorizationModal: React.FC<PinAuthorizationModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-100 p-4">
             <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="bg-slate-900 px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-white font-bold">
@@ -126,8 +131,7 @@ export const PinAuthorizationModal: React.FC<PinAuthorizationModalProps> = ({
                             </button>
                         </div>
                     </form>
-                </div>
-                {/* Security Footer */}
+                </div>  
                 <div className="bg-slate-50 px-6 py-2 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400">
                     <span>Secure Authorization System</span>
                     <span>System ID: SYS-{new Date().getFullYear()}</span>

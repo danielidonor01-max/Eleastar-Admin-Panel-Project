@@ -19,7 +19,7 @@ import type {
     PayrollCycleType,
     ActivityLog,
     ModuleType
-} from '../context/AdminContext';
+} from '../context/admin';
 import { generatePastCycles } from './payrollUtils';
 
 // ===== PAYROLL COMPLIANCE REPORTS =====
@@ -188,11 +188,9 @@ export const generateSalaryHistoryReport = (
         )
         .map(log => {
             const employee = employees.find(e => e.id === log.entityId);
-            const metadata = log.metadata || {};
-            // The following lines were problematic in the instruction, reverting to original logic
-            // and applying default string to employeeId as per instruction.
-            const previousSalary = metadata.oldSalary || metadata.previousSalary || 0;
-            const newSalary = metadata.newSalary || 0;
+            const metadata = (log.metadata || {}) as Record<string, unknown>;
+            const previousSalary = (metadata.oldSalary as number) || (metadata.previousSalary as number) || 0;
+            const newSalary = (metadata.newSalary as number) || 0;
             const changeAmount = newSalary - previousSalary;
             const changePercent = previousSalary > 0 ? (changeAmount / previousSalary) * 100 : 0;
 
@@ -201,12 +199,12 @@ export const generateSalaryHistoryReport = (
                 employeeId: log.entityId || 'Unknown', // Added default string
                 employeeName: employee?.name || 'Unknown',
                 department: employee?.department || 'Unknown',
-                effectiveDate: metadata.effectiveDate || log.timestamp,
+                effectiveDate: (metadata.effectiveDate as string) || log.timestamp,
                 previousSalary,
                 newSalary,
                 changeAmount,
                 changePercent,
-                reason: metadata.reason || 'Not specified',
+                reason: (metadata.reason as string) || 'Not specified',
                 approvedBy: log.userId || 'Unknown', // Added default string
                 timestamp: log.timestamp
             };
@@ -292,8 +290,8 @@ export const generateCriticalActionReport = (
             performedByRole: log.role || 'Unknown',
             timestamp: log.timestamp,
             details: log.details || '',
-            status: (log.status as any) || 'SUCCESS',
-            metadata: log.metadata
+            status: (log.status as CriticalActionReport['status']) || 'SUCCESS',
+            metadata: log.metadata as Record<string, unknown> | undefined
         }))
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 };
