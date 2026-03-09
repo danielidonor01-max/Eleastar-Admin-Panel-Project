@@ -45,3 +45,13 @@ export interface UserProfile {
     confirmPassword: string;
     photoUrl: string;
 }
+
+
+export interface RolesProps {
+    id: number;
+    name: string;
+    slug: string;
+    description: string;
+    created_at: string;
+    updated_at: string;
+}

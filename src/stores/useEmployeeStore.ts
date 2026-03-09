@@ -55,7 +55,7 @@ export const useEmployeeStore = create<EmployeeState & EmployeeActions>()(
             if (sensitiveRoles.includes(currentUserRole)) return employees;
             return employees.map((emp) => ({
                 ...emp,
-                salary: emp.id === currentUserId ? emp.salary : 0,
+                salary: emp.id === Number(currentUserId) ? emp.salary : '0',
             }));
         },
 
@@ -64,10 +64,10 @@ export const useEmployeeStore = create<EmployeeState & EmployeeActions>()(
             try {
                 const { password, password_confirmation, role_id, ...empData } = newEmployee;
                 const { currentTenantId } = useAuthStore.getState();
-                const payload = { ...empData, tenantId: currentTenantId, password, password_confirmation, role_id };
+                const payload = { ...empData, tenantId: currentTenantId, password, password_confirmation, role_id: Number(role_id) };
                 const res = await employeeService.createEmployee(payload);
                 if (res.success) {
-                    const created: Employee = res.data || ({ ...empData, tenantId: payload.tenantId } as Employee);
+                    const created: Employee = res.data as Employee;
                     set((s) => ({ employees: [created, ...s.employees] }));
                     const { logAction } = useAuditStore.getState();
                     logAction('Onboarding', `Added new employee: ${created.name}`);
@@ -89,7 +89,7 @@ export const useEmployeeStore = create<EmployeeState & EmployeeActions>()(
                 if (res.success) {
                     set((s) => ({
                         employees: s.employees.map((emp) => {
-                            if (emp.id !== id) return emp;
+                            if (emp.id !== Number(id)) return emp;
                             const oldEmp = emp;
                             const newEmp = { ...emp, ...updates };
                             const { dispatchNotification } = useNotificationStore.getState();
@@ -99,9 +99,9 @@ export const useEmployeeStore = create<EmployeeState & EmployeeActions>()(
                                     { userId: id }, ['in-app', 'email']
                                 );
                             }
-                            if (updates.title && updates.title !== oldEmp.title) {
+                            if (updates.role_relation && updates.role_relation.name !== oldEmp.role_relation.name) {
                                 dispatchNotification(
-                                    { title: 'Role Update', message: `Congratulations on your new role: ${updates.title}!`, type: 'HR', link: '/user/profile' },
+                                    { title: 'Role Update', message: `Congratulations on your new role: ${updates.role_relation.name}!`, type: 'HR', link: '/user/profile' },
                                     { userId: id }, ['in-app', 'email']
                                 );
                             }
@@ -126,7 +126,7 @@ export const useEmployeeStore = create<EmployeeState & EmployeeActions>()(
             try {
                 const res = await employeeService.deleteEmployee(id);
                 if (res.success) {
-                    set((s) => ({ employees: s.employees.filter((e) => e.id !== id) }));
+                    set((s) => ({ employees: s.employees.filter((e) => e.id !== Number(id)) }));
                     const { logAction } = useAuditStore.getState();
                     logAction('Offboarding', `Removed employee: ${id}`);
                     toast.success('Employee Removed');
@@ -154,7 +154,7 @@ export const useEmployeeStore = create<EmployeeState & EmployeeActions>()(
                 };
                 const res = await employeeService.updateEmployee(currentUserId, safeUpdates);
                 if (res.success) {
-                    set((s) => ({ employees: s.employees.map((e) => e.id === currentUserId ? { ...e, ...safeUpdates } : e) }));
+                    set((s) => ({ employees: s.employees.map((e) => e.id === Number(currentUserId) ? { ...e, ...safeUpdates } : e) }));
                     const { logAction } = useAuditStore.getState();
                     logAction('Profile Update', 'User updated their own profile');
                     toast.success('Profile Updated', { description: 'Your changes have been saved.' });
@@ -169,7 +169,7 @@ export const useEmployeeStore = create<EmployeeState & EmployeeActions>()(
         updateEmployeeContract: async (id, contract) => {
             set({ isLoading: true });
             try {
-                set((s) => ({ employees: s.employees.map((e) => e.id === id ? { ...e, ...contract } : e) }));
+                set((s) => ({ employees: s.employees.map((e) => e.id === Number(id) ? { ...e, ...contract } : e) }));
                 const { logAction } = useAuditStore.getState();
                 logAction('Contract Update', `Updated contract for ${id}`);
                 toast.success('Contract Updated', { description: 'Contract details have been saved.' });
@@ -194,7 +194,7 @@ export const useEmployeeStore = create<EmployeeState & EmployeeActions>()(
             try {
                 const res = await employeeService.updateSalary(empId, newSalary, reason);
                 if (res.success) {
-                    set((s) => ({ employees: s.employees.map((e) => e.id === empId ? { ...e, salary: newSalary } : e) }));
+                    set((s) => ({ employees: s.employees.map((e) => e.id === Number(empId) ? { ...e, salary: newSalary.toFixed(2) } : e) }));
                     const { logAction } = useAuditStore.getState();
                     logAction('Salary Update', `Updated salary for ${empId} to ${newSalary}. Reason: ${reason}`);
                     toast.success('Salary Updated', { description: 'Employee salary has been modified.' });
@@ -210,7 +210,7 @@ export const useEmployeeStore = create<EmployeeState & EmployeeActions>()(
 
         regenerateQR: (ids) => {
             set((s) => ({
-                employees: s.employees.map((e) => ids.includes(e.id) ? { ...e, verifiedAt: new Date().toISOString() } : e),
+                employees: s.employees.map((e) => ids.includes(e.id.toString()) ? { ...e, verifiedAt: new Date().toISOString() } : e),
             }));
             const { logAction } = useAuditStore.getState();
             logAction('Regenerated QR', `Regenerated QR for ${ids.length} employees.`);
@@ -220,7 +220,7 @@ export const useEmployeeStore = create<EmployeeState & EmployeeActions>()(
 
         toggleQRStatus: (id, status) => {
             set((s) => ({
-                employees: s.employees.map((e) => e.id === id ? { ...e, status: status === 'suspended' ? 'suspended' : 'active' } : e),
+                employees: s.employees.map((e) => e.id === Number(id) ? { ...e, status: status === 'suspended' ? 'suspended' : 'active' } : e),
             }));
             const { logAction } = useAuditStore.getState();
             logAction('Updated QR Status', `Set QR status to ${status} for ${id}`);

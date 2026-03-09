@@ -15,7 +15,7 @@ const getMimeIcon = (type: string) => MIME_ICON[type.split('/')[0]] ?? <FileIcon
 const isImage = (type: string) => type.startsWith('image/');
 const fmtSize = (b: number) => b < 1024 ? `${b} B` : b < 1024 * 1024 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1024 / 1024).toFixed(2)} MB`;
 
-const MediaTab = () => {
+const Media = () => {
     
     const [files, setFiles] = useState<MediaFile[]>([]);
     const [uploads, setUploads] = useState<UploadProgress[]>([]);
@@ -239,5 +239,5 @@ const MediaTab = () => {
 };
 
 
-export default MediaTab;
+export default Media;
 

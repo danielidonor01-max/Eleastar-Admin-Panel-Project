@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+
 import { useParams, Navigate } from 'react-router';
 import { useCMSStore } from '@/stores/useCMSStore';
 import { StickyHeader } from '../components/StickyHeader';
@@ -6,7 +6,8 @@ import { BrandFooter } from '../components/BrandFooter';
 import { ContactUsCard } from '../components/cms/ContactUsCard';
 import { PageSEO } from '../components/cms/PageSEO';
 
-export const DynamicPage: React.FC = () => {
+
+export const DynamicPage = () => {
     const { slug } = useParams<{ slug: string }>();
     const cmsContent = useCMSStore((s) => s.cmsContent);
 
@@ -43,21 +44,6 @@ export const DynamicPage: React.FC = () => {
 
     const { contactUsCardData } = cmsContent;
 
-    useEffect(() => {
-        if (seoData) {
-            document.title = seoData.title;
-            const metaDescription = document.querySelector('meta[name="description"]');
-            if (metaDescription) {
-                metaDescription.setAttribute('content', seoData.description);
-            } else {
-                const meta = document.createElement('meta');
-                meta.name = 'description';
-                meta.content = seoData.description;
-                document.head.appendChild(meta);
-            }
-        }
-    }, [seoData]);
-
     return (
         <div className="min-h-screen bg-white flex flex-col font-sans">
             <PageSEO slug={safeSlug} fallbackDescription={seoData?.description} />
@@ -73,7 +59,7 @@ export const DynamicPage: React.FC = () => {
                 {/* Hero Fallback / Universal Banner */}
                 <section className="bg-slate-900 py-32 px-6 flex items-center justify-center relative overflow-hidden">
                     <div className="absolute inset-0 bg-brand-900/40 mix-blend-multiply" />
-                    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_2px_2px,white_1px,transparent_0)] bg-[size:24px_24px]" />
+                    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_2px_2px,white_1px,transparent_0)] bg-size-[24px_24px]" />
                     <div className="relative text-center max-w-3xl animate-in slide-in-from-bottom duration-700">
                         <span className="text-brand-400 font-bold tracking-widest uppercase mb-4 block">Eleastar Dynamic Page</span>
                         <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-6 capitalize leading-tight">

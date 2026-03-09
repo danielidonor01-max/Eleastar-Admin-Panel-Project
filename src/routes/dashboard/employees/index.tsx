@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, MoreVertical, Plus, Download, UserPlus, FileText, Trash2, QrCode, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEmployeeStore } from '@/stores/useEmployeeStore';
@@ -6,21 +6,16 @@ import { useAuditStore } from '@/stores/useAuditStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useConfirmStore } from '@/stores/useConfirmStore';
 import { useDepartmentStore } from '@/stores/useDepartmentStore';
-import type { Department, Employee } from '@/types';
+import type { Department, Employee, RolesProps } from '@/types';
 import { EmployeeProfileModal } from '@/components/EmployeeProfileModal';
 import { ContractManagementModal } from '@/components/ContractManagementModal';
 
 export const Employees: React.FC = () => {
-    const employees = useEmployeeStore((s) => s.employees);
-    const addEmployee = useEmployeeStore((s) => s.addEmployee);
-    const updateEmployee = useEmployeeStore((s) => s.updateEmployee);
-    const toggleQRStatus = useEmployeeStore((s) => s.toggleQRStatus);
-    const updateEmployeeContract = useEmployeeStore((s) => s.updateEmployeeContract);
-    const uploadContractDocument = useEmployeeStore((s) => s.uploadContractDocument);
-    const logAction = useAuditStore((s) => s.logAction);
-    const requestAuth = useSettingsStore((s) => s.requestAuth);
-    const departments = useDepartmentStore((s) => s.departments);
-    const showConfirm = useConfirmStore((s) => s.showConfirm);
+    const {employees, fetchEmployees, addEmployee, updateEmployee, toggleQRStatus, updateEmployeeContract, uploadContractDocument} = useEmployeeStore();
+    const {logAction} = useAuditStore();
+    const {requestAuth} = useSettingsStore();
+    const {departments} = useDepartmentStore();
+    const {showConfirm} = useConfirmStore();
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
     const [contractEmployee, setContractEmployee] = useState<Employee | null>(null);
@@ -29,17 +24,23 @@ export const Employees: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const [newEmp, setNewEmp] = useState<Partial<Employee> & { password?: string; password_confirmation?: string; role_id?: number }>({
+
+
+    useEffect(() => {
+        fetchEmployees();
+    }, [fetchEmployees]);
+
+    const [newEmp, setNewEmp] = useState<Partial<Employee> & { password?: string; password_confirmation?: string; role_id?: string }>({
         status: 'active',
-        employmentType: 'Full-time',
-        department: departments.length > 0 ? departments[0].name : 'General',
-        salary: 0,
-        role_id: 3
+        employment_type: 'Full-time',
+        department_id: departments.length > 0 ? departments[0].id : '1',
+        salary: '0',
+        role_id: '3'
     });
 
-    const handleAddSubmit = async (e: React.FormEvent) => {
+    const handleAddSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!newEmp.name || !newEmp.email || !newEmp.department || !newEmp.salary || !newEmp.password || !newEmp.password_confirmation || !newEmp.role_id) {
+        if (!newEmp.name || !newEmp.email || !newEmp.department_id || !newEmp.salary || !newEmp.password || !newEmp.password_confirmation || !newEmp.role_id) {
             toast.error('Validation Error', { description: 'Please fill in all required fields including password and role.' });
             return;
         }
@@ -47,9 +48,9 @@ export const Employees: React.FC = () => {
             toast.error('Validation Error', { description: 'Passwords do not match.' });
             return;
         }
-        const dept = departments.find((d: Department) => d.name === newEmp.department);
+        const dept = departments.find((d: Department) => d.id === newEmp.department_id);
         if (dept) {
-            if (newEmp.salary! < dept.minSalary || newEmp.salary! > dept.maxSalary) {
+            if (Number(newEmp.salary!) < dept.minSalary || Number(newEmp.salary!) > dept.maxSalary) {
                 toast.error('Validation Error', { description: `Salary must be between ₦${dept.minSalary.toLocaleString()} and ₦${dept.maxSalary.toLocaleString()} for the ${dept.name} department.` });
                 return;
             }
@@ -58,38 +59,38 @@ export const Employees: React.FC = () => {
             return;
         }
         const emp: Omit<Employee, 'tenantId'> & { password?: string; password_confirmation?: string; role_id?: number } = {
-            id: `EMP-${Date.now().toString().slice(-4)}`,
+            id: Number(`EMP-${Date.now().toString().slice(-4)}`),
             name: newEmp.name!,
-            title: newEmp.title || 'Staff',
-            department: newEmp.department!,
+            role_relation: newEmp.role_relation as RolesProps || 'Staff',
+            department_id: newEmp.department_id!,
             email: newEmp.email!,
             photoUrl: `https://ui-avatars.com/api/?name=${newEmp.name}`,
             status: newEmp.status as Employee['status'] || 'active',
-            employmentType: newEmp.employmentType as Employee['employmentType'] || 'Full-time',
+            employment_type: newEmp.employment_type as Employee['employment_type'] || 'Full-time',
             verifiedAt: new Date().toISOString(),
             joinedAt: new Date().toISOString(),
-            salary: newEmp.salary || 100000,
-            systemRole: newEmp.role_id === 1 ? 'SUPER_ADMIN' : (newEmp.role_id === 2 ? 'HR_ADMIN' : 'USER'),
-            accessGranted: newEmp.status === 'active',
+            salary: newEmp.salary || '100000',
+            hire_date: new Date().toISOString(),
             password: newEmp.password,
             password_confirmation: newEmp.password_confirmation,
-            role_id: newEmp.role_id
+            role_id: newEmp?.role_id as unknown as number,
+            employee_id: `EMP-${Date.now().toString().slice(-4)}`,
         };
-        await addEmployee(emp);
+        await addEmployee(emp as Omit<Employee, 'tenantId'> & { password?: string; password_confirmation?: string; role_id?: number });
         setShowAddModal(false);
-        setNewEmp({ status: 'active', employmentType: 'Full-time', role_id: 3 });
+        setNewEmp({ status: 'active', employment_type: 'Full-time', role_id: '3' });
     };
 
     const handleAction = (action: string, emp: Employee) => {
         setActiveMenuId(null);
         if (action === 'suspend_qr') {
             requestAuth('SENSITIVE', `Suspend QR Access for ${emp.name}`, () => {
-                toggleQRStatus(emp.id, 'suspended');
+                toggleQRStatus(emp.employee_id, 'suspended');
                 toast.success('Access Suspended', { description: `${emp.name}'s QR access has been suspended.` });
             });
         } else if (action === 'enable_qr') {
             requestAuth('SENSITIVE', `Re-activate QR Access for ${emp.name}`, () => {
-                toggleQRStatus(emp.id, 'active');
+                toggleQRStatus(emp.employee_id, 'active');
                 toast.success('Access Restored', { description: `${emp.name}'s QR access has been restored.` });
             });
         } else if (action === 'view_profile') {
@@ -102,7 +103,7 @@ export const Employees: React.FC = () => {
                 message: `Are you sure you want to completely terminate ${emp.name}? This cannot be easily undone.`,
                 onConfirm: () => {
                     requestAuth('SENSITIVE', `PERMANENTLY TERMINATE ${emp.name}`, () => {
-                        updateEmployee(emp.id, { status: 'exited', accessGranted: false });
+                        updateEmployee(emp.employee_id, { status: 'exited' });
                         logAction('Employee Termination', `Terminated ${emp.name} (${emp.id})`);
                         toast.success('Employee Terminated', { description: `${emp.name} has been marked as exited.` });
                     });
@@ -114,11 +115,11 @@ export const Employees: React.FC = () => {
     const filteredEmployees = employees.filter((emp: Employee) => {
         const query = searchQuery.toLowerCase();
         return (
-            emp.name.toLowerCase().includes(query) ||
-            emp.title.toLowerCase().includes(query) ||
-            emp.department.toLowerCase().includes(query) ||
-            emp.id.toLowerCase().includes(query) ||
-            emp.status.toLowerCase().includes(query)
+            emp.name?.toLowerCase().includes(query) ||
+            emp.role_relation?.name.toLowerCase().includes(query) ||
+            emp.department_id?.toLowerCase().includes(query) ||
+            emp.employee_id?.toLowerCase().includes(query) ||
+            emp.status?.toLowerCase().includes(query)
         );
     });
 
@@ -127,8 +128,8 @@ export const Employees: React.FC = () => {
         const headers = ['Full Name', 'Role', 'Department', 'Employment Status', 'Date Joined'];
         const rows = filteredEmployees.map((emp: Employee) => [
             emp.name,
-            emp.title,
-            emp.department,
+            emp.role_relation?.name || 'N/A',
+            emp.department_id || 'N/A',
             emp.status,
             new Date(emp.joinedAt).toISOString().split('T')[0]
         ].map(val => `"${val}"`).join(','));
@@ -192,7 +193,6 @@ export const Employees: React.FC = () => {
                         <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider">
                             <tr>
                                 <th className="px-6 py-4 border-b border-slate-200">Employee</th>
-                                <th className="px-6 py-4 border-b border-slate-200">ID</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Job Title & Dept</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Employment Type</th>
                                 <th className="px-6 py-4 border-b border-slate-200">Status</th>
@@ -210,13 +210,13 @@ export const Employees: React.FC = () => {
                                             <div className="font-semibold text-slate-900">{emp.name}</div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-sm font-mono text-slate-500">{emp.id}</td>
                                     <td className="px-6 py-4">
-                                        <div className="text-sm font-medium text-slate-900">{emp.title}</div>
-                                        <div className="text-xs text-slate-500">{emp.department}</div>
+                                        <div className="text-sm font-medium text-slate-900">{emp.role_relation?.name}</div>
+                                        <div className="text-xs text-slate-500">{emp.department_id ?? 'General'}</div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="text-sm text-slate-700">{emp.employmentType}</div>
+                                        <div className="text-sm text-slate-700 capitalize">{emp.employment_type ?? 'Full-time'}</div>
+                                        <div className="text-xs text-slate-500">Hire Date: {emp.hire_date ? new Date(emp.hire_date).toLocaleDateString() : 'N/A'}</div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${emp.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
@@ -230,13 +230,13 @@ export const Employees: React.FC = () => {
                                     <td className="px-6 py-4 text-right">
                                         <div className="relative">
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === emp.id ? null : emp.id); }}
+                                                onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === emp.employee_id ? null : emp.employee_id); }}
                                                 className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                                                 aria-label="Employee Actions"
                                             >
                                                 <MoreVertical size={18} />
                                             </button>
-                                            {activeMenuId === emp.id && (
+                                            {activeMenuId === emp.employee_id && (
                                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-200 z-50 py-1 text-left">
                                                     {emp.status !== 'active' ? (
                                                         <button onClick={() => handleAction('enable_qr', emp)} className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-2">
@@ -281,7 +281,7 @@ export const Employees: React.FC = () => {
                             </div>
                             <h2 className="text-xl font-bold text-slate-900">Onboard New Employee</h2>
                         </div>
-                        <form onSubmit={handleAddSubmit} className="space-y-6">
+                        <form onSubmit={ (e) => handleAddSubmit(e)} className="space-y-6">
                             <div>
                                 <label htmlFor="emp-name" className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
                                 <input id="emp-name" type="text" required className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500" value={newEmp.name || ''} onChange={e => setNewEmp({ ...newEmp, name: e.target.value })} />
@@ -293,28 +293,28 @@ export const Employees: React.FC = () => {
                                 </div>
                                 <div>
                                     <label htmlFor="emp-title" className="block text-sm font-medium text-slate-700 mb-1">Role Title</label>
-                                    <input id="emp-title" type="text" required className="w-full p-2 border border-slate-200 rounded-lg" value={newEmp.title || ''} onChange={e => setNewEmp({ ...newEmp, title: e.target.value })} />
+                                    <input id="emp-title" type="text" required className="w-full p-2 border border-slate-200 rounded-lg" value={newEmp.role_relation?.name || ''} onChange={e => setNewEmp({ ...newEmp, role_relation: { ...newEmp.role_relation, name: e.target.value } as RolesProps })} />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label htmlFor="emp-dept" className="block text-sm font-medium text-slate-700 mb-1">Department</label>
-                                    <select id="emp-dept" className="w-full p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500" value={newEmp.department || (departments[0]?.name || 'General')} onChange={e => setNewEmp({ ...newEmp, department: e.target.value })} required>
-                                        {departments.length > 0 ? departments.map((d: Department) => <option key={d.id} value={d.name}>{d.name}</option>) : <option value="General">General</option>}
+                                    <select id="emp-dept" className="w-full p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500" value={newEmp.department_id || (departments[0]?.id || '1')} onChange={e => setNewEmp({ ...newEmp, department_id: e.target.value })} required>
+                                        {departments.length > 0 ? departments.map((d: Department) => <option key={d.id} value={d.id}>{d.name}</option>) : <option value="1">General</option>}
                                     </select>
                                 </div>
                                 <div>
                                     <label htmlFor="emp-salary" className="block text-sm font-medium text-slate-700 mb-1">Salary (â‚¦)</label>
-                                    <input id="emp-salary" type="number" className="w-full p-2 border border-slate-200 rounded-lg" value={newEmp.salary || ''} onChange={e => setNewEmp({ ...newEmp, salary: Number(e.target.value) })} required />
-                                    {newEmp.department && departments.find((d: Department) => d.name === newEmp.department) && (
-                                        <p className="text-xs text-brand-600 mt-1">Band: â‚¦{departments.find((d: Department) => d.name === newEmp.department)?.minSalary.toLocaleString()} - â‚¦{departments.find((d: Department) => d.name === newEmp.department)?.maxSalary.toLocaleString()}</p>
+                                    <input id="emp-salary" type="number" className="w-full p-2 border border-slate-200 rounded-lg" value={newEmp.salary || ''} onChange={e => setNewEmp({ ...newEmp, salary: e.target.value })} required />
+                                    {newEmp.department_id && departments.find((d: Department) => d.id === newEmp.department_id) && (
+                                        <p className="text-xs text-brand-600 mt-1">Band: â‚¦{departments.find((d: Department) => d.id === newEmp.department_id)?.minSalary.toLocaleString()} - â‚¦{departments.find((d: Department) => d.id === newEmp.department_id)?.maxSalary.toLocaleString()}</p>
                                     )}
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label htmlFor="emp-role" className="block text-sm font-medium text-slate-700 mb-1">System Role</label>
-                                    <select id="emp-role" className="w-full p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500" value={newEmp.role_id || 3} onChange={e => setNewEmp({ ...newEmp, role_id: Number(e.target.value) })}>
+                                    <select id="emp-role" className="w-full p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500" value={newEmp.role_id || '3'} onChange={e => setNewEmp({ ...newEmp, role_id: e.target.value })}>
                                         <option value={1}>Administrator</option>
                                         <option value={2}>HR Manager</option>
                                         <option value={3}>User</option>
@@ -322,7 +322,7 @@ export const Employees: React.FC = () => {
                                 </div>
                                 <div>
                                     <label htmlFor="emp-type" className="block text-sm font-medium text-slate-700 mb-1">Employment Type</label>
-                                    <select id="emp-type" className="w-full p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500" value={newEmp.employmentType || 'Full-time'} onChange={e => setNewEmp({ ...newEmp, employmentType: e.target.value as Employee['employmentType'] })}>
+                                    <select id="emp-type" className="w-full p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500" value={newEmp.employment_type || 'Full-time'} onChange={e => setNewEmp({ ...newEmp, employment_type: e.target.value as Employee['employment_type'] })}>
                                         <option value="Full-time">Full-time</option>
                                         <option value="Part-time">Part-time</option>
                                         <option value="Contract">Contract</option>
@@ -373,11 +373,11 @@ export const Employees: React.FC = () => {
                     employee={contractEmployee}
                     onClose={() => setContractEmployee(null)}
                     onSaveContract={(contractInfo) => {
-                        updateEmployeeContract(contractEmployee.id, contractInfo);
+                        updateEmployeeContract(contractEmployee.employee_id, contractInfo);
                         setContractEmployee(null);
                     }}
                     onUploadDocument={(document) => {
-                        uploadContractDocument(contractEmployee.id, document);
+                        uploadContractDocument(contractEmployee.employee_id, document);
                     }}
                 />
             )}

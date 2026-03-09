@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Users, TrendingUp, Clock, FileText } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router';
 import { useEmployeeStore } from '@/stores/useEmployeeStore';
@@ -7,16 +7,28 @@ import { useAuditStore } from '@/stores/useAuditStore';
 import { useRecruitmentStore } from '@/stores/useRecruitmentStore';
 import type { ActivityLog, Employee, Job } from '@/types';
 
-export const Dashboard: React.FC = () => {
-    const employees = useEmployeeStore((s) => s.employees);
-    const payrollStatus = usePayrollStore((s) => s.payrollStatus);
-    const activityLogs = useAuditStore((s) => s.activityLogs);
-    const jobs = useRecruitmentStore((s) => s.jobs);
+export const Dashboard = () => {
+    const {employees, fetchEmployees, } = useEmployeeStore();
+    const {payrollStatus, fetchPayrollStatus} = usePayrollStore();
+    const {activityLogs, } = useAuditStore();
+    const {jobs} = useRecruitmentStore();
     const location = useLocation();
     const navigate = useNavigate();
     const [highlightedLogId, setHighlightedLogId] = useState<string | null>(null);
 
-    // Deep Linking Handler
+    const loadData = useCallback(async () => {
+        await Promise.allSettled([
+            fetchEmployees(),
+            fetchPayrollStatus(),
+        ]);
+    },[fetchEmployees, fetchPayrollStatus]);
+   
+
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const logId = params.get('logId');
@@ -29,7 +41,7 @@ export const Dashboard: React.FC = () => {
 
     // Computed Data
     const totalEmployees = employees.length;
-    const interns = employees.filter((e: Employee) => e.employmentType === 'Intern').length;
+    const interns = employees.filter((e: Employee) => e.employment_type === 'Intern').length;
     const active = employees.filter((e: Employee) => e.status === 'active').length;
     const activePercentage = totalEmployees > 0 ? Math.round((active / totalEmployees) * 100) : 0;
 

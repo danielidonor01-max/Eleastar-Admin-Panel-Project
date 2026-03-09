@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, User, QrCode, DollarSign, Clock, FileText, Mail, Phone, Briefcase, MapPin, Globe, Edit2, Save, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import type { Employee } from '../data/mockData';
+import type { Employee, RolesProps, EmploymentType } from '@/types';
 import { usePayrollStore } from '@/stores/usePayrollStore';
 import { useAuditStore } from '@/stores/useAuditStore';
 import { useEmployeeStore } from '@/stores/useEmployeeStore';
@@ -14,11 +14,9 @@ interface EmployeeProfileModalProps {
 }
 
 export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ employee, onClose }) => {
-    const payrollStatus = usePayrollStore((s) => s.payrollStatus);
-    const activityLogs = useAuditStore((s) => s.activityLogs);
-    const toggleQRStatus = useEmployeeStore((s) => s.toggleQRStatus);
-    const regenerateQR = useEmployeeStore((s) => s.regenerateQR);
-    const updateEmployee = useEmployeeStore((s) => s.updateEmployee);
+    const { payrollStatus } = usePayrollStore();
+    const { activityLogs } = useAuditStore();
+    const { toggleQRStatus, regenerateQR, updateEmployee } = useEmployeeStore();
     const [activeTab, setActiveTab] = useState<'overview' | 'qr' | 'payroll' | 'activity'>('overview');
     const [isEditing, setIsEditing] = useState(false);
     const navigate = useNavigate();
@@ -27,30 +25,30 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
     const [formData, setFormData] = useState({
         name: employee.name,
         email: employee.email,
-        title: employee.title,
-        department: employee.department,
+        title: employee.role_relation?.name || 'N/A',
+        department: employee.department_id || 'N/A',
         photoUrl: employee.photoUrl,
         phone: '+234 800 000 0000', // Mock phone since it's not in base type yet
         location: 'Abuja HQ',
-        employmentType: employee.employmentType
+        employmentType: employee.employment_type || 'Full-time'
     });
 
     const handleSave = () => {
-        updateEmployee(employee.id, {
+        updateEmployee(employee.employee_id, {
             name: formData.name,
             email: formData.email,
-            title: formData.title,
-            department: formData.department,
+            role_relation: { name: formData.title } as RolesProps,
+            department_id: formData.department,
             photoUrl: formData.photoUrl,
-            employmentType: formData.employmentType
+            employment_type: formData.employmentType
         });
         setIsEditing(false);
     };
 
     // Derived Data
-    const adjustments = payrollStatus.adjustments.filter(a => a.empId === employee.id);
-    const relatedLogs = activityLogs.filter(log =>
-        log.details?.includes(employee.name) || log.details?.includes(employee.id)
+    const adjustments = payrollStatus?.adjustments?.filter(a => a.empId === employee.employee_id) || [];
+    const relatedLogs = activityLogs?.filter(log =>
+        log.details?.includes(employee.name) || log.details?.includes(employee.employee_id)
     );
 
     const tabs = [
@@ -173,7 +171,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id as any)}
+                                onClick={() => setActiveTab(tab.id as 'overview' | 'qr' | 'payroll' | 'activity')}
                                 className={`flex items-center gap-2 pb-4 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id
                                     ? 'border-slate-900 text-slate-900'
                                     : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
@@ -274,7 +272,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                                                 <select
                                                     aria-label="Employment Type"
                                                     value={formData.employmentType}
-                                                    onChange={e => setFormData({ ...formData, employmentType: e.target.value as any })}
+                                                    onChange={e => setFormData({ ...formData, employmentType: e.target.value as EmploymentType })}
                                                     className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all cursor-pointer"
                                                 >
                                                     <option value="Full-time">Full-time</option>
@@ -283,7 +281,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                                                     <option value="Intern">Intern</option>
                                                 </select>
                                             ) : (
-                                                <div className="text-sm font-medium text-slate-900">{employee.employmentType}</div>
+                                                <div className="text-sm font-medium text-slate-900">{employee.employment_type}</div>
                                             )}
                                         </div>
                                     </div>
@@ -296,7 +294,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                                             </div>
                                             <div className="pl-6">
                                                 <div className="font-mono text-sm font-bold bg-slate-50 text-slate-700 inline-block px-3 py-1.5 rounded-lg border border-slate-200">
-                                                    {employee.id}
+                                                    {employee.employee_id}
                                                 </div>
                                             </div>
                                         </div>
@@ -321,7 +319,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                                 <h3 className="font-bold text-slate-900 mb-4">Current QR Code</h3>
                                 <div className={`p-4 bg-white border-2 rounded-xl shadow-sm mb-4 transition-all ${employee.status === 'active' ? 'border-brand-500 ring-4 ring-brand-50' : 'border-slate-200 opacity-50 grayscale'}`}>
                                     <QRCode
-                                        value={`${PUBLIC_LINK}/verify/${employee.id}`}
+                                        value={`${PUBLIC_LINK}/verify/${employee.employee_id}`}
                                         size={160}
                                         level="H"
                                     />
@@ -337,7 +335,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                                     <h3 className="font-bold text-slate-900 mb-4">Access Controls</h3>
                                     <div className="space-y-4">
                                         <button
-                                            onClick={() => window.open(`${PUBLIC_LINK}/verify/${employee.id}`, '_blank')}
+                                            onClick={() => window.open(`${PUBLIC_LINK}/verify/${employee.employee_id}`, '_blank')}
                                             className="w-full py-2.5 px-4 rounded-lg font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-sm"
                                         >
                                             <Globe size={16} />
@@ -345,7 +343,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                                         </button>
 
                                         <button
-                                            onClick={() => toggleQRStatus(employee.id, (employee.status === 'active' || employee.status === 'probation') ? 'suspended' : 'active')}
+                                            onClick={() => toggleQRStatus(employee.employee_id, (employee.status === 'active' || employee.status === 'probation') ? 'suspended' : 'active')}
                                             className={`w-full py-2.5 px-4 rounded-lg font-medium border transition-colors ${(employee.status === 'active' || employee.status === 'probation')
                                                 ? 'border-red-200 text-red-700 hover:bg-red-50'
                                                 : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
@@ -354,7 +352,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                                             {(employee.status === 'active' || employee.status === 'probation') ? 'Revoke QR Access' : 'Re-enable QR Access'}
                                         </button>
                                         <button
-                                            onClick={() => regenerateQR([employee.id])}
+                                            onClick={() => regenerateQR([employee.employee_id])}
                                             className="w-full py-2.5 px-4 rounded-lg font-medium border border-slate-200 text-slate-700 hover:bg-slate-50"
                                         >
                                             Regenerate New Code
@@ -401,7 +399,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                                     Current Month Adjustments
                                 </div>
                                 <div className="divide-y divide-slate-100">
-                                    {adjustments.length > 0 ? adjustments.map((adj, i) => (
+                                    {adjustments?.length > 0 ? adjustments?.map((adj, i) => (
                                         <div key={i} className="px-6 py-4 flex items-center justify-between">
                                             <div>
                                                 <div className="font-bold text-slate-900">{adj.reason}</div>
@@ -422,7 +420,7 @@ export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ empl
                     {activeTab === 'activity' && (
                         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                             <div className="divide-y divide-slate-100">
-                                {relatedLogs.length > 0 ? relatedLogs.map(log => (
+                                {relatedLogs?.length > 0 ? relatedLogs?.map(log => (
                                     <div key={log.id} className="p-4 hover:bg-slate-50 transition-colors">
                                         <div className="flex items-start gap-3">
                                             <div className="mt-1"><FileText size={16} className="text-slate-400" /></div>

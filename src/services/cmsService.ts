@@ -14,7 +14,7 @@ export const cmsService = {
      */
     getPublicCMSSlugs: async (): Promise<ApiResponse<{ name: string; slug: string }[]>> => {
         try {
-            const { data } = await api.get<{ data?: { name: string; slug: string }[]; message?: string }>(`/cms/get-slugs`, {
+            const { data } = await api.get(`/cms/get-slugs`, {
                 requireAuth: false,
                 headers: { 'X-CMS-API-Key': CMS_PUBLIC_API_KEY },
             });
@@ -30,7 +30,7 @@ export const cmsService = {
      */
     getPublicPageSections: async (slug: string): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ data?: unknown; message?: string }>(`/cms/pages/${slug}`, {
+            const { data } = await api.get(`/cms/pages/${slug}`, {
                 requireAuth: false,
                 headers: { 'X-CMS-API-Key': CMS_PUBLIC_API_KEY },
             });
@@ -46,7 +46,7 @@ export const cmsService = {
      */
     getPublicMenus: async (): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ data?: unknown[]; message?: string }>(`/cms/menus`, {
+            const { data } = await api.get(`/cms/menus`, {
                 requireAuth: false,
                 headers: { 'X-CMS-API-Key': CMS_PUBLIC_API_KEY },
             });
@@ -62,7 +62,7 @@ export const cmsService = {
      */
     getPublicSettingsGroups: async (): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ data?: unknown[]; message?: string }>(`/cms/settings/groups`, {
+            const { data } = await api.get(`/cms/settings/groups`, {
                 requireAuth: false,
                 headers: { 'X-CMS-API-Key': CMS_PUBLIC_API_KEY },
             });
@@ -78,7 +78,7 @@ export const cmsService = {
      */
     getCMSPages: async (): Promise<ApiResponse<CMSData | null>> => {
         try {
-            const { data } = await api.get<{ data?: CMSData | null; message?: string }>(`/portal/cms/pages`);
+            const { data } = await api.get(`/portal/cms/pages`);
             return { data: data?.data ?? null, success: true, message: data?.message };
         } catch (error: unknown) {
             const e = error as { message?: string };
@@ -91,7 +91,7 @@ export const cmsService = {
      */
     listApiKeys: async (): Promise<ApiResponse<unknown[]>> => {
         try {
-            const { data } = await api.get<{ data?: unknown[]; message?: string }>(`/portal/cms/api-keys`);
+            const { data } = await api.get(`/portal/cms/api-keys`);
             return { data: data?.data ?? [], success: true, message: data?.message };
         } catch (error: unknown) {
             const e = error as { message?: string };
@@ -104,7 +104,7 @@ export const cmsService = {
      */
     generateApiKey: async (name: string): Promise<ApiResponse<{ name: string; key: string }>> => {
         try {
-            const { data } = await api.post<{ status?: boolean; data?: { name: string; key: string }; message?: string }>(`/portal/cms/api-keys`, { name });
+            const { data } = await api.post(`/portal/cms/api-keys`, { name });
             if (!data?.status) throw new Error(data?.message ?? 'Failed to generate API key');
             return { data: data.data!, success: true, message: data?.message ?? 'API key generated successfully' };
         } catch (error: unknown) {
@@ -118,7 +118,7 @@ export const cmsService = {
      */
     deleteApiKey: async (id: string | number): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.delete<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/api-keys/${id}`);
+            const { data } = await api.delete(`/portal/cms/api-keys/${id}`);
             if (!data?.status) throw new Error(data?.message ?? 'Failed to delete API key');
             return { data: data.data, success: true, message: data?.message };
         } catch (error: unknown) {
@@ -132,7 +132,7 @@ export const cmsService = {
      */
     toggleApiKeyStatus: async (id: string | number, is_active: boolean): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.patch<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/api-keys/${id}/status`, { is_active });
+            const { data } = await api.patch(`/portal/cms/api-keys/${id}/status`, { is_active });
             if (!data?.status) throw new Error(data?.message ?? 'Failed to toggle status');
             return { data: data.data, success: true, message: data?.message };
         } catch (error: unknown) {
@@ -146,7 +146,7 @@ export const cmsService = {
      */
     updateCMSSection: async (sectionId: string | number, payload: unknown): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.put<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/sections/${sectionId}`, payload);
+            const { data } = await api.put(`/portal/cms/sections/${sectionId}`, payload);
             if (!data?.status) throw new Error(data?.message ?? 'Failed to update section');
             return { data: data.data, success: true, message: data?.message ?? 'CMS content updated successfully' };
         } catch (error: unknown) {
@@ -160,7 +160,7 @@ export const cmsService = {
      */
     updateCMSSectionStatus: async (sectionId: string | number, status: 'published' | 'draft'): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.patch<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/sections/${sectionId}/status`, { status });
+            const { data } = await api.patch(`/portal/cms/sections/${sectionId}/status`, { status });
             if (!data?.status) throw new Error(data?.message ?? 'Failed to update section status');
             return { data: data.data, success: true, message: data?.message ?? 'Section status updated' };
         } catch (error: unknown) {
@@ -175,7 +175,7 @@ export const cmsService = {
     // -------------------------------------------------------------
     createCMSPage: async (payload: unknown): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.post<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/pages`, payload);
+                        const { data } = await api.post(`/portal/cms/pages`, payload);
             if (!data?.status) throw new Error(data?.message ?? 'Failed to create page');
             return { data: data.data, success: true, message: data?.message };
         } catch (error: unknown) {
@@ -186,7 +186,7 @@ export const cmsService = {
 
     updateCMSPage: async (slug: string, payload: unknown): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.put<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/pages/${slug}`, payload);
+            const { data } = await api.put(`/portal/cms/pages/${slug}`, payload);
             if (!data?.status) throw new Error(data?.message ?? 'Failed to update page');
             return { data: data.data, success: true, message: data?.message };
         } catch (error: unknown) {
@@ -197,7 +197,7 @@ export const cmsService = {
 
     deleteCMSPage: async (slug: string): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.delete<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/pages/${slug}`);
+            const { data } = await api.delete(`/portal/cms/pages/${slug}`);
             if (!data?.status) throw new Error(data?.message ?? 'Failed to delete page');
             return { data: data.data, success: true, message: data?.message };
         } catch (error: unknown) {
@@ -208,7 +208,7 @@ export const cmsService = {
 
     updateCMSPageStatus: async (slug: string, status: 'live' | 'draft'): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.patch<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/pages/${slug}/status`, { status });
+            const { data } = await api.patch(`/portal/cms/pages/${slug}/status`, { status });
             if (!data?.status) throw new Error(data?.message ?? 'Failed to update page status');
             return { data: data.data, success: true, message: data?.message };
         } catch (error: unknown) {
@@ -219,7 +219,7 @@ export const cmsService = {
 
     getPageSections: async (slug: string): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ data?: unknown; message?: string }>(`/portal/cms/pages/${slug}/sections`);
+            const { data } = await api.get(`/portal/cms/pages/${slug}/sections`);
             return { data: data?.data, success: true, message: data?.message };
         } catch (error: unknown) {
             const e = error as { message?: string };
@@ -229,7 +229,7 @@ export const cmsService = {
 
     createCMSSection: async (payload: unknown): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.post<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/sections`, payload);
+            const { data } = await api.post(`/portal/cms/sections`, payload);
             if (!data?.status) throw new Error(data?.message ?? 'Failed to create section');
             return { data: data.data, success: true, message: data?.message };
         } catch (error: unknown) {
@@ -240,7 +240,7 @@ export const cmsService = {
 
     deleteCMSSection: async (sectionId: string | number): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.delete<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/sections/${sectionId}`);
+            const { data } = await api.delete(`/portal/cms/sections/${sectionId}`);
             if (!data?.status) throw new Error(data?.message ?? 'Failed to delete section');
             return { data: data.data, success: true, message: data?.message };
         } catch (error: unknown) {
@@ -254,7 +254,7 @@ export const cmsService = {
     // -------------------------------------------------------------
     getCMSMenus: async (): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ data?: unknown; message?: string }>(`/portal/cms/menus`);
+            const { data } = await api.get(`/portal/cms/menus`);
             return { data: data?.data, success: true, message: data?.message };
         } catch (error: unknown) {
             const e = error as { message?: string };
@@ -264,7 +264,7 @@ export const cmsService = {
 
     getMenuWithItems: async (key: string): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ data?: unknown; message?: string }>(`/portal/cms/menus/${key}`);
+            const { data } = await api.get(`/portal/cms/menus/${key}`);
             return { data: data?.data, success: true, message: data?.message };
         } catch (error: unknown) {
             const e = error as { message?: string };
@@ -274,7 +274,7 @@ export const cmsService = {
 
     createMenuItem: async (payload: unknown): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.post<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/menu-items`, payload);
+            const { data } = await api.post(`/portal/cms/menu-items`, payload);
             if (!data?.status) throw new Error(data?.message ?? 'Failed to create menu item');
             return { data: data.data, success: true, message: data?.message };
         } catch (error: unknown) {
@@ -285,7 +285,7 @@ export const cmsService = {
 
     updateMenuItem: async (id: string | number, payload: unknown): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.put<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/menu-items/${id}`, payload);
+            const { data } = await api.put(`/portal/cms/menu-items/${id}`, payload);
             if (!data?.status) throw new Error(data?.message ?? 'Failed to update menu item');
             return { data: data.data, success: true, message: data?.message };
         } catch (error: unknown) {
@@ -296,7 +296,7 @@ export const cmsService = {
 
     deleteMenuItem: async (id: string | number): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.delete<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/menu-items/${id}`);
+            const { data } = await api.delete(`/portal/cms/menu-items/${id}`);
             if (!data?.status) throw new Error(data?.message ?? 'Failed to delete menu item');
             return { data: data.data, success: true, message: data?.message };
         } catch (error: unknown) {
@@ -307,7 +307,7 @@ export const cmsService = {
 
     updateMenuItemVisibility: async (id: string | number, is_visible: boolean): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.patch<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/menu-items/${id}/visibility`, { is_visible });
+                const { data } = await api.patch(`/portal/cms/menu-items/${id}/visibility`, { is_visible });
             if (!data?.status) throw new Error(data?.message ?? 'Failed to update menu item visibility');
             return { data: data.data, success: true, message: data?.message };
         } catch (error: unknown) {
@@ -321,7 +321,7 @@ export const cmsService = {
      */
     updateFooterMetadata: async (payload: unknown): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.patch<{ status?: boolean; data?: unknown; message?: string }>(`/portal/cms/menus/footer/metadata`, payload);
+            const { data } = await api.patch(`/portal/cms/menus/footer/metadata`, payload);
             if (!data?.status) throw new Error(data?.message ?? 'Failed to update footer metadata');
             return { data: data.data, success: true, message: data?.message };
         } catch (error: unknown) {

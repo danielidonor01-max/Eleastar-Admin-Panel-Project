@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useEmployeeStore } from '@/stores/useEmployeeStore';
 import { useTaskStore } from '@/stores/useTaskStore';
@@ -7,21 +7,23 @@ import { Search, Filter, Plus, Calendar, AlertCircle, CheckCircle2, Clock, Eye }
 import type { Employee, Task } from '@/types';
 
 export const AdminTasksPage = () => {
-    const tasks = useTaskStore((s) => s.tasks);
-    const employees = useEmployeeStore((s) => s.employees);
-    const createTask = useTaskStore((s) => s.createTask);
-    const updateTaskStatus = useTaskStore((s) => s.updateTaskStatus);
-    const showConfirm = useConfirmStore((s) => s.showConfirm);
+    const { tasks, createTask, updateTaskStatus, getAllTasks } = useTaskStore();
+    const { employees } = useEmployeeStore();
+    const { showConfirm } = useConfirmStore();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'All' | Task['status']>('All');
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+    useEffect(() => {
+        getAllTasks();
+    }, [getAllTasks])
+
     // Form State
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [assignedTo, setAssignedTo] = useState('');
+    const [assignedTo, setAssignedTo] = useState<string>('');
     const [priority, setPriority] = useState<Task['priority']>('Medium');
     const [deliveryDate, setDeliveryDate] = useState('');
 
@@ -160,7 +162,7 @@ export const AdminTasksPage = () => {
                         ) : (
                             <div className="divide-y divide-slate-100">
                                 {filteredTasks.map((task: Task) => {
-                                    const assignee = employees.find((e: Employee) => e.id === task.assignedTo);
+                                    const assignee = employees.find((e: Employee) => e.employee_id === task.assignedTo);
                                     return (
                                         <button
                                             key={task.id}
@@ -326,7 +328,7 @@ export const AdminTasksPage = () => {
                                     >
                                         <option value="">Select Personnel...</option>
                                         {employees.map((emp: Employee) => (
-                                            <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                            <option key={emp.employee_id} value={emp.employee_id}>{emp.name}</option>
                                         ))}
                                     </select>
                                 </div>

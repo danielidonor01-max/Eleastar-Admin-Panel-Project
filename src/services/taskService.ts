@@ -1,5 +1,6 @@
 import { type ApiResponse } from './api';
 import { api } from '../utils/apiClient';
+import type { Task } from '@/types';
 
 function getError(error: unknown): string {
     const e = error as { response?: { data?: { message?: string } }; message?: string };
@@ -10,21 +11,21 @@ function getError(error: unknown): string {
  * Service for Internal Task management
  */
 export const taskService = {
-    getAllTasks: async (params?: { page?: number; per_page?: number; status?: string; priority?: string; search?: string }): Promise<ApiResponse<unknown>> => {
+    getAllTasks: async (params?: { page?: number; per_page?: number; status?: string; priority?: string; search?: string }): Promise<ApiResponse<Task[]>> => {
         try {
-            const { data } = await api.get<{ success?: boolean; status?: boolean; data?: unknown; message?: string }>('/tasks', { params });
+            const { data } = await api.get('/tasks', { params });
             if (data?.success || data?.status) {
                 return { success: true, data: data.data ?? null, message: data?.message };
             }
-            return { success: false, data: null, error: data?.message ?? 'Failed to fetch tasks' };
+            return { success: false, data: [], error: data?.message ?? 'Failed to fetch tasks' };
         } catch (error: unknown) {
-            return { success: false, data: null, error: getError(error) };
+            return { success: false, data: [], error: getError(error) };
         }
     },
 
     createTask: async (taskPayload: unknown): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.post<{ success?: boolean; status?: boolean; data?: unknown; message?: string }>('/tasks', taskPayload);
+            const { data } = await api.post('/tasks', taskPayload);
             if (data?.success || data?.status) {
                 return { success: true, data: data.data ?? null, message: data?.message };
             }
@@ -36,7 +37,7 @@ export const taskService = {
 
     getTaskStatistics: async (): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ success?: boolean; status?: boolean; data?: unknown; message?: string }>('/tasks/statistics');
+            const { data } = await api.get('/tasks/statistics');
             if (data?.success || data?.status) {
                 return { success: true, data: data.data ?? null, message: data?.message };
             }
@@ -48,7 +49,7 @@ export const taskService = {
 
     getMyTasks: async (params?: { status?: string }): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ success?: boolean; status?: boolean; data?: unknown; message?: string }>('/tasks/my-tasks', { params });
+            const { data } = await api.get('/tasks/my-tasks', { params });
             if (data?.success || data?.status) {
                 return { success: true, data: data.data ?? null, message: data?.message };
             }
@@ -60,7 +61,7 @@ export const taskService = {
 
     updateTaskStatus: async (id: string | number, status: string): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.patch<{ success?: boolean; status?: boolean; data?: unknown; message?: string }>(`/tasks/${id}/status`, { status });
+            const { data } = await api.patch(`/tasks/${id}/status`, { status });
             if (data?.success || data?.status) {
                 return { success: true, data: data.data ?? null, message: data?.message };
             }

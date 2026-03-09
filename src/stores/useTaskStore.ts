@@ -10,6 +10,7 @@ interface TaskState {
 }
 
 interface TaskActions {
+    getAllTasks: () => Promise<void>;
     createTask: (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => Promise<void>;
     updateTaskStatus: (taskId: string, status: Task['status']) => Promise<void>;
     submitTaskEvidence: (taskId: string, notes: string, b64Evidence: string[]) => void;
@@ -19,10 +20,22 @@ export const useTaskStore = create<TaskState & TaskActions>((set, get) => ({
     tasks: [],
     isLoading: false,
 
+    getAllTasks: async () => {
+        set({ isLoading: true });
+        try {
+            const res = await taskService.getAllTasks();
+            if (res.success) {
+                set({ tasks: Array.isArray(res.data) ? res.data : ((res.data as { data?: Task[] })?.data || []) });
+            } else {
+                toast.error('Fetch Error', { description: (res as { error?: string }).error });
+            }
+        } catch { toast.error('Fetch Error', { description: 'Failed to fetch tasks.' }); }
+        finally { set({ isLoading: false }); }
+    },
+
     createTask: async (taskData) => {
         set({ isLoading: true });
         try {
-            const { taskService } = await import('../services/taskService');
             const res = await taskService.createTask(taskData);
             if (res.success) {
                 const newTask: Task = {

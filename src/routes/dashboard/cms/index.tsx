@@ -1,16 +1,24 @@
 ﻿import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router';
 import type { CMSModule } from '@/types';
-import PagesTab from './tabs/PagesTab';
+import PagesTab from './$pagesList';
 import ApiKeysTab from './tabs/ActiveKeys';
 import MenuBuilderTab from './tabs/MenuBuilderTab';
-import MediaTab from './tabs/MediaTab';
-import SettingsTab from './tabs/SettingsTab';
 
+import SettingsTab from './tabs/SettingsTab';
+import { useCMSStore } from '@/stores/useCMSStore';
 
 export const CMSPage = () => {
+
+    const { fetchCMSData , pagesList} = useCMSStore();
     const location = useLocation();
     const [activeModule, setActiveModule] = useState<CMSModule>('pages');
+
+
+
+    useEffect(() => {
+        fetchCMSData();
+    }, [fetchCMSData]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -32,7 +40,6 @@ export const CMSPage = () => {
                 {activeModule === 'menus' && <MenuBuilderTab />}
                 {activeModule === 'apikeys' && <ApiKeysTab />}
                 {activeModule === 'settings' && <SettingsTab section={pageParam} />}
-                {activeModule === 'media' && <MediaTab />}
             </div>
         </div>
     );

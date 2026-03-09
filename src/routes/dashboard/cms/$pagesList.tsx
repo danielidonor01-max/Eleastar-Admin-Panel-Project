@@ -1,6 +1,3 @@
-// ──────────────────────────────────────────────
-// Pages Manager Tab
-
 import { DynamicJsonEditor } from "@/components/DynamicJsonEditor";
 import { CMSPreviewPane } from "@/components/CMSPreviewPane";
 import { useCallback, useEffect, useState } from "react";
@@ -12,8 +9,7 @@ import { Globe, Layout, FileCode, Eye, FolderOpen, Trash2, Plus, PlusCircle, Ale
 import { toast } from "sonner";
 import { useCMSStore } from "@/stores/useCMSStore";
 
-// ──────────────────────────────────────────────
-const PagesTab = () => {
+const PagesList = () => {
     const updatePMSContent = useCMSStore((s) => s.updatePMSContent);
     const createCMSPage = useCMSStore((s) => s.createCMSPage);
     const deleteCMSPage = useCMSStore((s) => s.deleteCMSPage);
@@ -56,7 +52,7 @@ const PagesTab = () => {
                 const sectionData = res.data;
                 const jsonStr = JSON.stringify(sectionData, null, 2);
                 setJsonInput(jsonStr);
-                setParsedData(sectionData);
+                setParsedData(sectionData as Record<string, unknown>);
             }
         } catch { 
             toast.error('Error', { description: 'Failed to load sections.' });
@@ -102,7 +98,7 @@ const PagesTab = () => {
         if (!selectedPage || jsonError) return;
         try {
             await updatePMSContent(selectedPage.slug, parsedData);
-            toast.success('Published', { description: `${selectedPage.title} changes are now live.` });
+            toast.success('Published', { description: `${selectedPage.name} changes are now live.` });
             setIsDirty(false);
         } catch (e: unknown) { toast.error('Publish Failed', { description: e instanceof Error ? e.message : 'Unknown error' }); }
     };
@@ -363,7 +359,7 @@ const PagesTab = () => {
     );
 };
 
-export default PagesTab;
+export default PagesList;
 
 export const PageSEOPanel = ({ page, onSave }: {
     page: CMSPageItem;
@@ -376,7 +372,7 @@ export const PageSEOPanel = ({ page, onSave }: {
     const [ogTitle, setOgTitle] = useState<string>(page.og_title || '');
     const [ogDescription, setOgDescription] = useState<string>(page.og_description || '');
     const [ogImageUrl, setOgImageUrl] = useState<string>(page.og_image_url || '');
-    const [noIndex, setNoIndex] = useState<boolean>(page.no_index || false);
+    const [noIndex, setNoIndex] = useState<boolean>(page.meta_noindex || false);
     const [saving, setSaving] = useState(false);
     const [dirty, setDirty] = useState(false);
 

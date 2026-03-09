@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { AppInitializer } from './components/AppInitializer';
 import { ConfirmModal } from './components/ConfirmModal';
 import { PinModal } from './components/PinModal';
 import PreviewBadge from './components/PreviewBadge';
@@ -37,18 +36,22 @@ import {
   BonusPage,
   AnalyticsDashboard,
   ComplianceReportsPage,
-  FinanceLedgerPage
+  FinanceLedgerPage,
+  Dashboard
 } from '@/routes/dashboard';
 import { UserDashboard } from './routes/user/UserDashboard';
 import { UserProfilePage } from './routes/user/UserProfilePage';
 import { LeavePage } from './routes/user/LeavePage';
 import { UserTasksPage } from './routes/user/UserTasksPage';
 import { PerformanceReviewPage } from './routes/user/PerformanceReviewPage';
+import PagesList from './routes/dashboard/cms/$pagesList';
+import PagesListEdit from './routes/dashboard/cms/$pagesList.edit';
+import PagesListPreview from './routes/dashboard/cms/$pagesList.preview';
+import Media from './routes/dashboard/cms/media';
 
 function App() {
   return (
     <>
-      <AppInitializer />
       <ConfirmModal />
       <PinModal />
       <Router>
@@ -72,7 +75,7 @@ function App() {
 
           {/* Admin Routes */}
             <Route path="/admin" element={<ErrorBoundary><AdminLayout /></ErrorBoundary>}>
-              <Route index element={<AdminDashboard />} />
+              <Route index element={<Dashboard />} />
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="employees" element={<Employees />} />
               <Route path="qr" element={<QRPage />} />
@@ -80,7 +83,13 @@ function App() {
               <Route path="recruitment" element={<RecruitmentPage />} />
               <Route path="leave" element={<LeaveManagement />} />
               <Route path="performance" element={<PerformancePage />} />
-              <Route path="cms" element={<CMSPage />} />
+              <Route path="cms">
+                <Route index element={<CMSPage />} />
+                <Route path=":pageId" element={<PagesList />} />
+                <Route path=":pageSlug/edit" element={<PagesListEdit />} />
+                <Route path=":pageSlug/preview" element={<PagesListPreview />} />
+                <Route path="media" element={<Media />} />
+              </Route>
               <Route path="tasks" element={<AdminTasksPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="profile" element={<ProfilePage />} />

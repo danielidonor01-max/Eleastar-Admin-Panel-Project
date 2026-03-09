@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
 import { performanceService } from '../services/performanceService';
-import type { ReviewCycle, PerformanceReview, AdminRole } from '../types';
+import type { ReviewCycle, PerformanceReview, AdminRole, Employee } from '../types';
 import { useAuditStore } from './useAuditStore';
 import { useNotificationStore } from './useNotificationStore';
 import { useAuthStore } from './useAuthStore';
@@ -74,10 +74,10 @@ export const usePerformanceStore = create<PerformanceState & PerformanceActions>
                 if (cycle) {
                     const { currentTenantId } = useAuthStore.getState();
                     const { employees } = useEmployeeStore.getState();
-                    const newReviews: PerformanceReview[] = employees.map((emp: { id: string }) => ({
+                    const newReviews: PerformanceReview[] = employees.map((emp: Employee) => ({
                         id: `PR-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
                         tenantId: currentTenantId,
-                        employeeId: emp.id,
+                        employeeId: emp.id.toString(),
                         cycleId: id,
                         status: 'Pending',
                         rating: 0,

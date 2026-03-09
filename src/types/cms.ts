@@ -659,18 +659,35 @@ export interface CMSMenu {
     items: CMSMenuItem[];
 }
 
-export interface CMSPageItem {
+export interface CMSPageLink {
     id: string;
-    title: string;
+    name: string;
     slug: string;
-    status: 'live' | 'draft';
-    meta_title: string;
-    meta_description: string;
-    meta_keywords: string;
-    meta_author: string;
-    og_title: string;
-    og_description: string;
-    og_image_url: string;
-    no_index: boolean;
-    
 }
+
+export interface CMSPageItem {
+  
+        id: string;
+        parent_id?: string;
+        slug: string;
+        name: string;
+        status: 'live' | 'draft';
+        is_sub_page: boolean;
+        order: number;
+        meta_title: string;
+        meta_description: string;
+        meta_keywords: string;
+        meta_author: string;
+        og_title: string;
+        og_description: string;
+        og_image_url: string;
+        og_image_alt: string;
+        og_type: string;
+        og_url: string;
+        created_at: string;
+        updated_at: string;
+        sections_count: number;
+        children_count: number;
+        parent: CMSPageLink;
+    }
+

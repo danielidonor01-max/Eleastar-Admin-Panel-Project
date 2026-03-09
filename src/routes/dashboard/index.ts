@@ -1,8 +1,3 @@
-/**
- * Admin routes barrel export.
- * Canonical import: @/routes/admin
- */
-
 export { Dashboard } from './dashboard/index';
 export { AnalyticsDashboard } from './analytics/index';
 export { Employees } from './employees/index';

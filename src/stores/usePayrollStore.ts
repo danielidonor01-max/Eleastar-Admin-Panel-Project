@@ -33,10 +33,10 @@ export const usePayrollStore = create<PayrollState & PayrollActions>()(
         isLoading: false,
 
         fetchPayrollStatus: async () => {
-            const res = await payrollService.getPayrollStatus();
+            const res = await payrollService.getPayrollSummary();
+            console.log(res);
             if (res.success) {
-                const data = Array.isArray(res.data) ? res.data : ((res.data as { data?: PayrollCycle[] })?.data || []);
-                if (data.length > 0) set({ payrollStatus: data[0] });
+                set({ payrollStatus: res.data as PayrollCycle });
             }
         },
 

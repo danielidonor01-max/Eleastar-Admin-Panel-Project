@@ -10,6 +10,7 @@ interface CMSState {
     cmsContent: CMSData | null;
     footerContent: FooterContent;
     globalContent: GlobalContent;
+    pagesList: CMSPageItem[];
     apiKeys: SystemApiKey[];
 }
 
@@ -41,6 +42,7 @@ interface CMSActions {
 export const useCMSStore = create<CMSState & CMSActions>()(
     createPersistedStore('cms', (set) => ({
     cmsContent: null,
+    pagesList: [],
     footerContent: initialFooterContent,
     globalContent: initialGlobalContent,
     apiKeys: initialApiKeys,
@@ -78,7 +80,7 @@ export const useCMSStore = create<CMSState & CMSActions>()(
             }
             const pagesRes = await cmsService.getCMSPages();
             if (pagesRes.success && pagesRes.data) {
-                set({ cmsContent: pagesRes.data as CMSData });
+                set({ pagesList: pagesRes.data as unknown as CMSPageItem[] });
             }
         } catch (err) {
             console.error('Failed to load CMS data', err);
@@ -87,7 +89,7 @@ export const useCMSStore = create<CMSState & CMSActions>()(
 
     refreshCMSData: async () => {
         const res = await cmsService.getCMSPages();
-        if (res.success && res.data) set({ cmsContent: res.data as CMSData });
+        if (res.success && res.data) set({ pagesList: res.data as unknown as CMSPageItem[] });
     },
 
     createCMSPage: async (payload) => {
