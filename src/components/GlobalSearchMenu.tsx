@@ -46,7 +46,7 @@ const generateSearchIndex = (rolePermissions: Record<string, string[]>, currentU
         employees.forEach(emp => {
             index.push({
                 id: `emp-${emp.id}`,
-                title: `${emp.name} - ${emp.department}`,
+                title: `${emp.name} - ${emp.department_id ?? 'N/A'}`,
                 type: 'Employee',
                 path: '/admin/employees',
                 icon: <User size={16} />

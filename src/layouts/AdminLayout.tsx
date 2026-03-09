@@ -207,70 +207,59 @@ export const AdminLayout = () => {
 
 
                                                 <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2 mb-4">
-                                                    <NavLink to="/admin/cms" className={() => {
-                                                        const active = location.pathname.includes('/admin/cms');
-                                                        return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
-                                                    }}>
-                                                        Menu Lists
+                                                    <NavLink to="/admin/cms" className={({ isActive }) =>
+                                                        `block px-2 py-1.5 text-xs rounded-md transition-all ${isActive ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`
+                                                    }>
+                                                        All Pages
                                                     </NavLink>
                                                     <NavLink to="/admin/cms/media" className={() => {
                                                         const active = location.pathname.includes('/admin/cms/media');
                                                         return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
                                                     }}>
-                                                        Media Library
+                                                        Media
                                                     </NavLink>
                                                 </div>
 
-
-
-
                                                 <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-2 mt-4 px-1">Pages</div>
                                                 <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2 mb-4">
-                                                    {pagesList.map((pages) => {
-                                                            const hasChildren = pages.children_count > 0;
+                                                    {pagesList.map((p) => {
+                                                        const hasChildren = (p.children_count ?? 0) > 0;
                                                         return (
-                                                            <Fragment key={pages.id}>
-                                                                {!hasChildren && pages.parent === null && (
-                                                                    <NavLink to={`/admin/cms/pages/${pages.slug}`} className={() => {
-                                                                        const active = location.pathname.includes(`/admin/cms/pages/${pages.slug}`);
+                                                            <Fragment key={p.id}>
+                                                                {!hasChildren && (p.parent === null || !p.parent) && (
+                                                                    <NavLink to={`/admin/cms/${p.slug}`} className={() => {
+                                                                        const active = location.pathname === `/admin/cms/${p.slug}` || location.pathname.startsWith(`/admin/cms/${p.slug}/`);
                                                                         return `block px-2 py-1.5 text-xs rounded-md transition-all ${active ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`;
                                                                     }}>
-                                                                        {pages.name}
+                                                                        {p.name}
                                                                     </NavLink>
                                                                 )}
                                                                 {hasChildren && (
-
-                                                                    <div className="relative" key={pages.id}>
+                                                                    <div className="relative" key={p.id}>
                                                                         <button
-                                                                            onClick={() => toggleSubMenu(pages.slug)}
-                                                                            className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-md transition-all ${location.search.includes('page=services') || location.search.includes('page=information-technology') || location.search.includes('page=research-and-development') || location.search.includes('page=electronics-manufacturing') || location.search.includes('page=cloud-solutions') ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                                                                            onClick={() => toggleSubMenu(p.slug)}
+                                                                            className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-md transition-all text-left ${location.pathname.includes(`/admin/cms/${p.slug}`) ? 'text-brand-400 font-medium bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
                                                                         >
-                                                                            <span>{pages.name}</span>
-                                                                            {isSubMenuExpanded(pages.slug) ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                                                                            <span>{p.name}</span>
+                                                                            {isSubMenuExpanded(p.slug) ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
                                                                         </button>
 
-                                                                        {isSubMenuExpanded(pages.slug) && (
+                                                                        {isSubMenuExpanded(p.slug) && (
                                                                             <div className="ml-3 mt-1 space-y-0.5 border-l border-slate-700">
-
-                                                                                {pagesList.filter(child => child.parent_id === pages.id).map((child) => (
-                                                                                    <Fragment key={child.id}>
-                                                                                        <NavLink to={`/admin/cms/pages/${child.slug}`} className={() => {
-                                                                                            const active = location.pathname.includes(`/admin/cms/pages/${child.slug}`);
-                                                                                            return `block px-3 py-1.5 text-[11px] rounded-md transition-all ${active ? 'text-brand-300 font-medium' : 'text-slate-500 hover:text-slate-300'}`;
-                                                                                        }}>
-                                                                                            {child.name}
-                                                                                        </NavLink>
-                                                                                    </Fragment>
-
+                                                                                {pagesList.filter((child) => String(child.parent_id) === String(p.id)).map((child) => (
+                                                                                    <NavLink key={child.id} to={`/admin/cms/${child.slug}`} className={() => {
+                                                                                        const active = location.pathname === `/admin/cms/${child.slug}` || location.pathname.startsWith(`/admin/cms/${child.slug}/`);
+                                                                                        return `block px-3 py-1.5 text-[11px] rounded-md transition-all ${active ? 'text-brand-300 font-medium' : 'text-slate-500 hover:text-slate-300'}`;
+                                                                                    }}>
+                                                                                        {child.name}
+                                                                                    </NavLink>
                                                                                 ))}
                                                                             </div>
                                                                         )}
                                                                     </div>
-
                                                                 )}
                                                             </Fragment>
-
-                                                        )
+                                                        );
                                                     })}
 
 

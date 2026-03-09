@@ -14,7 +14,8 @@ interface DynamicJsonEditorProps {
  * This ensures the CMS remains 100% synchronized with the backend schema without needing hardcoded layouts.
  */
 export const DynamicJsonEditor: React.FC<DynamicJsonEditorProps> = ({ data, onChange, label, level = 0, path = '' }) => {
-    const [isExpanded, setIsExpanded] = useState(level < 2); // Auto-expand top levels
+    // Auto-expand deeper so nested/grouped content is visible by default (levels 0–3)
+    const [isExpanded, setIsExpanded] = useState(level < 4);
 
     // Handle Primitive values (string, number, boolean)
     if (typeof data !== 'object' || data === null) {
@@ -141,23 +142,24 @@ export const DynamicJsonEditor: React.FC<DynamicJsonEditorProps> = ({ data, onCh
         );
     }
 
-    // Handle Objects
+    // Handle Objects — ensure nested/grouped content is always reachable
+    const displayLabel = label || 'Item';
     return (
         <div className={`mb-2 ${level === 0 ? '' : 'ml-4 border-l-2 border-slate-100 pl-4 py-2'}`}>
-            {label && level > 0 && (
+            {level > 0 && (
                 <div
                     className="flex items-center gap-2 mb-3 cursor-pointer group"
                     onClick={() => setIsExpanded(!isExpanded)}
                 >
                     {isExpanded ? <ChevronDown size={14} className="text-slate-400 group-hover:text-slate-600 transition-colors" /> : <ChevronRight size={14} className="text-slate-400 group-hover:text-slate-600 transition-colors" />}
                     <h4 className="text-sm font-bold text-slate-700 capitalize group-hover:text-slate-900 transition-colors">
-                        {label.replace(/([A-Z])/g, ' $1').trim()}
+                        {displayLabel.replace(/([A-Z])/g, ' $1').trim()}
                     </h4>
                 </div>
             )}
             {isExpanded && (
                 <div className="grid grid-cols-1 gap-x-6 gap-y-1">
-                    {Object.entries(data).map(([key, value]) => {
+                    {Object.entries(data ?? {}).map(([key, value]) => {
                         // Skip rendering completely empty internal structural fields unless they are inside arrays
                         if (key.startsWith('_') || key === 'id') return null;
 

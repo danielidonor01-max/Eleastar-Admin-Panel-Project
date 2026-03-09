@@ -3,7 +3,7 @@ import { api } from '../utils/apiClient';
 import { CMS_PUBLIC_API_KEY } from '../config';
 import type { FooterSection, FooterContent, ServiceCollection } from '../types';
 import { initialServicesCollection } from '../data/mockData';
-import type { CMSData } from '../types/cms';
+import type { CMSData, CMSPageDetail } from '../types/cms';
 
 /**
  * Service for Website Content Management (CMS)
@@ -80,6 +80,19 @@ export const cmsService = {
         try {
             const { data } = await api.get(`/portal/cms/pages`);
             return { data: data?.data ?? null, success: true, message: data?.message };
+        } catch (error: unknown) {
+            const e = error as { message?: string };
+            return { data: null, success: false, error: e?.message ?? 'Request failed' };
+        }
+    },
+
+    /**
+     * Gets a single page by slug with full sections, parent, and children (Admin)
+     */
+    getPageBySlug: async (slug: string): Promise<ApiResponse<CMSPageDetail | null>> => {
+        try {
+            const { data } = await api.get(`/portal/cms/pages/${slug}`);
+            return { data: data?.data ?? null, success: !!data?.status, message: data?.message };
         } catch (error: unknown) {
             const e = error as { message?: string };
             return { data: null, success: false, error: e?.message ?? 'Request failed' };

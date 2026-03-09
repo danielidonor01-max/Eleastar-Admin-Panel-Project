@@ -45,7 +45,6 @@ import { LeavePage } from './routes/user/LeavePage';
 import { UserTasksPage } from './routes/user/UserTasksPage';
 import { PerformanceReviewPage } from './routes/user/PerformanceReviewPage';
 import PagesList from './routes/dashboard/cms/$pagesList';
-import PagesListEdit from './routes/dashboard/cms/$pagesList.edit';
 import PagesListPreview from './routes/dashboard/cms/$pagesList.preview';
 import Media from './routes/dashboard/cms/media';
 
@@ -85,10 +84,9 @@ function App() {
               <Route path="performance" element={<PerformancePage />} />
               <Route path="cms">
                 <Route index element={<CMSPage />} />
-                <Route path=":pageId" element={<PagesList />} />
-                <Route path=":pageSlug/edit" element={<PagesListEdit />} />
-                <Route path=":pageSlug/preview" element={<PagesListPreview />} />
                 <Route path="media" element={<Media />} />
+                <Route path=":pageSlug" element={<PagesList />} />
+                <Route path=":pageSlug/preview" element={<PagesListPreview />} />
               </Route>
               <Route path="tasks" element={<AdminTasksPage />} />
               <Route path="settings" element={<SettingsPage />} />

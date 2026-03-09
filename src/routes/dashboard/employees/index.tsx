@@ -58,7 +58,7 @@ export const Employees: React.FC = () => {
             toast.error('Validation Error', { description: 'Selected department is invalid.' });
             return;
         }
-        const emp: Omit<Employee, 'tenantId'> & { password?: string; password_confirmation?: string; role_id?: number } = {
+        const emp: Partial<Employee> & { password?: string; password_confirmation?: string; role_id?: never } = {
             id: Number(`EMP-${Date.now().toString().slice(-4)}`),
             name: newEmp.name!,
             role_relation: newEmp.role_relation as RolesProps || 'Staff',
@@ -73,7 +73,7 @@ export const Employees: React.FC = () => {
             hire_date: new Date().toISOString(),
             password: newEmp.password,
             password_confirmation: newEmp.password_confirmation,
-            role_id: newEmp?.role_id as unknown as number,
+            role_id: newEmp?.role_id as unknown as never,
             employee_id: `EMP-${Date.now().toString().slice(-4)}`,
         };
         await addEmployee(emp as Omit<Employee, 'tenantId'> & { password?: string; password_confirmation?: string; role_id?: number });

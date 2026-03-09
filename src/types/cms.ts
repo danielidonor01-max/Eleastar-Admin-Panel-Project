@@ -660,34 +660,119 @@ export interface CMSMenu {
 }
 
 export interface CMSPageLink {
-    id: string;
+    id: string | number;
     name: string;
     slug: string;
 }
 
+/** Backend section content shapes (GET /page/:slug response) */
+export interface ServiceDetailHeroContent {
+    page_title?: string;
+    intro_text?: string;
+}
+
+export interface ServiceDetailOverviewContent {
+    overview_image?: { url: string; alt?: string };
+}
+
+export interface ServiceDetailOfferingContent {
+    number?: string;
+    title?: string;
+    description?: string;
+    image?: { url: string; alt?: string };
+}
+
+export interface ServiceDetailContactContent {
+    title?: string;
+    description?: string;
+    cta_label?: string;
+    cta_link?: string;
+}
+
+/** Backend section format (embedded in CMSPageDetail) */
+export interface CMSPageSection {
+    id: number;
+    page_id: number;
+    section_key: string;
+    type: string;
+    label: string;
+    order: number;
+    status: 'published' | 'draft';
+    content: Record<string, unknown>;
+    created_at: string;
+    updated_at: string;
+}
+
+/** Full page response from GET /portal/cms/pages/:slug */
+export interface CMSPageDetail {
+    id: number;
+    parent_id: number | null;
+    slug: string;
+    name: string;
+    status: 'live' | 'draft';
+    is_sub_page: boolean;
+    order: number;
+    meta_title: string;
+    meta_description: string;
+    meta_keywords: string;
+    meta_author: string;
+    og_title: string;
+    og_description: string;
+    og_image_url: string;
+    og_image_alt: string;
+    og_type: string;
+    og_url: string;
+    created_at: string;
+    updated_at: string;
+    sections: CMSPageSection[];
+    parent: CMSPageParent | null;
+    children: CMSPageDetail[];
+}
+
+export interface CMSPageParent {
+    id: number;
+    parent_id: number | null;
+    slug: string;
+    name: string;
+    status: 'live' | 'draft';
+    is_sub_page: boolean;
+    order: number;
+    meta_title: string;
+    meta_description: string;
+    meta_keywords: string;
+    meta_author: string;
+    og_title: string;
+    og_description: string;
+    og_image_url: string;
+    og_image_alt: string;
+    og_type: string;
+    og_url: string;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface CMSPageItem {
-  
-        id: string;
-        parent_id?: string;
-        slug: string;
-        name: string;
-        status: 'live' | 'draft';
-        is_sub_page: boolean;
-        order: number;
-        meta_title: string;
-        meta_description: string;
-        meta_keywords: string;
-        meta_author: string;
-        og_title: string;
-        og_description: string;
-        og_image_url: string;
-        og_image_alt: string;
-        og_type: string;
-        og_url: string;
-        created_at: string;
-        updated_at: string;
-        sections_count: number;
-        children_count: number;
-        parent: CMSPageLink;
-    }
+    id: string | number;
+    parent_id?: string | number;
+    slug: string;
+    name: string;
+    status: 'live' | 'draft';
+    is_sub_page: boolean;
+    order: number;
+    meta_title: string;
+    meta_description: string;
+    meta_keywords: string;
+    meta_author: string;
+    og_title: string;
+    og_description: string;
+    og_image_url: string;
+    og_image_alt: string;
+    og_type: string;
+    og_url: string;
+    created_at: string;
+    updated_at: string;
+    sections_count: number;
+    children_count: number;
+    parent: CMSPageLink | null;
+}
 

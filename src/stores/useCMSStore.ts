@@ -7,6 +7,7 @@ import type { SystemApiKey, ApiResponse } from '../types/system';
 import { createPersistedStore } from './middleware';
 
 interface CMSState {
+    isLoading: boolean;
     cmsContent: CMSData | null;
     footerContent: FooterContent;
     globalContent: GlobalContent;
@@ -41,6 +42,7 @@ interface CMSActions {
 
 export const useCMSStore = create<CMSState & CMSActions>()(
     createPersistedStore('cms', (set) => ({
+    isLoading: false,
     cmsContent: null,
     pagesList: [],
     footerContent: initialFooterContent,
@@ -52,6 +54,7 @@ export const useCMSStore = create<CMSState & CMSActions>()(
     },
 
     fetchCMSData: async () => {
+        set({ isLoading: true });
         try {
             const [menusRes] = await Promise.all([
                 cmsService.getPublicMenus(),
@@ -84,38 +87,78 @@ export const useCMSStore = create<CMSState & CMSActions>()(
             }
         } catch (err) {
             console.error('Failed to load CMS data', err);
+        } finally {
+            set({ isLoading: false });
         }
     },
 
     refreshCMSData: async () => {
+        set({ isLoading: true });
         const res = await cmsService.getCMSPages();
         if (res.success && res.data) set({ pagesList: res.data as unknown as CMSPageItem[] });
+        set({ isLoading: false });
     },
 
     createCMSPage: async (payload) => {
+        set({ isLoading: true });
         const res = await cmsService.createCMSPage(payload);
         if (res.success) {
             const { refreshCMSData } = useCMSStore.getState();
             await refreshCMSData();
             toast.success('Page Created');
         }
+        set({ isLoading: false });
         return res as ApiResponse<CMSPageItem>;
     },
 
-    updateCMSPage: async (slug, payload) => cmsService.updateCMSPage(slug, payload) as Promise<ApiResponse<CMSPageItem>>,
-    deleteCMSPage: async (slug) => cmsService.deleteCMSPage(slug) as Promise<ApiResponse<null>>,
-    updateCMSPageStatus: async (slug, status) => cmsService.updateCMSPageStatus(slug, status) as Promise<ApiResponse<CMSPageItem>>,
-
-    updateSEOMetadata: async (slug, payload) => {
+    updateCMSPage: async (slug, payload) => {
+        set({ isLoading: true });
         const res = await cmsService.updateCMSPage(slug, payload);
         if (res.success) {
             const { refreshCMSData } = useCMSStore.getState();
             await refreshCMSData();
         }
+        set({ isLoading: false });
+        return res as ApiResponse<CMSPageItem>;
+    },
+    deleteCMSPage: async (slug) => {
+        set({ isLoading: true });
+        const res = await cmsService.deleteCMSPage(slug);
+        if (res.success) {
+            const { refreshCMSData } = useCMSStore.getState();
+            await refreshCMSData();
+        }
+        set({ isLoading: false });
+        return res as ApiResponse<null>;
+    },
+    updateCMSPageStatus: async (slug, status) => {
+        set({ isLoading: true });
+        const res = await cmsService.updateCMSPageStatus(slug, status);
+        if (res.success) {
+            const { refreshCMSData } = useCMSStore.getState();
+            await refreshCMSData();
+        }
+        set({ isLoading: false });
         return res as ApiResponse<CMSPageItem>;
     },
 
-    getPageSections: async (slug) => cmsService.getPageSections(slug) as Promise<ApiResponse<unknown>>,
+    updateSEOMetadata: async (slug, payload) => {
+        set({ isLoading: true });
+        const res = await cmsService.updateCMSPage(slug, payload);
+        if (res.success) {
+            const { refreshCMSData } = useCMSStore.getState();
+            await refreshCMSData();
+        }
+        set({ isLoading: false });
+        return res as ApiResponse<CMSPageItem>;
+    },
+
+    getPageSections: async (slug) => {
+        set({ isLoading: true });
+        const res = await cmsService.getPageSections(slug);
+        set({ isLoading: false });
+        return res as ApiResponse<unknown>;
+    },
     updatePMSContent: async (id, content) => { await cmsService.updateCMSSection(id, content); },
     createCMSSection: async (payload) => { await cmsService.createCMSSection(payload); },
     deleteCMSSection: async (sectionId) => { await cmsService.deleteCMSSection(sectionId); },

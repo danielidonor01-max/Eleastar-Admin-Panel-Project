@@ -53,7 +53,7 @@ const MenuBuilderTab = () => {
         try {
             const res = await cmsService.getMenuWithItems(key);
             if (res.success && res.data) {
-                setMenuItems(res.data.items || []);
+                setMenuItems(res.data as CMSMenuItem[]);
             } else {
                 setMenuItems([]);
             }
