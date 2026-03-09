@@ -1,42 +1,25 @@
 import { type ApiResponse } from './api';
-import type { Employee } from '../data/mockData';
-import { API_BASE_URL } from '../config';
-import Cookies from 'js-cookie';
+import type { Employee } from '../types';
+import { api } from '../utils/apiClient';
 
-const getHeaders = () => {
-    const token = Cookies.get('admin_token');
-    return {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-    };
-};
+function getError(error: unknown): string {
+    const e = error as { response?: { data?: { message?: string } }; message?: string };
+    return e.response?.data?.message ?? e.message ?? 'Request failed';
+}
 
 export const employeeService = {
     /**
      * Get All Employees (Paginated)
      */
-    getAllEmployees: async (params?: { page?: number; per_page?: number; status?: string; department?: string; search?: string; role?: number }): Promise<ApiResponse<any>> => {
+    getAllEmployees: async (params?: { page?: number; per_page?: number; status?: string; department?: string; search?: string; role?: number }): Promise<ApiResponse<unknown>> => {
         try {
-            const query = new URLSearchParams();
-            if (params) {
-                Object.entries(params).forEach(([key, value]) => {
-                    if (value !== undefined && value !== '') query.append(key, String(value));
-                });
+            const { data } = await api.get('/employees', { params });
+            if (data?.success) {
+                return { success: true, data: data.data ?? null };
             }
-
-            const response = await fetch(`${API_BASE_URL}/employees?${query.toString()}`, {
-                method: 'GET',
-                headers: getHeaders()
-            });
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                return { success: true, data: data.data };
-            }
-            return { success: false, data: null as any, error: data.message || 'Failed to fetch employees' };
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: null, error: data?.message ?? 'Failed to fetch employees' };
+        } catch (error: unknown) {
+            return { success: false, data: null, error: getError(error) };
         }
     },
 
@@ -45,39 +28,28 @@ export const employeeService = {
      */
     getEmployeeById: async (id: string | number): Promise<ApiResponse<Employee | null>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/employees/${id}`, {
-                method: 'GET',
-                headers: getHeaders()
-            });
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                return { success: true, data: data.data };
+            const { data } = await api.get(`/employees/${id}`);
+            if (data?.success) {
+                return { success: true, data: data.data ?? null };
             }
-            return { success: false, data: null as any, error: data.message || 'Failed to fetch employee' };
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: null, error: data?.message ?? 'Failed to fetch employee' };
+        } catch (error: unknown) {
+            return { success: false, data: null, error: getError(error) };
         }
     },
 
     /**
      * Create New Employee
      */
-    createEmployee: async (employeePayload: any): Promise<ApiResponse<Employee>> => {
+    createEmployee: async (employeePayload: unknown): Promise<ApiResponse<Employee>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/employees`, {
-                method: 'POST',
-                headers: getHeaders(),
-                body: JSON.stringify(employeePayload)
-            });
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                return { success: true, data: data.data, message: data.message };
+            const { data } = await api.post('/employees', employeePayload);
+            if (data?.success) {
+                return { success: true, data: data.data!, message: data.message };
             }
-            return { success: false, data: null as any, error: data.message || 'Failed to create employee' };
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: null as unknown as Employee, error: data?.message ?? 'Failed to create employee' };
+        } catch (error: unknown) {
+            return { success: false, data: null as unknown as Employee, error: getError(error) };
         }
     },
 
@@ -86,19 +58,13 @@ export const employeeService = {
      */
     updateEmployee: async (id: string | number, updates: Partial<Employee>): Promise<ApiResponse<Employee>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/employees/${id}`, {
-                method: 'PUT',
-                headers: getHeaders(),
-                body: JSON.stringify(updates)
-            });
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                return { success: true, data: data.data, message: data.message };
+            const { data } = await api.put(`/employees/${id}`, updates);
+            if (data?.success) {
+                return { success: true, data: data.data!, message: data.message };
             }
-            return { success: false, data: null as any, error: data.message || 'Failed to update employee' };
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: null as unknown as Employee, error: data?.message ?? 'Failed to update employee' };
+        } catch (error: unknown) {
+            return { success: false, data: null as unknown as Employee, error: getError(error) };
         }
     },
 
@@ -107,19 +73,13 @@ export const employeeService = {
      */
     updateEmployeeStatus: async (id: string | number, status: string): Promise<ApiResponse<Employee>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/employees/${id}/status`, {
-                method: 'PATCH',
-                headers: getHeaders(),
-                body: JSON.stringify({ status })
-            });
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                return { success: true, data: data.data, message: data.message };
+            const { data } = await api.patch(`/employees/${id}/status`, { status });
+            if (data?.success) {
+                return { success: true, data: data.data!, message: data.message };
             }
-            return { success: false, data: null as any, error: data.message || 'Failed to update employee status' };
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: null as unknown as Employee, error: data?.message ?? 'Failed to update employee status' };
+        } catch (error: unknown) {
+            return { success: false, data: null as unknown as Employee, error: getError(error) };
         }
     },
 
@@ -128,48 +88,43 @@ export const employeeService = {
      */
     deleteEmployee: async (id: string | number): Promise<ApiResponse<void>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/employees/${id}`, {
-                method: 'DELETE',
-                headers: getHeaders()
-            });
-            const data = await response.json();
-
-            if (response.ok && data.success) {
+            const { data } = await api.delete(`/employees/${id}`);
+            if (data?.success) {
                 return { success: true, data: undefined, message: data.message };
             }
-            return { success: false, data: null as any, error: data.message || 'Failed to delete employee' };
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: undefined, error: data?.message ?? 'Failed to delete employee' };
+        } catch (error: unknown) {
+            return { success: false, data: undefined, error: getError(error) };
         }
     },
-
-
 
     /**
      * Get Roles
      */
-    getRoles: async (): Promise<ApiResponse<any>> => {
+    getRoles: async (): Promise<ApiResponse<unknown>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/roles`, {
-                method: 'GET',
-                headers: getHeaders()
-            });
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                return { success: true, data: data.data };
+            const { data } = await api.get('/roles');
+            if (data?.success) {
+                return { success: true, data: data.data ?? null };
             }
-            return { success: false, data: null as any, error: data.message || 'Failed to fetch roles' };
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: null, error: data?.message ?? 'Failed to fetch roles' };
+        } catch (error: unknown) {
+            return { success: false, data: null, error: getError(error) };
         }
     },
 
     /**
      * Update Employee Salary (Specialized Action)
-     * Maps to standard update under the hood for now, until backend has a specific salary endpoints
      */
-    updateSalary: async (id: string | number, newSalary: number, _reason: string): Promise<ApiResponse<Employee>> => {
-        return employeeService.updateEmployee(id, { salary: newSalary } as any);
-    }
+    updateSalary: async (id: string | number, newSalary: number, reason: string): Promise<ApiResponse<Employee>> => {
+        try {
+            const { data } = await api.put(`/employees/${id}/salary`, { salary: newSalary, reason });
+            if (data?.success) {
+                return { success: true, data: data.data!, message: data.message };
+            }
+            return { success: false, data: null as unknown as Employee, error: data?.message ?? 'Failed to update salary' };
+        } catch (error: unknown) {
+            return { success: false, data: null as unknown as Employee, error: getError(error) };
+        }
+    },
 };

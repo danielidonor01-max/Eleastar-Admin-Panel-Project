@@ -1,4 +1,4 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
+import axios, { type AxiosRequestConfig, type AxiosResponse, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import Cookies from 'js-cookie';
 import { API_BASE_URL } from '../config';
 
@@ -18,7 +18,7 @@ const subscribeTokenRefresh = (cb: (token: string) => void) => {
     refreshSubscribers.push(cb);
 };
 
-const instance: AxiosInstance = axios.create({
+const req = axios.create({
     baseURL: API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
@@ -26,8 +26,8 @@ const instance: AxiosInstance = axios.create({
     },
 });
 
-instance.interceptors.request.use((config) => {
-    const opts = config as ApiClientConfig;
+req.interceptors.request.use((config: InternalAxiosRequestConfig<unknown>) => {
+    const opts = config as unknown as ApiClientConfig;
     const requireAuth = opts.requireAuth !== false;
     if (requireAuth) {
         const token = Cookies.get('admin_token');
@@ -38,9 +38,9 @@ instance.interceptors.request.use((config) => {
     return config;
 });
 
-instance.interceptors.response.use(
-    (response) => response,
-    async (error) => {
+req.interceptors.response.use(
+    (response: AxiosResponse) => response,
+    async (error: AxiosError) => {
         const originalRequest = error.config as ApiClientConfig & { _retry?: boolean };
 
         if (error.response?.status === 401 && originalRequest?.requireAuth !== false && !originalRequest._retry) {
@@ -56,10 +56,10 @@ instance.interceptors.response.use(
                 originalRequest._retry = true;
                 isRefreshing = true;
                 try {
-                    const refreshResponse = await axios.post(
-                        `${API_BASE_URL}/auth/refresh`,
+                    const refreshResponse = await api.post(
+                        '/auth/refresh',
                         { refresh_token: refreshToken },
-                        { headers: { 'Content-Type': 'application/json' } }
+                        { requireAuth: false }
                     );
                     const refreshData = refreshResponse.data;
 
@@ -81,8 +81,8 @@ instance.interceptors.response.use(
                             sameSite: 'strict',
                         });
                         onRefreshed(newToken);
-                        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-                        return instance(originalRequest);
+                        if (originalRequest.headers) originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                        return req(originalRequest);
                     }
                 } catch (refreshError) {
                     Cookies.remove('admin_token');
@@ -96,8 +96,8 @@ instance.interceptors.response.use(
 
             return new Promise((resolve) => {
                 subscribeTokenRefresh((newToken: string) => {
-                    originalRequest.headers.Authorization = `Bearer ${newToken}`;
-                    resolve(instance(originalRequest));
+                    if (originalRequest.headers) originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                    resolve(req(originalRequest));
                 });
             });
         }
@@ -106,69 +106,24 @@ instance.interceptors.response.use(
     }
 );
 
-function resolveUrl(endpoint: string): string {
-    return endpoint.startsWith('http') ? endpoint : endpoint;
-}
-
-function getConfig(endpoint: string, config?: ApiClientConfig): ApiClientConfig {
-    const url = resolveUrl(endpoint);
-    return { ...config, url: url || endpoint };
-}
-
 export const api = {
-    get<T = unknown>(endpoint: string, config?: ApiClientConfig): Promise<AxiosResponse<T>> {
-        const { url, ...rest } = getConfig(endpoint, config);
-        return instance.get<T>(url ?? endpoint, rest);
+    get(endpoint: string, config?: ApiClientConfig): Promise<AxiosResponse> {
+        return req.get(endpoint, config);
     },
 
-    post<T = unknown>(endpoint: string, data?: unknown, config?: ApiClientConfig): Promise<AxiosResponse<T>> {
-        const { url, ...rest } = getConfig(endpoint, config);
-        return instance.post<T>(url ?? endpoint, data, rest);
+    post(endpoint: string, data?: unknown, config?: ApiClientConfig): Promise<AxiosResponse> {
+        return req.post(endpoint, data, config);
     },
 
-    put<T = unknown>(endpoint: string, data?: unknown, config?: ApiClientConfig): Promise<AxiosResponse<T>> {
-        const { url, ...rest } = getConfig(endpoint, config);
-        return instance.put<T>(url ?? endpoint, data, rest);
+    put(endpoint: string, data?: unknown, config?: ApiClientConfig): Promise<AxiosResponse> {
+        return req.put(endpoint, data, config);
     },
 
-    patch<T = unknown>(endpoint: string, data?: unknown, config?: ApiClientConfig): Promise<AxiosResponse<T>> {
-        const { url, ...rest } = getConfig(endpoint, config);
-        return instance.patch<T>(url ?? endpoint, data, rest);
+    patch(endpoint: string, data?: unknown, config?: ApiClientConfig): Promise<AxiosResponse> {
+        return req.patch(endpoint, data, config);
     },
 
-    delete<T = unknown>(endpoint: string, config?: ApiClientConfig): Promise<AxiosResponse<T>> {
-        const { url, ...rest } = getConfig(endpoint, config);
-        return instance.delete<T>(url ?? endpoint, rest);
+    delete(endpoint: string, config?: ApiClientConfig): Promise<AxiosResponse> {
+        return req.delete(endpoint, config);
     },
-};
-
-/** @deprecated Use api.get, api.post, api.put, api.delete instead */
-export const apiClient = async (endpoint: string, options: RequestInit & { requireAuth?: boolean } = {}): Promise<Response> => {
-    const { requireAuth = true, method = 'GET', body, ...rest } = options;
-    const config: ApiClientConfig = { requireAuth, ...rest } as ApiClientConfig;
-    try {
-        const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
-        if (method === 'GET') {
-            const res = await api.get(url, config);
-            return new Response(JSON.stringify(res.data), { status: res.status, headers: res.headers as unknown as HeadersInit });
-        }
-        if (method === 'POST') {
-            const res = await api.post(url, body ? JSON.parse(body as string) : undefined, config);
-            return new Response(JSON.stringify(res.data), { status: res.status, headers: res.headers as unknown as HeadersInit });
-        }
-        if (method === 'PUT') {
-            const res = await api.put(url, body ? JSON.parse(body as string) : undefined, config);
-            return new Response(JSON.stringify(res.data), { status: res.status, headers: res.headers as unknown as HeadersInit });
-        }
-        if (method === 'DELETE') {
-            const res = await api.delete(url, config);
-            return new Response(JSON.stringify(res.data), { status: res.status, headers: res.headers as unknown as HeadersInit });
-        }
-        return fetch(url, options);
-    } catch (e: unknown) {
-        const err = e as { response?: { status: number; data?: unknown }; message?: string };
-        return new Response(JSON.stringify(err.response?.data ?? { message: err.message }), {
-            status: err.response?.status ?? 500,
-        });
-    }
 };

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useAdmin } from '@/context/admin';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useRoleDashboard } from '../hooks/useRoleDashboard';
 import { DashboardWidget } from '../widgets/DashboardWidget';
 
 export const AdminDashboard: React.FC = () => {
-    const { currentUserRole } = useAdmin();
+    const currentUserRole = useAuthStore((s) => s.currentUserRole);
     const role = currentUserRole || 'USER';
     const [activeTab, setActiveTab] = useState('overview');
 

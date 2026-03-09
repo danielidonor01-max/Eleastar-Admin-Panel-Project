@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import type { Employee } from '../data/mockData';
-import { useFeedback } from '../context/FeedbackContext';
+import { toast } from 'sonner';
 import '../SalaryModal.css';
 
 interface SalaryEditModalProps {
@@ -11,7 +11,6 @@ interface SalaryEditModalProps {
 }
 
 export const SalaryEditModal: React.FC<SalaryEditModalProps> = ({ employee, onClose, onSave }) => {
-    const { showError } = useFeedback();
     const [newSalary, setNewSalary] = useState(employee.salary.toString());
     const [reason, setReason] = useState<string>('Promotion');
     const [customReason, setCustomReason] = useState('');
@@ -21,13 +20,13 @@ export const SalaryEditModal: React.FC<SalaryEditModalProps> = ({ employee, onCl
         e.preventDefault();
         const salaryValue = parseFloat(newSalary);
         if (isNaN(salaryValue) || salaryValue <= 0) {
-            showError({ title: 'Invalid Salary', message: 'Please enter a valid salary amount' });
+            toast.error('Invalid Salary', { description: 'Please enter a valid salary amount' });
             return;
         }
 
         const finalReason = reason === 'Other' ? customReason : reason;
         if (!finalReason.trim()) {
-            showError({ title: 'Reason Required', message: 'Please provide a reason for the salary change' });
+            toast.error('Reason Required', { description: 'Please provide a reason for the salary change' });
             return;
         }
 

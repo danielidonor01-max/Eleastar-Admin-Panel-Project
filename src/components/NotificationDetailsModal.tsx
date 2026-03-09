@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { X, ExternalLink, Calendar, TrendingUp, Wallet, UserPlus, FileText, QrCode, Bell, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import type { AdminNotification, NotificationType } from '../services/notificationTypes';
-import { useAdmin } from '@/context/admin';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 interface NotificationDetailsModalProps {
     isOpen: boolean;
@@ -29,7 +29,7 @@ export const NotificationDetailsModal: React.FC<NotificationDetailsModalProps> =
         }
     };
 
-    const { currentUserRole } = useAdmin();
+    const currentUserRole = useAuthStore((s) => s.currentUserRole);
 
     // Routing Logic
     const actionConfig = useMemo(() => {

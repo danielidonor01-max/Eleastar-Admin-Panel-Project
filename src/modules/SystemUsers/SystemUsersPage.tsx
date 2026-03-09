@@ -1,12 +1,21 @@
 import React, { useState } from 'react';
 import { Search, Shield, Lock, Unlock, RefreshCw, AlertCircle, CheckCircle, Edit2, Plus, X } from 'lucide-react';
-import { useAdmin } from '@/context/admin';
+import { toast } from 'sonner';
+import { useEmployeeStore } from '@/stores/useEmployeeStore';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useAuditStore } from '@/stores/useAuditStore';
+import { useConfirmStore } from '@/stores/useConfirmStore';
 import type { AdminRole, Employee } from '../../data/mockData';
-import { useFeedback } from '../../context/FeedbackContext';
 
 export const SystemUsersPage: React.FC = () => {
-    const { employees, updateEmployee, currentUserRole, requestAuth, logAction, addEmployee } = useAdmin();
-    const { showSuccess, showError, showConfirm } = useFeedback();
+    const employees = useEmployeeStore((s) => s.employees);
+    const updateEmployee = useEmployeeStore((s) => s.updateEmployee);
+    const currentUserRole = useAuthStore((s) => s.currentUserRole);
+    const requestAuth = useSettingsStore((s) => s.requestAuth);
+    const logAction = useAuditStore((s) => s.logAction);
+    const addEmployee = useEmployeeStore((s) => s.addEmployee);
+    const showConfirm = useConfirmStore((s) => s.showConfirm);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRole, setFilterRole] = useState<AdminRole | 'All'>('All');
     const [editingUser, setEditingUser] = useState<Employee | null>(null);
@@ -39,13 +48,13 @@ export const SystemUsersPage: React.FC = () => {
 
     const handleRoleChange = (emp: Employee, newRole: AdminRole) => {
         if (emp.id === 'EMP-001' && currentUserRole !== 'SUPER_ADMIN') {
-            showError({ title: 'Permission Denied', message: 'Cannot modify Super Admin.' });
+            toast.error('Permission Denied', { description: 'Cannot modify Super Admin.' });
             return;
         }
 
         // Security Check for escalating privileges
         if (newRole === 'SUPER_ADMIN' && currentUserRole !== 'SUPER_ADMIN') {
-            showError({ title: 'Permission Denied', message: 'Only Super Admins can promote others to Super Admin.' });
+            toast.error('Permission Denied', { description: 'Only Super Admins can promote others to Super Admin.' });
             return;
         }
 
@@ -56,7 +65,7 @@ export const SystemUsersPage: React.FC = () => {
                 requestAuth('SENSITIVE', `Promote/Demote ${emp.name} to ${newRole}`, () => {
                     updateEmployee(emp.id, { systemRole: newRole });
                     logAction('Role Change', `Changed role for ${emp.name} to ${newRole}`);
-                    showSuccess({ title: 'Role Updated', message: `User role updated successfully.` });
+                    toast.success('Role Updated', { description: 'User role updated successfully.' });
                 });
             }
         });
@@ -64,7 +73,7 @@ export const SystemUsersPage: React.FC = () => {
 
     const toggleAccess = (emp: Employee) => {
         if (emp.id === 'EMP-001') {
-            showError({ title: 'Action Denied', message: 'Cannot revoke access for the Root Super Admin.' });
+            toast.error('Action Denied', { description: 'Cannot revoke access for the Root Super Admin.' });
             return;
         }
 
@@ -78,7 +87,7 @@ export const SystemUsersPage: React.FC = () => {
                 requestAuth('SENSITIVE', `${action} for ${emp.name}`, () => {
                     updateEmployee(emp.id, { accessGranted: newStatus });
                     logAction('Access Control', `${action} for ${emp.name}`);
-                    showSuccess({ title: 'Access Updated', message: `User access has been ${newStatus ? 'granted' : 'revoked'}.` });
+                    toast.success('Access Updated', { description: `User access has been ${newStatus ? 'granted' : 'revoked'}.` });
                 });
             }
         });
@@ -91,7 +100,7 @@ export const SystemUsersPage: React.FC = () => {
             onConfirm: () => {
                 // Mock Action
                 logAction('Password Reset', `Initiated password reset for ${emp.email}`);
-                showSuccess({ title: 'Reset Link Sent', message: `Password reset instructions sent to ${emp.email}` });
+                toast.success('Reset Link Sent', { description: `Password reset instructions sent to ${emp.email}` });
             }
         });
     };
@@ -101,7 +110,7 @@ export const SystemUsersPage: React.FC = () => {
 
         // Basic Validation
         if (!newUser.name || !newUser.email) {
-            showError({ title: 'Missing Fields', message: 'Name and Email are required.' });
+            toast.error('Missing Fields', { description: 'Name and Email are required.' });
             return;
         }
 
@@ -127,7 +136,7 @@ export const SystemUsersPage: React.FC = () => {
             addEmployee(newEmployee);
 
             logAction('User Creation', `Created new system user ${newUser.name} as ${newUser.role}`);
-            showSuccess({ title: 'User Created', message: `${newUser.name} has been added to the system.` });
+            toast.success('User Created', { description: `${newUser.name} has been added to the system.` });
             setShowAddModal(false);
             setNewUser({ name: '', email: '', role: 'USER', department: 'General' });
         });

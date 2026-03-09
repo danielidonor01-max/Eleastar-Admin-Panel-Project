@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useCMS } from '../context/CMSContext';
+import { useCMSStore } from '@/stores/useCMSStore';
 import { StickyHeader } from '../components/StickyHeader';
 import { BrandFooter } from '../components/BrandFooter';
 import { Link } from 'react-router';
@@ -91,7 +91,7 @@ const HeroRenderer: React.FC<{ cards: CMSHomeHeroCardData[] }> = ({ cards }) => 
 
 
 export const Home: React.FC = () => {
-    const { cmsContent } = useCMS();
+    const cmsContent = useCMSStore((s) => s.cmsContent);
     // Assuming useAdmin isn't used for anything else. Wait, let's keep it safe.
     // If it was just `const { cmsContent } = useAdmin();`, this is fine.
 

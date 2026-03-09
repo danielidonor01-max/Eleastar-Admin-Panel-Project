@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ActivityLog } from '@/context/admin';
+import type { ActivityLog } from '@/types';
 import { CheckCircle, AlertTriangle, XCircle, Clock, Shield } from 'lucide-react';
 
 interface TimelineViewProps {

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useCMS } from '../../context/CMSContext';
+import { useCMSStore } from '@/stores/useCMSStore';
 
 interface PageSEOProps {
     slug: string;
@@ -16,7 +16,7 @@ export const PageSEO: React.FC<PageSEOProps> = ({
     fallbackTitle = "Eleastar Technologies Ltd.",
     fallbackDescription = "Leading provider of technology solutions and industrial innovation."
 }) => {
-    const { cmsContent } = useCMS();
+    const cmsContent = useCMSStore((s) => s.cmsContent);
 
     useEffect(() => {
         // Find matching metadata in CMS

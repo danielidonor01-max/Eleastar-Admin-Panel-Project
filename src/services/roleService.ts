@@ -1,15 +1,10 @@
 import { type ApiResponse } from './api';
-import { API_BASE_URL } from '../config';
-import Cookies from 'js-cookie';
+import { api } from '../utils/apiClient';
 
-const getHeaders = () => {
-    const token = Cookies.get('admin_token');
-    return {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-    };
-};
+function getError(error: unknown): string {
+    const e = error as { response?: { data?: { message?: string } }; message?: string };
+    return e.response?.data?.message ?? e.message ?? 'Request failed';
+}
 
 /**
  * Service for Role management
@@ -17,130 +12,91 @@ const getHeaders = () => {
 export const roleService = {
     /**
      * Get All Roles
-     * Calls GET /roles
      */
-    getAllRoles: async (): Promise<ApiResponse<any>> => {
+    getAllRoles: async (): Promise<ApiResponse<unknown>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/roles`, {
-                method: 'GET',
-                headers: getHeaders()
-            });
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                return { success: true, data: data.data, message: data.message };
+            const { data } = await api.get<{ success?: boolean; data?: unknown; message?: string }>('/roles');
+            if (data?.success) {
+                return { success: true, data: data.data ?? null, message: data.message };
             }
-            return { success: false, data: null as any, error: data.message || 'Failed to fetch roles' };
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: null, error: data?.message ?? 'Failed to fetch roles' };
+        } catch (error: unknown) {
+            return { success: false, data: null, error: getError(error) };
         }
     },
 
     /**
      * Create Role
-     * Calls POST /roles
      */
-    createRole: async (rolePayload: any): Promise<ApiResponse<any>> => {
+    createRole: async (rolePayload: unknown): Promise<ApiResponse<unknown>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/roles`, {
-                method: 'POST',
-                headers: getHeaders(),
-                body: JSON.stringify(rolePayload)
-            });
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                return { success: true, data: data.data, message: data.message };
+            const { data } = await api.post<{ success?: boolean; data?: unknown; message?: string }>('/roles', rolePayload);
+            if (data?.success) {
+                return { success: true, data: data.data ?? null, message: data.message };
             }
-            return { success: false, data: null as any, error: data.message || 'Failed to create role' };
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: null, error: data?.message ?? 'Failed to create role' };
+        } catch (error: unknown) {
+            return { success: false, data: null, error: getError(error) };
         }
     },
 
     /**
      * Get Role Details
-     * Calls GET /roles/{id}
      */
-    getRoleById: async (id: string | number): Promise<ApiResponse<any>> => {
+    getRoleById: async (id: string | number): Promise<ApiResponse<unknown>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/roles/${id}`, {
-                method: 'GET',
-                headers: getHeaders()
-            });
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                return { success: true, data: data.data, message: data.message };
+            const { data } = await api.get<{ success?: boolean; data?: unknown; message?: string }>(`/roles/${id}`);
+            if (data?.success) {
+                return { success: true, data: data.data ?? null, message: data.message };
             }
-            return { success: false, data: null as any, error: data.message || 'Failed to fetch role details' };
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: null, error: data?.message ?? 'Failed to fetch role details' };
+        } catch (error: unknown) {
+            return { success: false, data: null, error: getError(error) };
         }
     },
 
     /**
      * Update Role
-     * Calls PUT /roles/{id}
      */
-    updateRole: async (id: string | number, updates: any): Promise<ApiResponse<any>> => {
+    updateRole: async (id: string | number, updates: unknown): Promise<ApiResponse<unknown>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/roles/${id}`, {
-                method: 'PUT',
-                headers: getHeaders(),
-                body: JSON.stringify(updates)
-            });
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                return { success: true, data: data.data, message: data.message };
+            const { data } = await api.put<{ success?: boolean; data?: unknown; message?: string }>(`/roles/${id}`, updates);
+            if (data?.success) {
+                return { success: true, data: data.data ?? null, message: data.message };
             }
-            return { success: false, data: null as any, error: data.message || 'Failed to update role' };
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: null, error: data?.message ?? 'Failed to update role' };
+        } catch (error: unknown) {
+            return { success: false, data: null, error: getError(error) };
         }
     },
 
     /**
      * Delete Role
-     * Calls DELETE /roles/{id}
      */
     deleteRole: async (id: string | number): Promise<ApiResponse<void>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/roles/${id}`, {
-                method: 'DELETE',
-                headers: getHeaders()
-            });
-            const data = await response.json();
-
-            if (response.ok && data.success) {
+            const { data } = await api.delete<{ success?: boolean; message?: string }>(`/roles/${id}`);
+            if (data?.success) {
                 return { success: true, data: undefined, message: data.message };
             }
-            return { success: false, data: null as any, error: data.message || 'Failed to delete role' };
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: undefined, error: data?.message ?? 'Failed to delete role' };
+        } catch (error: unknown) {
+            return { success: false, data: undefined, error: getError(error) };
         }
     },
 
     /**
      * Assign Permissions to Role
-     * Calls POST /roles/{id}/permissions
      */
-    assignPermissions: async (id: string | number, permissions: string[]): Promise<ApiResponse<any>> => {
+    assignPermissions: async (id: string | number, permissions: string[]): Promise<ApiResponse<unknown>> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/roles/${id}/permissions`, {
-                method: 'POST',
-                headers: getHeaders(),
-                body: JSON.stringify({ permissions })
-            });
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                return { success: true, data: data.data, message: data.message };
+            const { data } = await api.post<{ success?: boolean; data?: unknown; message?: string }>(`/roles/${id}/permissions`, { permissions });
+            if (data?.success) {
+                return { success: true, data: data.data ?? null, message: data.message };
             }
-            return { success: false, data: null as any, error: data.message || 'Failed to assign permissions' };
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: null, error: data?.message ?? 'Failed to assign permissions' };
+        } catch (error: unknown) {
+            return { success: false, data: null, error: getError(error) };
         }
-    }
+    },
 };

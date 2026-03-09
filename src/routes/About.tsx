@@ -1,4 +1,4 @@
-import { useCMS } from '../context/CMSContext';
+import { useCMSStore } from '@/stores/useCMSStore';
 import { StickyHeader } from '../components/StickyHeader';
 import { BrandFooter } from '../components/BrandFooter';
 import type { CMSAboutHeroData } from '@/types/cms';
@@ -29,7 +29,7 @@ const AboutHeroRenderer = ({ data }: { data: CMSAboutHeroData }) => (
 );
 
 export const About = () => {
-    const { cmsContent } = useCMS();
+    const cmsContent = useCMSStore((s) => s.cmsContent);
 
     const aboutData = cmsContent?.pages?.about;
     const globalContactData = cmsContent?.contactUsCardData;

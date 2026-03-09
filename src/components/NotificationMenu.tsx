@@ -1,17 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { Bell, Calendar, TrendingUp, Wallet, UserPlus, QrCode, FileText, CheckCheck, Search } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { useAdmin, type AdminNotification, type NotificationType } from '@/context/admin';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useNotificationStore } from '@/stores/useNotificationStore';
+import type { AdminNotification, NotificationType } from '@/types';
 import { NotificationDetailsModal } from './NotificationDetailsModal';
 
 export const NotificationMenu: React.FC = () => {
-    const {
-        notifications,
-        markNotificationAsRead,
-        markAllNotificationsAsRead,
-        currentUserId,
-        currentUserRole
-    } = useAdmin();
+    const notifications = useNotificationStore((s) => s.notifications);
+    const markNotificationAsRead = useNotificationStore((s) => s.markNotificationAsRead);
+    const markAllNotificationsAsRead = useNotificationStore((s) => s.markAllNotificationsAsRead);
+    const currentUserId = useAuthStore((s) => s.currentUserId);
+    const currentUserRole = useAuthStore((s) => s.currentUserRole);
 
     const [showMenu, setShowMenu] = useState(false);
     const [activeFilter, setActiveFilter] = useState<'All' | 'Unread' | NotificationType>('All');

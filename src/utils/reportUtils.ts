@@ -9,17 +9,13 @@ import type {
     UserAccessReport,
     CriticalActionReport,
     AttestationPack
-} from '../data/reportTypes';
+} from '../types';
 import type {
     Employee,
     PromotionRequest,
     AdminRole
-} from '../data/mockData';
-import type {
-    PayrollCycleType,
-    ActivityLog,
-    ModuleType
-} from '../context/admin';
+} from '../types';
+import type { ActivityLog, ModuleType, PayrollCycleType } from '../types';
 import { generatePastCycles } from './payrollUtils';
 
 // ===== PAYROLL COMPLIANCE REPORTS =====

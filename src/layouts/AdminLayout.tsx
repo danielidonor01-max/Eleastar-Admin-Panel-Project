@@ -1,29 +1,18 @@
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { Outlet, NavLink, useNavigate, Navigate, useLocation } from 'react-router';
 import { LayoutDashboard, Users, Settings, Globe, ChevronDown, ChevronRight, LogOut, Calendar, BarChart2, QrCode, Wallet, FileText, Check, Shield, TrendingUp, Gift, Activity, CheckSquare } from 'lucide-react';
-import { useAdmin } from '@/context/admin';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { NotificationMenu } from '../components/NotificationMenu';
 import { GlobalSearchMenu } from '../components/GlobalSearchMenu';
 import type { AdminRole, ModuleType } from '@/types';
+import { GlobalLoadingFallback } from '@/components/GlobalLoadingFallback';
 
-export const AdminLayout: React.FC = () => {
-    const {
-        currentUserRole,
-        switchRole,
-        rolePermissions,
-        isAuthenticated,
-        isLoading
-    } = useAdmin();
-    // const { cmsContent } = useCMS();
-
-    const navigate = useNavigate();
+export const AdminLayout = () => {
+    const {currentUserRole, switchRole, rolePermissions, isAuthenticated, isLoading, logout} = useAuthStore();
+     const navigate = useNavigate();
     const location = useLocation();
-
-    // UI State for Dropdowns
     const [showRoleMenu, setShowRoleMenu] = useState(false);
-
-    // Sidebar State
-    const [expandedCMS, setExpandedCMS] = useState(true); // Default open for visibility
+    const [expandedCMS, setExpandedCMS] = useState(true);
     const [expandedServices, setExpandedServices] = useState(false);
 
 
@@ -47,16 +36,11 @@ export const AdminLayout: React.FC = () => {
     }
 
     if (!isAuthenticated) {
+        //logout the user
+        logout();
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
-
-    // Sidebar width based on CMS expansion
-    // If CMS is expanded, wide sidebar (280px), else standard (256px)
     const sidebarWidthClass = expandedCMS ? 'w-[280px]' : 'w-64';
-
-    // Click outside to close (simplified)
-    // In production, use click-outside hooks.
-
     const hasAccess = (module: ModuleType) => {
         return rolePermissions[currentUserRole].includes(module);
     };
@@ -64,6 +48,7 @@ export const AdminLayout: React.FC = () => {
     const roles: AdminRole[] = ['SUPER_ADMIN', 'COO', 'HR_ADMIN', 'FINANCE_ADMIN', 'PAYROLL_ADMIN', 'CHIEF_RISK_OFFICER', 'USER'];
 
     return (
+        <Suspense fallback={<GlobalLoadingFallback />} >
         <div className="flex h-screen bg-slate-50 font-sans text-slate-900">
 
             <aside className={`${sidebarWidthClass} bg-slate-900 text-slate-300 flex flex-col h-full shrink-0 transition-all duration-300 ease-in-out`}>
@@ -85,7 +70,7 @@ export const AdminLayout: React.FC = () => {
                                 <LayoutDashboard size={20} />
                                 Dashboard
                             </NavLink>
-                            {/* Analytics Link - CEO/COO/Finance only */}
+                            
                             {['SUPER_ADMIN', 'COO', 'FINANCE_ADMIN'].includes(currentUserRole) && (
                                 <NavLink to="/admin/analytics" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
                                     <BarChart2 size={20} />
@@ -97,9 +82,7 @@ export const AdminLayout: React.FC = () => {
 
                     {(hasAccess('Employees') || hasAccess('QR & ID')) && (
                         <>
-                            {/* Only show header if we haven't shown it for dashboard or if we want to group distinctively */}
-                            {/* In this simple list, we can just render the links if permitted */}
-
+                           
                             {hasAccess('QR & ID') && (
                                 <NavLink to="/admin/qr" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
                                     <QrCode size={20} />
@@ -112,7 +95,6 @@ export const AdminLayout: React.FC = () => {
                                     Employees
                                 </NavLink>
                             )}
-
                         </>
                     )}
 
@@ -132,7 +114,7 @@ export const AdminLayout: React.FC = () => {
                                     Recruitment
                                 </NavLink>
                             )}
-                            {/* Salary Bands */}
+                            
                             {hasAccess('Employees') && (
                                 <NavLink to="/admin/salary-structures" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
                                     <TrendingUp size={20} />
@@ -182,6 +164,7 @@ export const AdminLayout: React.FC = () => {
                                 <Shield size={20} />
                                 Compliance
                             </NavLink>
+
                             {['SUPER_ADMIN', 'COO', 'CHIEF_RISK_OFFICER', 'FINANCE_ADMIN', 'HR_ADMIN'].includes(currentUserRole) && (
                                 <NavLink to="/admin/compliance-reports" className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-brand-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}>
                                     <FileText size={20} />
@@ -214,7 +197,6 @@ export const AdminLayout: React.FC = () => {
 
                                     {expandedCMS && (
                                         <div className="ml-5 mt-2 transition-all duration-300 ease-in-out">
-                                            {/* GLOBAL SETTINGS */}
                                             <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-2 mt-4 px-1">Global Settings</div>
                                             <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2 mb-4">
                                                 <NavLink to="/admin/cms?module=menus&page=GlobalNav" className={() => {
@@ -237,7 +219,6 @@ export const AdminLayout: React.FC = () => {
                                                 </NavLink>
                                             </div>
 
-                                            {/* PAGES */}
                                             <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-2 mt-4 px-1">Pages</div>
                                             <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2 mb-4">
                                                 <NavLink to="/admin/cms?module=pages&page=home" className={() => {
@@ -318,7 +299,6 @@ export const AdminLayout: React.FC = () => {
                                                 </NavLink>
                                             </div>
 
-                                            {/* FOOTER */}
                                             <div className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-2 mt-4 px-1">Footer</div>
                                             <div className="space-y-0.5 border-l border-slate-800 ml-1 pl-2 mb-4">
                                                 <NavLink to="/admin/cms?module=settings&page=FooterLayout" className={() => {
@@ -362,11 +342,8 @@ export const AdminLayout: React.FC = () => {
                 </nav>
             </aside>
 
-            {/* Main Content */}
             <div className="flex-1 flex flex-col h-full overflow-hidden">
-                {/* Top Header */}
                 <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-20 relative">
-                    {/* View As Info */}
                     <div className="flex items-center gap-4">
                         <GlobalSearchMenu />
                         {currentUserRole !== 'SUPER_ADMIN' && (
@@ -379,10 +356,8 @@ export const AdminLayout: React.FC = () => {
                     <div className="flex items-center gap-6">
 
 
-                        {/* Notifications */}
                         <NotificationMenu />
 
-                        {/* User Menu & Role Switcher */}
                         <div className="flex items-center gap-3">
                             <div className="text-right hidden sm:block">
                                 <div className="text-sm font-bold text-slate-900">Admin User</div>
@@ -394,7 +369,6 @@ export const AdminLayout: React.FC = () => {
                                         {currentUserRole} <ChevronDown size={12} className="group-hover:translate-y-0.5 transition-transform" />
                                     </button>
 
-                                    {/* Role Dropdown */}
                                     {showRoleMenu && (
                                         <>
                                             <div className="fixed inset-0 z-10" onClick={() => setShowRoleMenu(false)} />
@@ -406,7 +380,7 @@ export const AdminLayout: React.FC = () => {
                                                         onClick={() => {
                                                             switchRole(role);
                                                             setShowRoleMenu(false);
-                                                            navigate('/admin/dashboard'); // Reset to dashboard to avoid dead ends
+                                                            navigate('/admin/dashboard');
                                                         }}
                                                         className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-slate-50 transition-colors ${role === currentUserRole ? 'bg-brand-50 text-brand-700 font-bold' : 'text-slate-700'}`}
                                                     >
@@ -441,5 +415,6 @@ export const AdminLayout: React.FC = () => {
                 </main>
             </div>
         </div >
+        </Suspense>
     );
 };

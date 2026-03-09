@@ -1,108 +1,118 @@
 import { type ApiResponse, delay } from './api';
 import type { AdminRole } from '@/types';
-import { apiClient } from '../utils/apiClient';
+import { api } from '../utils/apiClient';
 import Cookies from 'js-cookie';
 
-export interface User {
-    id: string;
-    email: string;
+interface ApiUser {
+    id: number;
+    employee_id: string;
     name: string;
+    email: string;
+    email_verified_at: string | null;
+    otp_expires_at: string | null;
+    is_first_login: boolean;
+    last_login_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface User {
+    id: number;
+    employee_id: string;
+    name: string;
+    email: string;
+    role_id?: string;
     role: AdminRole;
-    permissions: string[];
-    token?: string;
+    email_verified_at: string;
+    otp_expires_at: string | null;
+    is_first_login: boolean;
+    last_login_at: string;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface LoginResponse {
     user: User;
     token: string;
-    refreshToken: string;
+    token_type: string;
 }
 
+/** API response wrapper: { status, message, data } */
+interface ApiAuthResponse<T> {
+    status: boolean;
+    message: string;
+    data: T;
+}
+
+function getErrorMessage(error: unknown): string {
+    const e = error as { response?: { data?: { message?: string } | string }; message?: string };
+    const d = e.response?.data;
+    if (typeof d === 'string') return d;
+    if (d && typeof d === 'object' && 'message' in d) return (d as { message?: string }).message ?? 'Request failed';
+    return e.message ?? 'Request failed';
+}
+
+function mapApiUserToUser(apiUser: ApiUser, defaultRole: AdminRole = 'SUPER_ADMIN'): User {
+    return {
+        id: apiUser.id,
+        employee_id: apiUser.employee_id,
+        name: apiUser.name,
+        email: apiUser.email,
+        role: defaultRole,
+        email_verified_at: apiUser.email_verified_at ?? '',
+        otp_expires_at: apiUser.otp_expires_at,
+        is_first_login: apiUser.is_first_login,
+        last_login_at: apiUser.last_login_at ?? '',
+        created_at: apiUser.created_at,
+        updated_at: apiUser.updated_at,
+    };
+}
 export const authService = {
-    /**
-     * Login with Email and Password
-     */
-    login: async (email: string, password: string): Promise<ApiResponse<LoginResponse | { requires_otp: boolean, email: string }>> => {
+
+
+    
+    login: async (email: string, password: string): Promise<ApiResponse<LoginResponse | { requires_otp: boolean; email: string }>> => {
         try {
-            const response = await apiClient(`/auth/login`, {
-                method: 'POST',
-                requireAuth: false,
-                body: JSON.stringify({ email, password })
-            });
-            const data = await response.json();
+            const res = await api.post('/auth/login', { email, password }, { requireAuth: false });
+            const data = res.data as ApiAuthResponse<{ user: ApiUser; token: string; token_type: string }>;
 
-            if (response.ok && (data.success || data.status || data.access_token)) {
-                if (data.data?.requires_otp) {
-                    return { success: true, data: data.data, message: data.message };
-                }
-
-                const token = data.data?.token || data.access_token || data.token;
-                const user = data.data?.user || data.user;
-
-                const loggedInUser: User = {
-                    id: String(user.id),
-                    email: user.email,
-                    name: user.firstName ? `${user.firstName} ${user.lastName}` : (user.name || ''),
-                    role: typeof user.role_id === 'number' ? (user.role_id === 1 ? 'SUPER_ADMIN' : (user.role_id === 2 ? 'HR_ADMIN' : 'USER')) : (user.role || 'SUPER_ADMIN'),
-                    permissions: [],
-                    token
-                };
+            if (data.status && data.data) {
+                const { token, token_type: tokenType, user: apiUser } = data.data;
+                const loggedInUser = mapApiUserToUser(apiUser);
 
                 Cookies.set('admin_token', token, { expires: 1, secure: window.location.protocol === 'https:', sameSite: 'strict' });
-                Cookies.set('admin_refresh_token', data.data?.refresh_token || data.refresh_token || token, { expires: 1, secure: window.location.protocol === 'https:', sameSite: 'strict' });
-                localStorage.setItem('user_id', loggedInUser.id);
+                localStorage.setItem('user_id', String(loggedInUser.id));
 
                 return {
                     success: true,
-                    data: {
-                        user: loggedInUser,
-                        token,
-                        refreshToken: data.data?.refresh_token || data.refresh_token || token
-                    },
-                    message: data.message || 'Login successful'
+                    data: { user: loggedInUser, token, token_type: tokenType },
+                    message: data.message,
                 };
-            } else {
-                return { success: false, data: null as unknown as LoginResponse, error: data.message || 'Invalid credentials' };
             }
+            return { success: false, data: null as unknown as LoginResponse, error: (data as { message?: string }).message ?? 'Invalid credentials' };
         } catch (error: unknown) {
-            return { success: false, data: null as unknown as LoginResponse, error: error.message };
+            return { success: false, data: null as unknown as LoginResponse, error: getErrorMessage(error) };
         }
     },
 
-    /**
-     * Verify OTP
-     */
+
     verifyOTP: async (email: string, otp: string): Promise<ApiResponse<LoginResponse>> => {
         try {
-            const response = await apiClient(`/auth/verify-otp`, {
-                method: 'POST',
-                requireAuth: false,
-                body: JSON.stringify({ email, otp })
-            });
-            const data = await response.json();
+            const { data } = await api.post('/auth/verify-otp', { email, otp }, { requireAuth: false });
+            const payload = data as ApiAuthResponse<{ user: ApiUser; token: string; token_type: string }>;
 
-            if (response.ok && data.status) {
-                const token = data.data.token;
-                const user = data.data.user;
-
-                const loggedInUser: User = {
-                    id: String(user.id),
-                    email: user.email,
-                    name: user.name,
-                    role: user.role_id === 1 ? 'SUPER_ADMIN' : (user.role_id === 2 ? 'HR_ADMIN' : 'USER'),
-                    permissions: [],
-                    token
-                };
+            if (payload.status && payload.data) {
+                const { token, token_type: tokenType, user: apiUser } = payload.data;
+                const loggedInUser = mapApiUserToUser(apiUser);
 
                 Cookies.set('admin_token', token, { expires: 1, secure: window.location.protocol === 'https:', sameSite: 'strict' });
-                localStorage.setItem('user_id', loggedInUser.id);
+                localStorage.setItem('user_id', String(loggedInUser.id));
 
-                return { success: true, data: { user: loggedInUser, token, refreshToken: token }, message: data.message };
-            } else {
-                return { success: false, data: null as any, error: data.message || 'Invalid OTP' };
+                return { success: true, data: { user: loggedInUser, token, token_type: tokenType }, message: payload.message };
             }
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: null as unknown as LoginResponse, error: payload.message ?? 'Invalid OTP' };
+        } catch (error: unknown) {
+            return { success: false, data: null as unknown as LoginResponse, error: getErrorMessage(error) };
         }
     },
 
@@ -111,20 +121,13 @@ export const authService = {
      */
     resendOTP: async (email: string): Promise<ApiResponse<void>> => {
         try {
-            const response = await apiClient(`/auth/resend-otp`, {
-                method: 'POST',
-                requireAuth: false,
-                body: JSON.stringify({ email })
-            });
-            const data = await response.json();
-
-            if (response.ok && data.status) {
-                return { success: true, data: undefined, message: data.message };
-            } else {
-                return { success: false, data: null as any, error: data.message || 'Failed to resend OTP' };
+            const { data } = await api.post('/auth/resend-otp', { email }, { requireAuth: false });
+            if ((data as { status?: boolean }).status) {
+                return { success: true, data: undefined, message: (data as { message?: string }).message };
             }
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: undefined, error: (data as { message?: string }).message ?? 'Failed to resend OTP' };
+        } catch (error: unknown) {
+            return { success: false, data: undefined, error: getErrorMessage(error) };
         }
     },
 
@@ -133,20 +136,13 @@ export const authService = {
      */
     forgotPassword: async (email: string): Promise<ApiResponse<void>> => {
         try {
-            const response = await apiClient(`/auth/forgot-password`, {
-                method: 'POST',
-                requireAuth: false,
-                body: JSON.stringify({ email })
-            });
-            const data = await response.json();
-
-            if (response.ok && data.status) {
-                return { success: true, data: undefined, message: data.message };
-            } else {
-                return { success: false, data: null as any, error: data.message || 'Failed to send password reset link' };
+            const { data } = await api.post('/auth/forgot-password', { email }, { requireAuth: false });
+            if ((data as { status?: boolean }).status) {
+                return { success: true, data: undefined, message: (data as { message?: string }).message };
             }
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: undefined, error: (data as { message?: string }).message ?? 'Failed to send password reset link' };
+        } catch (error: unknown) {
+            return { success: false, data: undefined, error: getErrorMessage(error) };
         }
     },
 
@@ -155,20 +151,13 @@ export const authService = {
      */
     resetPassword: async (payload: { email: string; token: string; password: string; password_confirmation: string }): Promise<ApiResponse<void>> => {
         try {
-            const response = await apiClient(`/auth/reset-password`, {
-                method: 'POST',
-                requireAuth: false,
-                body: JSON.stringify(payload)
-            });
-            const data = await response.json();
-
-            if (response.ok && data.status) {
-                return { success: true, data: undefined, message: data.message };
-            } else {
-                return { success: false, data: null as any, error: data.message || 'Failed to reset password' };
+            const { data } = await api.post('/auth/reset-password', payload, { requireAuth: false });
+            if ((data as { status?: boolean }).status) {
+                return { success: true, data: undefined, message: (data as { message?: string }).message };
             }
-        } catch (error: any) {
-            return { success: false, data: null as any, error: error.message };
+            return { success: false, data: undefined, error: (data as { message?: string }).message ?? 'Failed to reset password' };
+        } catch (error: unknown) {
+            return { success: false, data: undefined, error: getErrorMessage(error) };
         }
     },
 
@@ -179,9 +168,7 @@ export const authService = {
         try {
             const token = Cookies.get('admin_token');
             if (token) {
-                await apiClient(`/auth/logout`, {
-                    method: 'POST'
-                });
+                await api.post('/auth/logout', undefined, {});
             }
         } catch (error) {
             console.error('Logout error:', error);
@@ -201,27 +188,16 @@ export const authService = {
         if (!token) return { success: true, data: null };
 
         try {
-            const response = await apiClient(`/auth/me`, {
-                method: 'GET'
-            });
-            const data = await response.json();
+            const res = await api.get('/auth/me');
+            const resData = res.data as ApiAuthResponse<ApiUser>;
 
-            if (response.ok && (data.email || data.success || data.status)) {
-                const user = data.data?.user || data.data || data;
-                const loggedInUser: User = {
-                    id: String(user.id),
-                    email: user.email,
-                    name: user.firstName ? `${user.firstName} ${user.lastName}` : (user.name || ''),
-                    role: typeof user.role_id === 'number' ? (user.role_id === 1 ? 'SUPER_ADMIN' : (user.role_id === 2 ? 'HR_ADMIN' : 'USER')) : (user.role || 'SUPER_ADMIN'),
-                    permissions: [],
-                    token
-                };
+            if (resData?.status && resData?.data) {
+                const loggedInUser = mapApiUserToUser(resData.data);
                 return { success: true, data: loggedInUser };
-            } else {
-                Cookies.remove('admin_token');
-                return { success: true, data: null };
             }
-        } catch (error: any) {
+            Cookies.remove('admin_token');
+            return { success: true, data: null };
+        } catch (error: unknown) {
             console.error('GetCurrentUser error:', error);
             return { success: true, data: null };
         }
@@ -232,12 +208,12 @@ export const authService = {
      */
     refreshToken: async (): Promise<ApiResponse<string>> => {
         const refreshToken = Cookies.get('admin_refresh_token');
-        if (!refreshToken) return { success: false, data: null as any, error: 'No refresh token' };
+        if (!refreshToken) return { success: false, data: null as unknown as string, error: 'No refresh token' };
         return { success: true, data: refreshToken };
     },
 
     verifyPin: async (pin: string): Promise<boolean> => {
         await delay(500);
         return pin === '1234';
-    }
+    },
 };

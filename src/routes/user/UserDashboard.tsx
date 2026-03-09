@@ -1,12 +1,20 @@
 import { Link, useLocation } from 'react-router';
-import { useAdmin } from '@/context/admin';
+import { usePayrollStore } from '@/stores/usePayrollStore';
+import { useEmployeeStore } from '@/stores/useEmployeeStore';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useLeaveStore } from '@/stores/useLeaveStore';
+import { usePerformanceStore } from '@/stores/usePerformanceStore';
 import { Calendar, FileDown, CreditCard, TrendingUp, Clock, User, ArrowRight, Briefcase } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { generatePayslipPDF } from '../../utils/generatePayslip';
 import { generatePastCycles } from '../../utils/payrollUtils';
 
 export const UserDashboard: React.FC = () => {
-    const { payrollStatus, employees, currentUserId, leaveRequests, performanceReviews } = useAdmin();
+    const payrollStatus = usePayrollStore((s) => s.payrollStatus);
+    const employees = useEmployeeStore((s) => s.employees);
+    const currentUserId = useAuthStore((s) => s.currentUserId);
+    const leaveRequests = useLeaveStore((s) => s.leaveRequests);
+    const performanceReviews = usePerformanceStore((s) => s.performanceReviews);
     const location = useLocation();
 
     // Deep Linking Scroll

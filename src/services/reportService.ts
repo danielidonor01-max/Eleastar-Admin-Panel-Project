@@ -6,7 +6,7 @@ import type {
     PromotionRequest,
     PromotionHistoryEntry
 } from '../data/mockData';
-import type { ActivityLog } from '../context/admin';
+import type { ActivityLog } from '../types';
 import type {
     PayrollSummaryReport,
     ApprovalTrailReport,

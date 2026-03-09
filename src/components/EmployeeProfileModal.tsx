@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { X, User, QrCode, DollarSign, Clock, FileText, Mail, Phone, Briefcase, MapPin, Globe, Edit2, Save, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import type { Employee } from '../data/mockData';
-import { useAdmin } from '@/context/admin';
+import { usePayrollStore } from '@/stores/usePayrollStore';
+import { useAuditStore } from '@/stores/useAuditStore';
+import { useEmployeeStore } from '@/stores/useEmployeeStore';
 import { PUBLIC_LINK } from '../config';
 import QRCode from 'react-qr-code';
 
@@ -12,7 +14,11 @@ interface EmployeeProfileModalProps {
 }
 
 export const EmployeeProfileModal: React.FC<EmployeeProfileModalProps> = ({ employee, onClose }) => {
-    const { payrollStatus, activityLogs, toggleQRStatus, regenerateQR, updateEmployee } = useAdmin();
+    const payrollStatus = usePayrollStore((s) => s.payrollStatus);
+    const activityLogs = useAuditStore((s) => s.activityLogs);
+    const toggleQRStatus = useEmployeeStore((s) => s.toggleQRStatus);
+    const regenerateQR = useEmployeeStore((s) => s.regenerateQR);
+    const updateEmployee = useEmployeeStore((s) => s.updateEmployee);
     const [activeTab, setActiveTab] = useState<'overview' | 'qr' | 'payroll' | 'activity'>('overview');
     const [isEditing, setIsEditing] = useState(false);
     const navigate = useNavigate();

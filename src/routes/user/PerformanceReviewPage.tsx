@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
-import { useAdmin } from '@/context/admin';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { usePerformanceStore } from '@/stores/usePerformanceStore';
 import { Target, TrendingUp, Award, Calendar, Play, X, CheckCircle2 } from 'lucide-react';
 
 export const PerformanceReviewPage: React.FC = () => {
-    const { currentUserId, performanceReviews, updatePerformanceReview, reviewCycles } = useAdmin();
+    const currentUserId = useAuthStore((s) => s.currentUserId);
+    const performanceReviews = usePerformanceStore((s) => s.performanceReviews);
+    const updatePerformanceReview = usePerformanceStore((s) => s.updatePerformanceReview);
+    const reviewCycles = usePerformanceStore((s) => s.reviewCycles);
     // Sort reviews by date descending
     const myReviews = performanceReviews
         .filter(r => r.employeeId === currentUserId)

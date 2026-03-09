@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, Navigate } from 'react-router';
-import { useCMS } from '../context/CMSContext';
+import { useCMSStore } from '@/stores/useCMSStore';
 import { StickyHeader } from '../components/StickyHeader';
 import { BrandFooter } from '../components/BrandFooter';
 import { ContactUsCard } from '../components/cms/ContactUsCard';
@@ -8,7 +8,7 @@ import { PageSEO } from '../components/cms/PageSEO';
 
 export const DynamicPage: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
-    const { cmsContent } = useCMS();
+    const cmsContent = useCMSStore((s) => s.cmsContent);
 
     // Safety checks
     if (!slug) return <Navigate to="/" replace />;

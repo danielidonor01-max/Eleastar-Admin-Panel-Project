@@ -1,8 +1,8 @@
 import React from 'react';
-import { useAdmin } from '@/context/admin';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 const PreviewBadge: React.FC = () => {
-    const { isAuthenticated } = useAdmin();
+    const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
     if (!isAuthenticated) return null;
 

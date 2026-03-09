@@ -1,12 +1,15 @@
 import React, { useState, useRef } from 'react';
-import { useAdmin } from '@/context/admin';
-import { useFeedback } from '../../context/FeedbackContext';
+import { toast } from 'sonner';
+import { useTaskStore } from '@/stores/useTaskStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { CheckCircle2, Clock, Play, Upload, X, AlertCircle, FileImage } from 'lucide-react';
 import type { Task } from '../../data/mockData';
 
 export const UserTasksPage: React.FC = () => {
-    const { tasks, currentUserId, updateTaskStatus, submitTaskEvidence } = useAdmin();
-    const { showSuccess, showError } = useFeedback();
+    const tasks = useTaskStore((s) => s.tasks);
+    const currentUserId = useAuthStore((s) => s.currentUserId);
+    const updateTaskStatus = useTaskStore((s) => s.updateTaskStatus);
+    const submitTaskEvidence = useTaskStore((s) => s.submitTaskEvidence);
 
     // Only show tasks assigned to this specific user
     const myTasks = tasks.filter(t => t.assignedTo === currentUserId);
@@ -23,7 +26,7 @@ export const UserTasksPage: React.FC = () => {
         if (!file) return;
 
         if (file.size > 5 * 1024 * 1024) {
-            showError({ title: 'File too large', message: 'Please select an image under 5MB.' });
+            toast.error('File too large', { description: 'Please select an image under 5MB.' });
             return;
         }
 
@@ -41,7 +44,7 @@ export const UserTasksPage: React.FC = () => {
 
     const handleStartTask = (taskId: string) => {
         updateTaskStatus(taskId, 'In Progress');
-        showSuccess({ title: 'Task Started', message: 'Status updated to In Progress.' });
+        toast.success('Task Started', { description: 'Status updated to In Progress.' });
         if (selectedTask?.id === taskId) {
             setSelectedTask({ ...selectedTask, status: 'In Progress' });
         }
@@ -52,7 +55,7 @@ export const UserTasksPage: React.FC = () => {
         if (!selectedTask) return;
 
         submitTaskEvidence(selectedTask.id, progressNotes, evidenceB64);
-        showSuccess({ title: 'Evidence Submitted', message: 'Your admin will review the task shortly.' });
+        toast.success('Evidence Submitted', { description: 'Your admin will review the task shortly.' });
         setSelectedTask({ ...selectedTask, status: 'In Review', progressNotes, evidenceUrls: evidenceB64 });
     };
 

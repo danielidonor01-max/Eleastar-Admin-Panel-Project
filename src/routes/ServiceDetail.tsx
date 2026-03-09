@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCMS } from '../context/CMSContext';
+import { useCMSStore } from '@/stores/useCMSStore';
 import { StickyHeader } from '../components/StickyHeader';
 import { BrandFooter } from '../components/BrandFooter';
 import type { CMSServiceItemData } from '../types/cms';
@@ -20,7 +20,7 @@ const slugMap: Record<string, string> = {
 };
 
 export const ServiceDetail: React.FC<ServiceDetailProps> = ({ pageName }) => {
-    const { cmsContent } = useCMS();
+    const cmsContent = useCMSStore((s) => s.cmsContent);
 
     const targetSlug = slugMap[pageName] || pageName;
     const servicesListData = cmsContent?.pages?.services?.servicesListData || [];

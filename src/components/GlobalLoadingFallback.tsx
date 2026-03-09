@@ -1,6 +1,5 @@
-import React from 'react';
 
-export const GlobalLoadingFallback: React.FC = () => {
+export const GlobalLoadingFallback = () => {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50">
             <div className="relative flex items-center justify-center w-16 h-16 mb-4">

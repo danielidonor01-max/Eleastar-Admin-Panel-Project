@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAdmin } from '@/context/admin';
+import { useEmployeeStore } from '@/stores/useEmployeeStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { Save, Linkedin, Facebook, Instagram, Phone, Mail, Camera, ShieldCheck } from 'lucide-react';
 
 
 
 export const UserProfilePage: React.FC = () => {
-    const { employees, currentUserId, updateUserProfile } = useAdmin();
+    const employees = useEmployeeStore((s) => s.employees);
+    const currentUserId = useAuthStore((s) => s.currentUserId);
+    const updateUserProfile = useEmployeeStore((s) => s.updateUserProfile);
 
     const [formData, setFormData] = useState<{
         phoneNumber: string;

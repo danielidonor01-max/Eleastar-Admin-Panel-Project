@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
-import { useAdmin } from '@/context/admin';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useEmployeeStore } from '@/stores/useEmployeeStore';
+import { useLeaveStore } from '@/stores/useLeaveStore';
 import { Calendar, Clock, CheckCircle, Plus, X, AlertCircle } from 'lucide-react';
 
 export const LeavePage: React.FC = () => {
-    const { currentUserId, employees, leaveRequests, requestLeave } = useAdmin();
+    const currentUserId = useAuthStore((s) => s.currentUserId);
+    const employees = useEmployeeStore((s) => s.employees);
+    const leaveRequests = useLeaveStore((s) => s.leaveRequests);
+    const requestLeave = useLeaveStore((s) => s.requestLeave);
     const currentUser = employees.find(e => e.id === currentUserId);
     const myRequests = leaveRequests.filter(r => r.employeeId === currentUserId).sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
 

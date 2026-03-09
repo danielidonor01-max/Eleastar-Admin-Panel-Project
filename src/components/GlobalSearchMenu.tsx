@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { Search, User, FileText, Globe, X } from 'lucide-react';
-import { useAdmin } from '@/context/admin';
-import { useCMS } from '../context/CMSContext';
-import { employees } from '../data/mockData';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useCMSStore } from '@/stores/useCMSStore';
+import { employees } from '@/data/mockData';
+import type { CMSData } from '@/types';
 
 // Generate a searchable unified index of routes
-const generateSearchIndex = (rolePermissions: any, currentUserRole: string, cmsData: import('../types/cms').CMSData | null) => {
-    const index: { id: string; title: string; type: 'Page' | 'Employee' | 'CMS'; path: string; icon: any }[] = [];
+const generateSearchIndex = (rolePermissions: Record<string, string[]>, currentUserRole: string, cmsData: CMSData | null) => {
+    const index: { id: string; title: string; type: 'Page' | 'Employee' | 'CMS'; path: string; icon: React.ReactNode }[] = [];
     const hasAccess = (module: string) => rolePermissions[currentUserRole]?.includes(module);
 
     // Core Admin Pages
@@ -41,14 +42,13 @@ const generateSearchIndex = (rolePermissions: any, currentUserRole: string, cmsD
         }
     }
 
-    // Employees mapped from MockData
     if (hasAccess('Employees')) {
         employees.forEach(emp => {
             index.push({
                 id: `emp-${emp.id}`,
                 title: `${emp.name} - ${emp.department}`,
                 type: 'Employee',
-                path: '/admin/employees', // Optionally passing ?search=... later
+                path: '/admin/employees',
                 icon: <User size={16} />
             });
         });
@@ -57,9 +57,9 @@ const generateSearchIndex = (rolePermissions: any, currentUserRole: string, cmsD
     return index;
 };
 
-export const GlobalSearchMenu: React.FC = () => {
-    const { rolePermissions, currentUserRole } = useAdmin();
-    const { cmsContent } = useCMS();
+export const GlobalSearchMenu = () => {
+    const {rolePermissions, currentUserRole} = useAuthStore();
+    const {cmsContent} = useCMSStore();
     const navigate = useNavigate();
 
     const [isOpen, setIsOpen] = useState(false);
@@ -67,10 +67,8 @@ export const GlobalSearchMenu: React.FC = () => {
     const inputRef = useRef<HTMLInputElement>(null);
 
 
-    // Load searchable items securely based on Role
-    const searchIndex = React.useMemo(() => generateSearchIndex(rolePermissions, currentUserRole, cmsContent), [rolePermissions, currentUserRole, cmsContent]);
+    const searchIndex = useMemo(() => generateSearchIndex(rolePermissions, currentUserRole, cmsContent), [rolePermissions, currentUserRole, cmsContent]);
 
-    // Keyboard Shortcuts (Cmd+K or Ctrl+K)
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -86,17 +84,13 @@ export const GlobalSearchMenu: React.FC = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen]);
 
-    // Focus immediately when opened
     useEffect(() => {
         if (isOpen) {
-            setTimeout(() => inputRef.current?.focus(), 100);
-        } else {
-            setSearchTerm(''); // Clear on close
+            inputRef.current?.focus();
         }
     }, [isOpen]);
 
-    // Compute Results
-    const results = searchIndex.filter(item => item.title.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 8); // Max 8 results
+    const results = searchIndex.filter((item: { title: string }) => item.title.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 8);
 
     return (
         <div className="relative w-96 hidden md:block">

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Upload, FileText } from 'lucide-react';
 import type { Employee, ContractInfo, ContractDocument } from '../data/mockData';
-import { useFeedback } from '../context/FeedbackContext';
+import { toast } from 'sonner';
 import '../SalaryModal.css';
 
 interface ContractManagementModalProps {
@@ -18,7 +18,6 @@ export const ContractManagementModal: React.FC<ContractManagementModalProps> = (
     onUploadDocument
 }) => {
     const contract = employee.contractInfo;
-    const { showError } = useFeedback();
 
     // Contract Info State
     const [contractType, setContractType] = useState<string>(contract?.contractType || 'Full-Time');
@@ -49,13 +48,13 @@ export const ContractManagementModal: React.FC<ContractManagementModalProps> = (
 
         // Validation: Probation end date is required
         if (!probationEndDate) {
-            showError({ title: 'Validation Error', message: 'Probation End Date is required for all employees' });
+            toast.error('Validation Error', { description: 'Probation End Date is required for all employees' });
             return;
         }
 
         // Validation: End date required for Contract and Intern
         if (isEndDateEnabled && !endDate) {
-            showError({ title: 'Validation Error', message: `End Date is required for ${contractType} employees` });
+            toast.error('Validation Error', { description: `End Date is required for ${contractType} employees` });
             return;
         }
 
@@ -75,7 +74,7 @@ export const ContractManagementModal: React.FC<ContractManagementModalProps> = (
         e.preventDefault();
 
         if (!docName.trim()) {
-            showError({ title: 'Validation Error', message: 'Please enter a document name' });
+            toast.error('Validation Error', { description: 'Please enter a document name' });
             return;
         }
 

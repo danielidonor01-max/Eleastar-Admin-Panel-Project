@@ -15,7 +15,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { apiClient } from '../utils/apiClient';
+import { api } from '../utils/apiClient';
 import type { ApiResponse } from './api';
 
 // ── Endpoint constants (fill these in when manager shares them) ──────────
@@ -104,11 +104,11 @@ export const mediaService = {
         }
         // ── REAL ─────────────────────────────────────────────────────────
         try {
-            const res = await apiClient(R2_LIST_URL, { requireAuth: true });
-            const json = await res.json();
-            return { success: json.success, data: json.data || [], error: json.error };
-        } catch (e: any) {
-            return { success: false, data: [], error: e.message };
+            const { data } = await api.get<{ success?: boolean; data?: MediaFile[]; error?: string }>(R2_LIST_URL, { requireAuth: true });
+            return { success: data?.success ?? true, data: data?.data ?? [], error: data?.error };
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return { success: false, data: [], error: err?.message ?? 'Request failed' };
         }
     },
 
@@ -127,14 +127,11 @@ export const mediaService = {
         }
         // ── REAL ─────────────────────────────────────────────────────────
         try {
-            const res = await apiClient(`${R2_DELETE_URL}/${encodeURIComponent(key)}`, {
-                method: 'DELETE',
-                requireAuth: true,
-            });
-            const json = await res.json();
-            return { success: json.success, data: undefined, error: json.error };
-        } catch (e: any) {
-            return { success: false, data: undefined, error: e.message };
+            const { data } = await api.delete<{ success?: boolean; error?: string }>(`${R2_DELETE_URL}/${encodeURIComponent(key)}`, { requireAuth: true });
+            return { success: data?.success ?? true, data: undefined, error: data?.error };
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return { success: false, data: undefined, error: err?.message ?? 'Request failed' };
         }
     },
 };
