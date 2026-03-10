@@ -26,13 +26,13 @@ export const PromotionsPage = () => {
     // Form State
     const [formData, setFormData] = useState<{
         employeeId: string;
-        newRole: AdminRole;
+        newRole: string;
         suggestedSalary: number;
         reason: string;
         effectiveDate: string;
     }>({
         employeeId: '',
-        newRole: 'USER',
+        newRole: '',
         suggestedSalary: 0,
         reason: '',
         effectiveDate: new Date().toISOString().split('T')[0]
@@ -65,27 +65,27 @@ export const PromotionsPage = () => {
     }, [formData.employeeId, formData.newRole, evaluateEligibility]);
 
     const handleEmployeeSelect = (empId: string) => {
-        const emp = employees.find((e: Employee) => e.id === empId);
+        const emp = employees.find((e: Employee) => e.employee_id === empId);
         if (emp) {
             setFormData({
                 ...formData,
                 employeeId: empId,
-                newRole: emp.systemRole, // Default to current
-                suggestedSalary: emp.salary
+                newRole: emp.role, // Default to current
+                suggestedSalary: Number(emp.salary)
             });
         }
     };
 
     const handleSubmit = (e: React.ChangeEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const emp = employees.find((e: Employee) => e.id === formData.employeeId);
+        const emp = employees.find((e: Employee) => e.employee_id === formData.employeeId);
         if (!emp) return;
 
         requestPromotion({
             employeeId: formData.employeeId,
-            currentRole: emp.systemRole,
-            newRole: formData.newRole,
-            currentSalary: emp.salary,
+            currentRole: emp.role,
+            newRole: formData.newRole as AdminRole,
+            currentSalary: Number(emp.salary),
             proposedSalary: formData.suggestedSalary,
             effectiveDate: formData.effectiveDate,
             reason: formData.reason,
@@ -271,7 +271,7 @@ export const PromotionsPage = () => {
                         </div>
                     ) : (
                         filteredRequests.map((req: PromotionRequest) => {
-                            const employee = employees.find((e: Employee) => e.id === req.employeeId);
+                            const employee = employees.find((e: Employee) => e.employee_id === req.employeeId);
                             const isSalaryIncrease = req.proposedSalary > req.currentSalary;
                             const isEligible = req.eligibilitySnapshot?.isEligible ?? true;
 
@@ -383,7 +383,7 @@ export const PromotionsPage = () => {
                                 >
                                     <option value="">Select Employee...</option>
                                     {employees.filter((e: Employee) => e.status === 'active' || e.status === 'probation').map((e: Employee) => (
-                                        <option key={e.id} value={e.id}>{e.name} ({e.systemRole})</option>
+                                        <option key={e.employee_id} value={e.employee_id}>{e.name} ({e.role})</option>
                                     ))}
                                 </select>
                             </div>

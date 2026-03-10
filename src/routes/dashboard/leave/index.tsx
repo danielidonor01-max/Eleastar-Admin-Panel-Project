@@ -64,13 +64,13 @@ export const LeaveManagement=  () => {
     };
 
     const getEmployeeName = (id: string) => {
-        const emp = employees.find((e: Employee) => e.id === id);
+        const emp = employees.find((e: Employee) => e.employee_id === id);
         return emp ? emp.name : 'Unknown User';
     };
 
     const getEmployeeDept = (id: string) => {
-        const emp = employees.find((e: Employee) => e.id === id);
-        return emp ? emp.department : '-';
+        const emp = employees.find((e: Employee) => e.employee_id === id);
+        return emp ? emp.department_id || 'Unassigned' : 'Unassigned';
     };
 
     const filteredRequests = leaveRequests.filter((req: LeaveRequest) => {
@@ -172,7 +172,7 @@ export const LeaveManagement=  () => {
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-slate-900">{getEmployeeName(req.employeeId)}</div>
-                                                    <div className="text-xs text-slate-500">{getEmployeeDept(req.employeeId)}</div>
+                                                    <div className="text-xs text-slate-500">{getEmployeeDept(req.employeeId) || 'Unassigned'}</div>
                                                 </div>
                                             </div>
                                         </td>

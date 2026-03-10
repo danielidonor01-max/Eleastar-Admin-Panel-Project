@@ -18,7 +18,7 @@ export const UserLayout: React.FC = () => {
     const [userMenuOpen, setUserMenuOpen] = useState(false);
 
     // Get live user data
-    const currentUser = employees.find(e => e.id === currentUserId);
+    const currentUser = employees.find(e => e.id === Number(currentUserId));
     const userDisplayName = currentUser?.name || "User";
     const userInitials = userDisplayName.split(' ').map(n => n[0]).join('').substring(0, 2);
     const userEmail = currentUser?.email || "user@eleastar.com";
@@ -155,7 +155,7 @@ export const UserLayout: React.FC = () => {
                             >
                                 <div className="text-right hidden lg:block">
                                     <div className="text-sm font-bold text-slate-900">{userDisplayName}</div>
-                                    <div className="text-xs text-slate-500">{currentUser?.title || "Employee"}</div>
+                                    <div className="text-xs text-slate-500">{currentUser?.name || "Employee"}</div>
                                 </div>
                                 <div className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold border border-slate-200 overflow-hidden shadow-sm">
                                     {currentUser?.photoUrl ? (

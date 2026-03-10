@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle2, XCircle, Linkedin, Twitter, Instagram, Facebook } from 'lucide-react';
-import type { Employee } from '../data/mockData';
+import type { Employee } from '@/types';
 
 interface ProfileCardProps {
     employee: Employee;
@@ -46,7 +46,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ employee }) => {
                     {employee.name}
                 </h1>
                 <p className="text-slate-500 font-medium mb-6 text-sm">
-                    {employee.title} • {employee.department}
+                    {employee.role} • {employee.department_id}
                 </p>
 
                 {/* Status Pill */}

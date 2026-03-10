@@ -5,14 +5,15 @@ import { ProfileCard } from '../components/ProfileCard';
 import { ActionStack } from '../components/ActionStack';
 import { VerificationInfo } from '../components/VerificationInfo';
 import { BrandFooter } from '../components/BrandFooter';
-import { employees } from '../data/mockData';
 import { AlertCircle } from 'lucide-react';
+import { useEmployeeStore } from '@/stores';
 
 export const VerificationPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
-    const employee = employees.find(e => e.id === id);
 
-    if (!employee) {
+    const {employees} =  useEmployeeStore();
+    const employee = employees.find(e => e.employee_id === id);
+    if (!employee || !id) {
         return (
             <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
                 <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full">

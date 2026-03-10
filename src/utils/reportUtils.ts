@@ -30,7 +30,7 @@ export const generatePayrollSummaryReport = (
         : [payrollStatus, ...generatePastCycles(payrollStatus, 12)];
 
     return cycles.map(cycle => {
-        let snapshot: any = null;
+        let snapshot: Record<string, unknown> | null = null;
         try {
             if (cycle.snapshot?.rawData) {
                 snapshot = JSON.parse(cycle.snapshot.rawData);
@@ -39,9 +39,9 @@ export const generatePayrollSummaryReport = (
             console.error('Failed to parse snapshot', e);
         }
 
-        const totalGross = snapshot?.totalPayout || cycle.totalPayout || 0;
-        const totalDeductions = snapshot?.totalDeductions || 0;
-        const totalNet = snapshot?.totalPayout || cycle.totalPayout || 0; // Fallback logic
+        const totalGross = (snapshot?.totalPayout as unknown as number) || (cycle.totalPayout as unknown as number) || 0;
+        const totalDeductions = (snapshot?.totalDeductions as unknown as number) || 0;
+        const totalNet = (snapshot?.totalPayout as unknown as number) || (cycle.totalPayout as unknown as number) || 0; // Fallback logic
 
 
         return {
@@ -52,11 +52,11 @@ export const generatePayrollSummaryReport = (
             totalGross,
             totalDeductions,
             totalNet,
-            employeeCount: snapshot?.employees?.length || cycle.snapshot?.employeeCount || employees.length,
-            approvalStatus: cycle.status,
-            approvedBy: cycle.approvedBy,
-            approvedAt: cycle.approvedAt,
-            executedAt: cycle.executedAt
+            employeeCount: (snapshot?.employees as unknown as Employee[])?.length || (cycle.snapshot?.employeeCount as unknown as number) || employees.length,
+            approvalStatus: cycle.status as unknown as 'Draft' | 'Reviewed' | 'Approved' | 'Paid',
+            approvedBy: cycle.approvedBy as unknown as string,
+            approvedAt: cycle.approvedAt as unknown as string,
+            executedAt: cycle.executedAt as unknown as string   
         };
     });
 };
@@ -94,13 +94,13 @@ export const generateBonusAdjustmentReport = (
     if (!cycle || !cycle.adjustments) return [];
 
     return cycle.adjustments.map((adj, index) => {
-        const employee = employees.find(e => e.id === adj.empId);
+        const employee = employees.find(e => e.id === adj.empId as unknown as number);
         return {
             id: `ADJ-${cycleId}-${index}`,
             cycleId,
             employeeId: adj.empId || 'Unknown',
             employeeName: employee?.name || 'Unknown',
-            department: employee?.department || 'Unknown',
+            department: employee?.department_id as string || 'Unknown',
             type: adj.type,
             amount: adj.amount,
             reason: adj.reason,
@@ -125,8 +125,8 @@ export const generatePayrollVarianceReport = (
 
     if (!currentCycle?.snapshot?.rawData || !previousCycle?.snapshot?.rawData) return [];
 
-    let currentSnapshot: any[] = [];
-    let previousSnapshot: any[] = [];
+    let currentSnapshot: Record<string, unknown>[] = [];
+    let previousSnapshot: Record<string, unknown>[] = [];
 
     try {
         const currData = JSON.parse(currentCycle.snapshot.rawData);
@@ -135,13 +135,14 @@ export const generatePayrollVarianceReport = (
         currentSnapshot = Array.isArray(currData) ? currData : (currData.employees || []);
         previousSnapshot = Array.isArray(prevData) ? prevData : (prevData.employees || []);
     } catch (e) {
+        console.error('Failed to parse snapshot', e);
         return [];
     }
 
-    return currentSnapshot.map(currentEmp => {
-        const previousEmp = previousSnapshot.find(p => p.id === currentEmp.id);
-        const previousPeriod = previousEmp?.netPay || 0;
-        const currentPeriod = currentEmp.netPay;
+    return currentSnapshot.map((currentEmp: Record<string, unknown>) => {
+        const previousEmp = previousSnapshot.find(p => p.id === (currentEmp.id as unknown as string));
+        const previousPeriod = previousEmp?.netPay as unknown as number || 0;
+        const currentPeriod = (currentEmp.netPay as unknown as number) || 0;
         const variance = currentPeriod - previousPeriod;
         const variancePercent = previousPeriod > 0 ? (variance / previousPeriod) * 100 : 0;
 
@@ -149,17 +150,17 @@ export const generatePayrollVarianceReport = (
         if (Math.abs(variancePercent) > 20) flag = 'Critical';
         else if (Math.abs(variancePercent) > 10) flag = 'Significant';
 
-        const employee = employees.find(e => e.id === currentEmp.id);
+        const employee = employees.find(e => e.id === currentEmp.id as unknown as number);
 
         return {
-            employeeId: currentEmp.id,
-            employeeName: currentEmp.name,
-            department: employee?.department || 'Unknown',
+            employeeId: currentEmp.id as unknown as string,
+            employeeName: currentEmp.name as unknown as string,
+            department: employee?.department_id as string || 'Unknown',
             previousPeriod,
             currentPeriod,
-            variance,
-            variancePercent,
-            flag
+            variance: variance as unknown as number,
+            variancePercent: variancePercent as unknown as number,
+            flag: flag as unknown as 'Normal' | 'Significant' | 'Critical'
         };
     });
 };
@@ -183,7 +184,7 @@ export const generateSalaryHistoryReport = (
             (!endDate || new Date(log.timestamp) <= new Date(endDate))
         )
         .map(log => {
-            const employee = employees.find(e => e.id === log.entityId);
+            const employee = employees.find(e => e.id === log.entityId as unknown as number);
             const metadata = (log.metadata || {}) as Record<string, unknown>;
             const previousSalary = (metadata.oldSalary as number) || (metadata.previousSalary as number) || 0;
             const newSalary = (metadata.newSalary as number) || 0;
@@ -194,7 +195,7 @@ export const generateSalaryHistoryReport = (
                 id: log.id,
                 employeeId: log.entityId || 'Unknown', // Added default string
                 employeeName: employee?.name || 'Unknown',
-                department: employee?.department || 'Unknown',
+                department: employee?.department_id as string || 'Unknown',
                 effectiveDate: (metadata.effectiveDate as string) || log.timestamp,
                 previousSalary,
                 newSalary,
@@ -221,20 +222,20 @@ export const generatePromotionHistoryReport = (
             (!endDate || new Date(req.requestedAt) <= new Date(endDate))
         )
         .map(req => {
-            const employee = employees.find(e => e.id === req.employeeId);
+            const employee = employees.find(e => e.id === req.employeeId as unknown as number);
             return {
                 id: req.id,
                 employeeId: req.employeeId,
                 employeeName: employee?.name || 'Unknown',
-                department: employee?.department || 'Unknown',
+                department: employee?.department_id as string || 'Unknown',
                 previousRole: req.currentRole,
                 newRole: req.newRole,
                 effectiveDate: req.effectiveDate || req.requestedAt,
                 requestedBy: req.requestedBy,
                 requestedAt: req.requestedAt,
-                approvedBy: (req as any).reviewedBy || 'COO',
-                approvedAt: (req as any).reviewedAt || req.requestedAt,
-                salaryChange: req.proposedSalary ? req.proposedSalary - (employee?.salary || 0) : undefined
+                approvedBy: req.approvedBy || 'COO',
+                approvedAt: req.approvedAt || req.requestedAt,
+                salaryChange: req.proposedSalary ? req.proposedSalary - (employee?.salary as unknown as number) : undefined
             };
         })
         .sort((a, b) => new Date(b.approvedAt).getTime() - new Date(a.approvedAt).getTime());
@@ -247,14 +248,14 @@ export const generateUserAccessReport = (
     rolePermissions: Record<AdminRole, ModuleType[]>
 ): UserAccessReport[] => {
     return employees.map(emp => ({
-        userId: emp.id,
+        userId: emp.id as unknown as string,
         userName: emp.name,
         email: emp.email,
-        role: emp.systemRole, // Fixed: role -> systemRole
-        department: emp.department,
-        status: (emp.status as any) === 'Active' ? 'Active' : (emp.status as any) === 'Suspended' ? 'Suspended' : 'Inactive',
+        role: emp.role_relation as unknown as AdminRole, // Fixed: role -> systemRole
+        department: emp.department_id as string,
+        status: (emp.status as unknown as string) === 'Active' ? 'Active' : (emp.status as unknown as string) === 'Suspended' ? 'Suspended' : 'Inactive',
         lastLogin: new Date().toISOString(), // Mocked as missing in interface
-        moduleAccess: rolePermissions[emp.systemRole] || [], // Fixed: role -> systemRole
+        moduleAccess: rolePermissions[emp.role_relation as unknown as AdminRole] || [], // Fixed: role -> systemRole
         createdAt: emp.joinedAt || new Date().toISOString(), // Fallback
         lastModified: new Date().toISOString() // Mocked
     }));

@@ -41,22 +41,22 @@ const CardFront = ({ isPreview = false, employee, showPhoto, showDept, showRole,
             )}
             <h2 className="text-2xl font-bold text-slate-900 text-center leading-tight mb-1">{employee.name}</h2>
             {showRole && (
-                <p className="text-brand-600 font-bold text-sm mb-1 uppercase tracking-wide">{employee.title}</p>
+                <p className="text-brand-600 font-bold text-sm mb-1 uppercase tracking-wide">{employee.role_relation?.name}</p>
             )}
             {showDept && (
-                <p className="text-slate-400 text-xs uppercase tracking-widest font-semibold">{employee.department}</p>
+                <p className="text-slate-400 text-xs uppercase tracking-widest font-semibold">{employee.department_id || 'Unassigned'}</p>
             )}
             {showQRC && (
                 <div className="mt-auto mb-2 p-3 bg-white rounded-xl border border-slate-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                     <QRCode
-                        value={`${PUBLIC_LINK}/verify/${employee.id}`}
+                        value={`${PUBLIC_LINK}/verify/${employee.employee_id}`}
                         size={80}
                         level="M"
                     />
                 </div>
             )}
             <div className="mt-4 w-full border-t border-slate-100 pt-3 flex justify-between items-center text-[10px] text-slate-400 font-mono">
-                <div>ID: <span className="text-slate-600 font-bold">{employee.id}</span></div>
+                <div>ID: <span className="text-slate-600 font-bold">{employee.employee_id}</span></div>
                 <div>ISS: <span className="text-slate-600">JAN 26</span></div>
             </div>
         </div>
@@ -112,7 +112,7 @@ export const QRPage: React.FC = () => {
     const [showIDModal, setShowIDModal] = useState(false);
 
     // Editor State
-    const [selectedEmpId, setSelectedEmpId] = useState<string>(employees[0]?.id || '');
+    const [selectedEmpId, setSelectedEmpId] = useState<string>(employees[0]?.employee_id || '');
     const [templateConfig, setTemplateConfig] = useState({
         showPhoto: true,
         showDept: true,
@@ -126,7 +126,7 @@ export const QRPage: React.FC = () => {
     const frontCardRef = useRef<HTMLDivElement>(null);
     const backCardRef = useRef<HTMLDivElement>(null);
 
-    const selectedEmployee = employees.find((e: Employee) => e.id === selectedEmpId) || employees[0];
+    const selectedEmployee = employees.find((e: Employee) => e.employee_id === selectedEmpId) || employees[0];
 
     // Derived stats
     const activeCodeCount = employees.filter((e: Employee) => e.status === 'active').length;
@@ -141,10 +141,10 @@ export const QRPage: React.FC = () => {
     }
 
     const handleBulkRegenerate = () => {
-        const allIds = employees.map((e: Employee) => e.id);
+        const allIds = employees.map((e: Employee) => e.employee_id);
         regenerateQR(allIds);
         setShowRegenModal(false);
-        logAction('UPDATE', 'Employee', 'Regenerated all QR codes manually from Admin Panel.', 'SUCCESS');
+        logAction('Regenerated QR', `Regenerated QR for ${allIds.length} employees.`);
         toast.success('Regeneration Complete', { description: 'All QR codes have been regenerated. Please reprint ID cards.' });
     };
 
@@ -199,9 +199,9 @@ export const QRPage: React.FC = () => {
 
     const executeExport = async (format: 'pdf' | 'png' | 'jpg') => {
         const safeName = selectedEmployee.name.replace(/[^a-z0-9]/gi, '_');
-        const fileName = `ID_${safeName}_${selectedEmployee.id}`;
+        const fileName = `ID_${safeName}_${selectedEmployee.employee_id}`;
 
-        logAction('SECURITY', 'Employee', `Started ID Card export (${format}) for ${selectedEmployee.name}`, 'SUCCESS', selectedEmployee.id);
+        logAction('Started ID Card export', `Started ID Card export (${format}) for ${selectedEmployee.name}`);
 
         const images = await generateImages();
         if (!images) {
@@ -408,7 +408,7 @@ export const QRPage: React.FC = () => {
                                             className="w-full p-3 pl-10 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 hover:border-brand-300 transition-colors appearance-none cursor-pointer font-medium text-slate-700"
                                         >
                                             {employees.map((e: Employee) => (
-                                                <option key={e.id} value={e.id}>{e.name}</option>
+                                                <option key={e.employee_id} value={e.employee_id}>{e.name}</option>
                                             ))}
                                         </select>
                                         <Search className="absolute left-3 top-3.5 text-slate-400 pointer-events-none" size={16} />

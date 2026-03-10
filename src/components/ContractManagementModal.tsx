@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Upload, FileText } from 'lucide-react';
-import type { Employee, ContractInfo, ContractDocument } from '../data/mockData';
+import type { Employee, ContractInfo, ContractDocument } from '@/types';
 import { toast } from 'sonner';
 import '../SalaryModal.css';
 

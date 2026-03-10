@@ -92,7 +92,7 @@ export const useLeaveStore = create<LeaveState & LeaveActions>()(
                 const { updateEmployee } = useEmployeeStore.getState();
                 updateEmployee(request.employeeId, {
                     leaveBalance: (() => {
-                        const emp = useEmployeeStore.getState().employees.find((e: { id: string }) => e.id === request.employeeId);
+                        const emp = useEmployeeStore.getState().employees.find((e: { employee_id: string }) => e.employee_id === request.employeeId);
                         if (!emp?.leaveBalance) return undefined;
                         return {
                             ...emp.leaveBalance,
@@ -179,7 +179,7 @@ export const useLeaveStore = create<LeaveState & LeaveActions>()(
                     else if (diffHours >= 120 && level < 3) { newLevel = 3; shouldRemind = true; escalation = true; }
                     if (shouldRemind) {
                         const { dispatchNotification } = useNotificationStore.getState();
-                        const empName = useEmployeeStore.getState().employees.find((e: { id: string }) => e.id === req.employeeId)?.name || req.employeeId;
+                        const empName = useEmployeeStore.getState().employees.find((e: { employee_id: string }) => e.employee_id === req.employeeId)?.name || req.employeeId;
                         if (escalation) {
                             dispatchNotification(
                                 { title: 'ESCALATION: Overdue Leave Request', message: `Leave by ${empName} pending 5+ days.`, type: 'Leave', link: '/admin/leave' },

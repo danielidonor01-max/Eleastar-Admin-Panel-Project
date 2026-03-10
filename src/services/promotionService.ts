@@ -1,5 +1,5 @@
 import { type ApiResponse, mockSuccess, delay } from './api';
-import type { PromotionRequest, PromotionEligibilityRule } from '../data/mockData';
+import type { PromotionRequest, PromotionEligibilityRule } from '@/types';
 
 /**
  * Service for Promotion Management

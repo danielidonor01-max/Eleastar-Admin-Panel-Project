@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useTaskStore } from '@/stores/useTaskStore';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { CheckCircle2, Clock, Play, Upload, X, AlertCircle, FileImage } from 'lucide-react';
-import type { Task } from '../../data/mockData';
+import type { Task } from '@/types';
 
 export const UserTasksPage: React.FC = () => {
     const tasks = useTaskStore((s) => s.tasks);
@@ -72,15 +72,15 @@ export const UserTasksPage: React.FC = () => {
                     <p className="text-sm font-medium text-slate-500 mb-1">Total Assigned</p>
                     <p className="text-3xl font-bold text-slate-900">{myTasks.length}</p>
                 </div>
-                <div className="bg-white p-6 rounded-xl border border-brand-200 shadow-sm bg-brand-50/50">
+                <div className="p-6 rounded-xl border border-brand-200 shadow-sm bg-brand-50/50">
                     <p className="text-sm font-medium text-brand-700 mb-1">In Progress</p>
                     <p className="text-3xl font-bold text-brand-700">{myTasks.filter(t => t.status === 'In Progress').length}</p>
                 </div>
-                <div className="bg-white p-6 rounded-xl border border-amber-200 shadow-sm bg-amber-50/50">
+                <div className="p-6 rounded-xl border border-amber-200 shadow-sm bg-amber-50/50">
                     <p className="text-sm font-medium text-amber-700 mb-1">In Review</p>
                     <p className="text-3xl font-bold text-amber-700">{myTasks.filter(t => t.status === 'In Review').length}</p>
                 </div>
-                <div className="bg-white p-6 rounded-xl border border-emerald-200 shadow-sm bg-emerald-50/50">
+                <div className="p-6 rounded-xl border border-emerald-200 shadow-sm bg-emerald-50/50">
                     <p className="text-sm font-medium text-emerald-700 mb-1">Completed</p>
                     <p className="text-3xl font-bold text-emerald-700">{myTasks.filter(t => t.status === 'Completed').length}</p>
                 </div>

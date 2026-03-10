@@ -261,7 +261,7 @@ export const ProfilePage = () => {
     const logAction = useAuditStore((s) => s.logAction);
     const location = useLocation();
     const navigate = useNavigate();
-    const currentUser = employees.find((e: Employee) => e.id === currentUserId);
+    const currentUser = employees.find((e: Employee) => e.employee_id === currentUserId);
     const initialTab = (location.state as { activeTab?: 'profile' | 'security' | 'notifications' })?.activeTab || 'profile';
 
     return (
@@ -271,7 +271,7 @@ export const ProfilePage = () => {
             currentUserRole={currentUserRole}
             initialTab={initialTab}
             onSaveProfile={(updates) => updateUserProfile(updates)}
-            onLogAction={(action, _scope, details, _status) => logAction(action, details)}
+            onLogAction={(action, _scope, details) => logAction(action, details)}
             onShowSuccess={({ title, message }) => toast.success(title, { description: message })}
             onLogout={logout}
             navigate={(to) => navigate(to)}

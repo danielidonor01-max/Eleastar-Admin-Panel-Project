@@ -5,7 +5,7 @@ import type {
     BonusRequest,
     PromotionRequest,
     PromotionHistoryEntry
-} from '../data/mockData';
+} from '@/types';
 import type { ActivityLog } from '../types';
 import type {
     PayrollSummaryReport,

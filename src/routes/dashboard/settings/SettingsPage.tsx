@@ -6,17 +6,15 @@ import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useNotificationStore } from '@/stores/useNotificationStore';
 import { Shield, Upload, Save, AlertTriangle, Check, Lock, Eye, RefreshCw, Key, Activity, Copy, CheckCircle2 } from 'lucide-react';
-import type { Employee, AdminRole, ModuleType, SystemApiKey, ActivityLog } from '@/types';
+import type { Employee, AdminRole, ModuleType, SystemApiKey, ActivityLog, RolesProps } from '@/types';
 import { cmsService } from '@/services/cmsService';
-import { useCMSStore } from '@/stores/useCMSStore';
 
 export const SettingsPage: React.FC = () => {
     const {activityLogs, logAction} = useAuditStore();
     const {employees, updateEmployee,ceoSignature, updateCeoSignature, addEmployee} = useEmployeeStore();
     const {rolePermissions, updateRolePermissions, currentUserRole} = useAuthStore();
-    const {requestAuth, generateSystemPassword} = useSettingsStore();
+    const {requestAuth, generateSystemPassword, apiKeys, addApiKey, toggleApiKeyStatus} = useSettingsStore();
     const {sendEmail} = useNotificationStore();
-    const {apiKeys, addApiKey, toggleApiKeyStatus} = useCMSStore();
 
     // UI State
     const [pendingChange, setPendingChange] = useState<{ id: string; updates: Partial<Employee> } | null>(null);
@@ -28,11 +26,11 @@ export const SettingsPage: React.FC = () => {
 
     // Handlers
     const handleRoleChange = (id: string, newRole: string) => {
-        setPendingChange({ id, updates: { systemRole: newRole as AdminRole } });
+        setPendingChange({ id, updates: { role: newRole as AdminRole } });
     };
 
     const handleAccessToggle = (id: string, currentAccess: boolean) => {
-        setPendingChange({ id, updates: { accessGranted: !currentAccess } });
+        setPendingChange({ id, updates: { status: currentAccess ? 'active' : 'suspended' } });
     };
 
     const confirmChange = () => {
@@ -169,19 +167,17 @@ export const SettingsPage: React.FC = () => {
 
         const newEmpId = `EMP-${Math.floor(Math.random() * 10000)}`;
         const newEmployee: Partial<Employee> = {
-            id: newEmpId,
+            employee_id: newEmpId,
             name: newUser.name,
             email: newUser.email,
-            systemRole: newUser.role,
-            department: newUser.department,
-            title: 'System USER',
+            role: newUser.role,
+            department_id: newUser.department,
+            role_relation: newUser.role as unknown as RolesProps,
             status: 'active',
-            accessGranted: true,
             joinedAt: new Date().toISOString(),
             photoUrl: `https://ui-avatars.com/api/?name=${newUser.name}&background=random`,
-            salary: 0,
-            employmentType: 'Full-time',
-            tenantId: 'tenant-default'
+            salary: '0',
+            employment_type: 'Full-time',
         };
 
         addEmployee(newEmployee as Omit<Employee, 'tenantId'> & { password?: string | undefined; password_confirmation?: string | undefined; role_id?: number | undefined; });
@@ -525,17 +521,17 @@ export const SettingsPage: React.FC = () => {
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
                                             {employees.map((emp: Employee) => (
-                                                <tr key={emp.id} className={`hover:bg-slate-50 transition-colors ${!emp.accessGranted ? 'opacity-60 bg-slate-50' : ''}`}>
+                                                <tr key={emp.employee_id} className={`hover:bg-slate-50 transition-colors ${!emp.status ? 'opacity-60 bg-slate-50' : ''}`}>
                                                     <td className="px-6 py-4">
                                                         <div className="font-bold text-slate-900">{emp.name}</div>
-                                                        <div className="text-xs text-slate-500">{emp.title}</div>
+                                                        <div className="text-xs text-slate-500">{emp.role_relation?.name}</div>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <select
-                                                            value={emp.systemRole}
-                                                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleRoleChange(emp.id, e.target.value)}
-                                                            className={`border-none bg-transparent font-medium focus:ring-2 rounded cursor-pointer ${emp.systemRole === 'SUPER_ADMIN' ? 'text-purple-600' :
-                                                                emp.systemRole === 'COO' ? 'text-brand-600' :
+                                                            value={emp.role}
+                                                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleRoleChange(emp.employee_id, e.target.value)}
+                                                            className={`border-none bg-transparent font-medium focus:ring-2 rounded cursor-pointer ${emp.role === 'SUPER_ADMIN' ? 'text-purple-600' :
+                                                                emp.role === 'COO' ? 'text-brand-600' :
                                                                     'text-slate-600'
                                                                 }`}
                                                             aria-label={`Change role for ${emp.name}`}
@@ -553,15 +549,15 @@ export const SettingsPage: React.FC = () => {
                                                     </td>
                                                     <td className="px-6 py-4 text-center">
                                                         <button
-                                                            onClick={() => handleAccessToggle(emp.id, emp.accessGranted)}
-                                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${emp.accessGranted ? 'bg-brand-600' : 'bg-slate-200'
+                                                            onClick={() => handleAccessToggle(emp.employee_id, emp.status === 'active')}
+                                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${emp.status ? 'bg-brand-600' : 'bg-slate-200'
                                                                 }`}
-                                                            aria-label={emp.accessGranted ? `Revoke access for ${emp.name}` : `Grant access to ${emp.name}`}
-                                                            title={emp.accessGranted ? `Revoke access for ${emp.name}` : `Grant access to ${emp.name}`}
+                                                            aria-label={emp.status ? `Revoke access for ${emp.name}` : `Grant access to ${emp.name}`}
+                                                            title={emp.status ? `Revoke access for ${emp.name}` : `Grant access to ${emp.name}`}
                                                         >
                                                             <span
                                                                 aria-hidden="true"
-                                                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${emp.accessGranted ? 'translate-x-5' : 'translate-x-0'
+                                                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${emp.status === 'active' ? 'translate-x-5' : 'translate-x-0'
                                                                     }`}
                                                             />
                                                         </button>
@@ -611,7 +607,7 @@ export const SettingsPage: React.FC = () => {
                         </div>
                         <h3 className="text-xl font-bold text-center text-slate-900 mb-2">Confirm Changes</h3>
                         <p className="text-center text-slate-500 mb-6">
-                            Are you sure you want to update permissions for <span className="font-bold text-slate-900">{employees.find((e: Employee) => e.id === pendingChange.id)?.name || ''}</span>?
+                            Are you sure you want to update permissions for <span className="font-bold text-slate-900">{employees.find((e: Employee) => e.employee_id === pendingChange.id)?.name || ''}</span>?
                             This action will be logged.
                         </p>
                         <div className="grid grid-cols-2 gap-4">
@@ -646,7 +642,7 @@ export const SettingsPage: React.FC = () => {
                             to <strong className="text-slate-900">{pendingPermChange.module as ModuleType}</strong> for the <strong className="text-slate-900">{pendingPermChange.role as AdminRole}</strong> role.
                         </p>
                         <p className="text-center text-slate-500 mb-6">
-                            Are you sure you want to update permissions for <span className="font-bold text-slate-900">{employees.find((e: Employee) => e.id === pendingPermChange.role)?.name || ''}</span>?
+                            Are you sure you want to update permissions for <span className="font-bold text-slate-900">{employees.find((e: Employee) => e.employee_id === pendingPermChange.role)?.name || ''}</span>?
                             This action will be logged.
                         </p>
                         <div className="grid grid-cols-2 gap-4">
@@ -761,7 +757,7 @@ export const SettingsPage: React.FC = () => {
                         </div>
                         <h3 className="text-xl font-bold text-center text-slate-900 mb-2">Confirm Changes</h3>
                         <p className="text-center text-slate-500 mb-6">
-                            Are you sure you want to update permissions for <span className="font-bold text-slate-900">{employees.find((e: Employee) => e.id === pendingChange.id)?.name || ''}</span>?
+                            Are you sure you want to update permissions for <span className="font-bold text-slate-900">{employees.find((e: Employee) => e.employee_id === pendingChange.id)?.name || ''}</span>?
                             This action will be logged.
                         </p>
                         <div className="grid grid-cols-2 gap-4">
@@ -794,7 +790,7 @@ export const SettingsPage: React.FC = () => {
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-slate-900">{selectedUser.name}</h3>
-                                    <p className="text-sm text-slate-500">{selectedUser.title} • {selectedUser.department}</p>
+                                    <p className="text-sm text-slate-500">{selectedUser.role_relation?.name} • {selectedUser.department_id}</p>
                                 </div>
                             </div>
                             <button onClick={() => setSelectedUSER(null)} className="text-slate-400 hover:text-slate-600" title="Close Details">
@@ -813,14 +809,14 @@ export const SettingsPage: React.FC = () => {
                                     <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                                         <div className="flex items-center justify-between mb-4">
                                             <span className="text-sm font-medium text-slate-700">Assigned Role:</span>
-                                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${selectedUser.systemRole === 'SUPER_ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-brand-100 text-brand-700'}`}>
-                                                {selectedUser.systemRole}
+                                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${selectedUser.role === 'SUPER_ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-brand-100 text-brand-700'}`}>
+                                                {selectedUser.role}
                                             </span>
                                         </div>
                                         <div className="space-y-2">
                                             <p className="text-xs text-slate-500 font-medium uppercase">Accessible Modules:</p>
                                             <div className="flex flex-wrap gap-2">
-                                                {rolePermissions[selectedUser.systemRole as AdminRole]?.map((m: ModuleType) => (
+                                                {rolePermissions[selectedUser.role as AdminRole]?.map((m: ModuleType) => (
                                                     <span key={m} className="px-2 py-1 bg-white border border-slate-200 rounded text-xs text-slate-600 flex items-center gap-1">
                                                         <Check size={12} className="text-emerald-500" />
                                                         {m}

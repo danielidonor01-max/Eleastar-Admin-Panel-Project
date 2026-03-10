@@ -1,10 +1,3 @@
-// =============================================================================
-// CMS — Public Contract Types & Admin Section Types
-// =============================================================================
-
-// ---------------------------------------------------------------------------
-// Public CMS Contract (used by CMSContext / frontend renderer)
-// ---------------------------------------------------------------------------
 
 export interface CMSImage {
     url: string;
@@ -99,7 +92,6 @@ export interface CMSServiceItemData {
     TextTitle1: string;
     TextTitle2: string;
     TextDescription: string;
-    /** URL string for the service image */
     image: string;
     imageAlt: string;
 }
@@ -133,10 +125,6 @@ export interface CMSData {
     contactUsCardData: CMSContactUsCardData;
     pages: CMSPagesData;
 }
-
-// ---------------------------------------------------------------------------
-// Admin CMS Section Types (editable page content managed in admin panel)
-// ---------------------------------------------------------------------------
 
 export type SectionType =
     | 'Hero'

@@ -66,7 +66,7 @@ export function AnalyticsDashboard() {
     const costMetrics = useMemo(() => {
         const monthlyBaseLiability = employees
             .filter((e: Employee) => e.status === 'active' || e.status === 'probation')
-            .reduce((sum: number, e: Employee) => sum + (e.salary / 12), 0);
+            .reduce((sum: number, e: Employee) => sum + (Number(e.salary) / 12), 0);
 
         const totalBonusesApproved = bonusRequests
             .filter((r: BonusRequest) => r.status === 'Approved')
@@ -76,8 +76,8 @@ export function AnalyticsDashboard() {
         employees
             .filter((e: Employee) => e.status === 'active' || e.status === 'probation')
             .forEach((e: Employee) => {
-                const dept = e.department || 'Unassigned';
-                deptCost[dept] = (deptCost[dept] || 0) + (e.salary / 12);
+                const dept = e.department_id || 'Unassigned';
+                deptCost[dept] = (deptCost[dept] || 0) + (Number(e.salary) / 12);
             });
 
         const deptChartData = Object.entries(deptCost)
@@ -92,7 +92,7 @@ export function AnalyticsDashboard() {
         const pendingBonuses = bonusRequests.filter((r: BonusRequest) => r.status === 'Pending').length;
         const pendingLeave = leaveRequests.filter((r: LeaveRequest) => r.status === 'Pending').length;
 
-        const salaryExceptions = employees.filter((e: Employee) => e.salary > 50000000).length; 
+        const salaryExceptions = employees.filter((e: Employee) => Number(e.salary) > 50000000).length; 
 
 
         return { pendingPromotions, pendingBonuses, pendingLeave, salaryExceptions };

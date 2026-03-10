@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import type { Employee } from '../data/mockData';
+import type { Employee } from '@/types';
 import { toast } from 'sonner';
 import '../SalaryModal.css';
 
@@ -34,8 +34,8 @@ export const SalaryEditModal: React.FC<SalaryEditModalProps> = ({ employee, onCl
         onClose();
     };
 
-    const salaryChange = parseFloat(newSalary) - employee.salary;
-    const percentageChange = ((salaryChange / employee.salary) * 100).toFixed(2);
+    const salaryChange = parseFloat(newSalary) - Number(employee.salary);
+    const percentageChange = ((salaryChange / Number(employee.salary)) * 100).toFixed(2);
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -75,7 +75,7 @@ export const SalaryEditModal: React.FC<SalaryEditModalProps> = ({ employee, onCl
                         </div>
 
                         {/* Change Summary */}
-                        {!isNaN(parseFloat(newSalary)) && parseFloat(newSalary) !== employee.salary && (
+                        {!isNaN(parseFloat(newSalary)) && parseFloat(newSalary) !== Number(employee.salary) && (
                             <div className={`change-summary ${salaryChange > 0 ? 'positive' : 'negative'}`}>
                                 <div className="label-text">
                                     Change

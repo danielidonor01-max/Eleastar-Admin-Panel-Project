@@ -48,6 +48,7 @@ export interface PerformanceReview {
 export interface TaskPerformanceStats {
     id: string;
     name: string;
+    department_id: string;
     department: string;
     totalTasks: number;
     completedTasks: number;

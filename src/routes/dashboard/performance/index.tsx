@@ -70,7 +70,7 @@ export const PerformancePage = () => {
         startReviewCycle(id);
     };
 
-    const getEmployeeName = (id: string) => employees.find((e: Employee) => e.id === id)?.name || id;
+    const getEmployeeName = (id: string) => employees.find((e: Employee) => e.employee_id === id)?.name || 'Unknown';
 
     const openReviewModal = (id: string) => {
         const review = performanceReviews.find((r: PerformanceReview) => r.id === id);
@@ -244,12 +244,12 @@ export const PerformancePage = () => {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {(() => {
-                                const stats: TaskPerformanceStats[] = employees.map((emp: Employee) => {
-                                    const empTasks = tasks.filter((t: Task) => t.assignedTo === emp.id);
+                                const stats: TaskPerformanceStats[] = employees.filter((emp: Employee) => emp.status === 'active').map((emp: Employee) => {
+                                    const empTasks = tasks.filter((t: Task) => t.assignedTo === emp.employee_id);
                                     const total = empTasks.length;
                                     const completed = empTasks.filter((t: Task) => t.status === 'Completed').length;
                                     const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
-                                    return { ...emp, totalTasks: total, completedTasks: completed, completionRate: rate };
+                                    return { id: emp.employee_id, name: emp.name, department_id: emp.department_id, department: emp.department_id || 'Unassigned', totalTasks: total, completedTasks: completed, completionRate: rate };
                                 }).filter((stat: TaskPerformanceStats) => stat.totalTasks > 0).sort((a: TaskPerformanceStats, b: TaskPerformanceStats) => b.completionRate - a.completionRate);
 
                                 if (stats.length === 0) {

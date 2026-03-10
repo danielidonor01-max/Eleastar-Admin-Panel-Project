@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, ShieldCheck, AlertTriangle } from 'lucide-react';
-import type { BonusRequest } from '../data/mockData';
+import type { BonusRequest } from '@/types';
 
 interface BonusApprovalModalProps {
     isOpen: boolean;

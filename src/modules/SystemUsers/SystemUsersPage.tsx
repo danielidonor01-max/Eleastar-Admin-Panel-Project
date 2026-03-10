@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useAuditStore } from '@/stores/useAuditStore';
 import { useConfirmStore } from '@/stores/useConfirmStore';
-import type { AdminRole, Employee } from '../../data/mockData';
+import type { AdminRole, Employee } from '@/types';
 
 export const SystemUsersPage: React.FC = () => {
     const employees = useEmployeeStore((s) => s.employees);
@@ -39,15 +39,15 @@ export const SystemUsersPage: React.FC = () => {
         const matchesSearch =
             emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            emp.systemRole.toLowerCase().includes(searchQuery.toLowerCase());
+            emp.role?.toLowerCase().includes(searchQuery.toLowerCase());
 
-        const matchesRole = filterRole === 'All' || emp.systemRole === filterRole;
+        const matchesRole = filterRole === 'All' || emp.role === filterRole;
 
         return matchesSearch && matchesRole;
     });
 
     const handleRoleChange = (emp: Employee, newRole: AdminRole) => {
-        if (emp.id === 'EMP-001' && currentUserRole !== 'SUPER_ADMIN') {
+        if (emp.id === 1 && currentUserRole !== 'SUPER_ADMIN') {
             toast.error('Permission Denied', { description: 'Cannot modify Super Admin.' });
             return;
         }
@@ -60,10 +60,10 @@ export const SystemUsersPage: React.FC = () => {
 
         showConfirm({
             title: 'Change User Role',
-            message: `Are you sure you want to change ${emp.name}'s role from ${emp.systemRole} to ${newRole}? This will affect their system permissions immediately.`,
+            message: `Are you sure you want to change ${emp.name}'s role from ${emp.role} to ${newRole}? This will affect their system permissions immediately.`,
             onConfirm: () => {
                 requestAuth('SENSITIVE', `Promote/Demote ${emp.name} to ${newRole}`, () => {
-                    updateEmployee(emp.id, { systemRole: newRole });
+                    updateEmployee(emp.employee_id.toString(), { role: newRole });
                     logAction('Role Change', `Changed role for ${emp.name} to ${newRole}`);
                     toast.success('Role Updated', { description: 'User role updated successfully.' });
                 });
@@ -72,12 +72,12 @@ export const SystemUsersPage: React.FC = () => {
     };
 
     const toggleAccess = (emp: Employee) => {
-        if (emp.id === 'EMP-001') {
+        if (emp.employee_id === 'EMP-001') {
             toast.error('Action Denied', { description: 'Cannot revoke access for the Root Super Admin.' });
             return;
         }
 
-        const newStatus = !emp.accessGranted;
+        const newStatus = emp.status === 'active' ? 'suspended' : 'active';
         const action = newStatus ? 'Grant Access' : 'Revoke Access';
 
         showConfirm({
@@ -85,7 +85,7 @@ export const SystemUsersPage: React.FC = () => {
             message: `Are you sure you want to ${action.toLowerCase()} for ${emp.name}? ${!newStatus ? 'They will no longer be able to log in.' : 'They will be able to access the system.'}`,
             onConfirm: () => {
                 requestAuth('SENSITIVE', `${action} for ${emp.name}`, () => {
-                    updateEmployee(emp.id, { accessGranted: newStatus });
+                    updateEmployee(emp.employee_id.toString(), { status: newStatus });
                     logAction('Access Control', `${action} for ${emp.name}`);
                     toast.success('Access Updated', { description: `User access has been ${newStatus ? 'granted' : 'revoked'}.` });
                 });
@@ -116,24 +116,18 @@ export const SystemUsersPage: React.FC = () => {
 
         requestAuth('SENSITIVE', `Create new System User: ${newUser.name} (${newUser.role})`, () => {
             const newEmpId = `EMP-${Math.floor(Math.random() * 10000)}`;
-            const newEmployee: any = {
-                id: newEmpId,
+            const newEmployee: Partial<Employee> = {
+                employee_id: newEmpId,
                 name: newUser.name,
                 email: newUser.email,
-                systemRole: newUser.role,
-                department: newUser.department,
-                title: 'System User',
+                role: newUser.role as AdminRole,
+                department_id: newUser.department,
                 status: 'active',
-                accessGranted: true,
                 joinedAt: new Date().toISOString(),
                 photoUrl: `https://ui-avatars.com/api/?name=${newUser.name}&background=random`,
-                // Defaults
-                salary: 0,
-                employmentType: 'Full-time',
-                tenantId: 'tenant-default'
             };
 
-            addEmployee(newEmployee);
+            addEmployee(newEmployee as Omit<Employee, 'tenantId'> & { password?: string | undefined; password_confirmation?: string | undefined; role_id?: never; });
 
             logAction('User Creation', `Created new system user ${newUser.name} as ${newUser.role}`);
             toast.success('User Created', { description: `${newUser.name} has been added to the system.` });
@@ -184,7 +178,7 @@ export const SystemUsersPage: React.FC = () => {
                 </div>
                 <select
                     value={filterRole}
-                    onChange={(e) => setFilterRole(e.target.value as any)}
+                    onChange={(e) => setFilterRole(e.target.value as AdminRole)}
                     className="w-full sm:w-48 p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     aria-label="Filter by Role"
                     title="Filter by Role"
@@ -224,7 +218,7 @@ export const SystemUsersPage: React.FC = () => {
                                         <div className="flex items-center gap-2">
                                             <select
                                                 className="text-sm p-1 border border-slate-300 rounded"
-                                                value={emp.systemRole}
+                                                value={emp.role}
                                                 onChange={(e) => handleRoleChange(emp, e.target.value as AdminRole)}
                                                 onBlur={() => setEditingUser(null)}
                                                 autoFocus
@@ -237,11 +231,11 @@ export const SystemUsersPage: React.FC = () => {
                                             </select>
                                         </div>
                                     ) : (
-                                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${emp.systemRole === 'SUPER_ADMIN' ? 'bg-purple-50 text-purple-700 border-purple-100' :
-                                            emp.systemRole === 'USER' ? 'bg-slate-100 text-slate-600 border-slate-200' :
+                                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${emp.role === 'SUPER_ADMIN' ? 'bg-purple-50 text-purple-700 border-purple-100' :
+                                            emp.role === 'USER' ? 'bg-slate-100 text-slate-600 border-slate-200' :
                                                 'bg-blue-50 text-blue-700 border-blue-100'
                                             }`}>
-                                            {emp.systemRole}
+                                            {emp.role}
                                             <button
                                                 onClick={() => setEditingUser(emp)}
                                                 className="p-0.5 hover:bg-black/5 rounded transition-colors ml-1"
@@ -253,7 +247,7 @@ export const SystemUsersPage: React.FC = () => {
                                     )}
                                 </td>
                                 <td className="px-6 py-4">
-                                    {emp.accessGranted ? (
+                                    {emp.status === 'active' ? (
                                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-100">
                                             <CheckCircle size={12} />
                                             Active
@@ -269,13 +263,13 @@ export const SystemUsersPage: React.FC = () => {
                                     <div className="flex items-center justify-end gap-2">
                                         <button
                                             onClick={() => toggleAccess(emp)}
-                                            className={`p-2 rounded-lg transition-colors border ${emp.accessGranted
+                                            className={`p-2 rounded-lg transition-colors border ${emp.status === 'active'
                                                 ? 'text-red-600 border-red-200 hover:bg-red-50'
                                                 : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50'
                                                 }`}
-                                            title={emp.accessGranted ? 'Revoke Access' : 'Grant Access'}
+                                            title={emp.status === 'active' ? 'Revoke Access' : 'Grant Access'}
                                         >
-                                            {emp.accessGranted ? <Lock size={16} /> : <Unlock size={16} />}
+                                            {emp.status === 'active' ? <Lock size={16} /> : <Unlock size={16} />}
                                         </button>
 
                                         <button

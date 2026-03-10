@@ -6,15 +6,15 @@ import { useLeaveStore } from '@/stores/useLeaveStore';
 import { usePerformanceStore } from '@/stores/usePerformanceStore';
 import { Calendar, FileDown, CreditCard, TrendingUp, Clock, User, ArrowRight, Briefcase } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { generatePayslipPDF } from '../../utils/generatePayslip';
-import { generatePastCycles } from '../../utils/payrollUtils';
+import { generatePayslipPDF } from '@/utils/generatePayslip';
+import { generatePastCycles } from '@/utils/payrollUtils';
 
 export const UserDashboard: React.FC = () => {
-    const payrollStatus = usePayrollStore((s) => s.payrollStatus);
-    const employees = useEmployeeStore((s) => s.employees);
-    const currentUserId = useAuthStore((s) => s.currentUserId);
-    const leaveRequests = useLeaveStore((s) => s.leaveRequests);
-    const performanceReviews = usePerformanceStore((s) => s.performanceReviews);
+    const {payrollStatus} = usePayrollStore();
+    const {employees} = useEmployeeStore();
+    const {currentUserId} = useAuthStore();
+    const {leaveRequests} = useLeaveStore();
+    const {performanceReviews} = usePerformanceStore();
     const location = useLocation();
 
     // Deep Linking Scroll
@@ -32,7 +32,7 @@ export const UserDashboard: React.FC = () => {
         }
     }, [location.search]);
 
-    const currentUser = employees.find(e => e.id === currentUserId);
+    const currentUser = employees.find(e => e.employee_id === currentUserId);
     const myAdjustments = payrollStatus.adjustments.filter(a => a.empId === currentUserId);
     const isPayrollVisible = payrollStatus.status === 'Approved' || payrollStatus.status === 'Paid';
 
@@ -40,7 +40,7 @@ export const UserDashboard: React.FC = () => {
     const baseSalary = currentUser?.salary || 0;
     const totalBonuses = myAdjustments.filter(a => a.type === 'Bonus').reduce((sum, a) => sum + a.amount, 0);
     const totalDeductions = myAdjustments.filter(a => a.type === 'Deduction' || a.type === 'Fine').reduce((sum, a) => sum + a.amount, 0);
-    const netPay = baseSalary + totalBonuses - totalDeductions;
+    const netPay = parseFloat(baseSalary.toString()) + totalBonuses - totalDeductions;
 
     // Mock Payroll History Data (Last 6 Months) -> Replaced with Dynamic
     const [historyPage, setHistoryPage] = useState(0);
@@ -64,10 +64,10 @@ export const UserDashboard: React.FC = () => {
     // Derived History for Table (Compatible mapping)
     const history = currentHistoryPage.map(h => ({
         cycle: `${h.month} ${h.year}`,
-        gross: (h as any).gross || baseSalary,
-        bonus: (h as any).bonus || 0,
-        deduction: (h as any).deduction || 0,
-        net: (h as any).net || baseSalary,
+        gross: parseFloat(h.gross?.toString() || baseSalary.toString()),
+        bonus: parseFloat(h.bonus?.toString() || '0'),
+        deduction: parseFloat(h.deduction?.toString() || '0'),
+        net: parseFloat(h.net?.toString() || baseSalary.toString()),
         status: h.status
     }));
 
@@ -81,7 +81,7 @@ export const UserDashboard: React.FC = () => {
             date: 'Jan 2026'
         })),
         { type: 'Salary', title: 'Salary Credited', desc: 'December 2025 Salary Paid', amount: null, date: 'Dec 25, 2025' },
-        { type: 'Promotion', title: 'Role Update', desc: `Promoted to ${currentUser?.title}`, amount: null, date: 'Nov 01, 2025' }
+        { type: 'Promotion', title: 'Role Update', desc: `Promoted to ${currentUser?.role_relation?.name}`, amount: null, date: 'Nov 01, 2025' }
     ];
 
     const getStatusColor = (status: string) => {
@@ -140,14 +140,14 @@ export const UserDashboard: React.FC = () => {
                             </div>
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Employment</span>
                         </div>
-                        <h3 className="font-bold text-slate-900 leading-tight mb-1">{currentUser?.title}</h3>
-                        <p className="text-slate-500 text-sm">{currentUser?.department}</p>
+                        <h3 className="font-bold text-slate-900 leading-tight mb-1">{currentUser?.role_relation?.name}</h3>
+                        <p className="text-slate-500 text-sm">{currentUser?.department_id}</p>
                     </div>
                     <div className="mt-4 pt-4 border-t border-slate-50 flex items-center gap-2">
                         <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded">
-                            {currentUser?.employmentType}
+                            {currentUser?.employment_type}
                         </span>
-                        <span className="text-xs text-slate-400">• ID: {currentUser?.id}</span>
+                        <span className="text-xs text-slate-400">• ID: {currentUser?.employee_id}</span>
                     </div>
                     {/* Employment Status Badge */}
                     <div className="mt-3 bg-slate-50 rounded-lg p-2 border border-slate-100 flex justify-between items-center">
@@ -156,7 +156,7 @@ export const UserDashboard: React.FC = () => {
                         <div className="flex items-center gap-1.5">
                             <span className={`w-2 h-2 rounded-full ${currentUser?.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                             <span className="text-xs font-bold text-slate-700">
-                                {currentUser?.status === 'active' ? 'Onboarded' : 'Probation'}
+                                    {currentUser?.status}
                             </span>
                         </div>
                     </div>

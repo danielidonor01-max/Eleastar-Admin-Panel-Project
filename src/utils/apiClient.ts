@@ -1,6 +1,9 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import Cookies from 'js-cookie';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL, R2_WORKER_URL, R2_WORKER_API_KEY } from '../config';
+import type { MediaFile } from '@/types';
+
+
 
 export interface ApiClientConfig extends AxiosRequestConfig {
     requireAuth?: boolean;
@@ -125,5 +128,49 @@ export const api = {
 
     delete(endpoint: string, config?: ApiClientConfig): Promise<AxiosResponse> {
         return req.delete(endpoint, config);
+    },
+};
+
+
+export interface R2UploadConfig {
+    onUploadProgress?: (percent: number) => void;
+}
+
+export const r2Api = {
+    upload(
+        file: File,
+        config?: R2UploadConfig
+    ): Promise<AxiosResponse<{ success: boolean; data: { key: string; url: string }; message?: string; error?: string }>> {
+        const form = new FormData();
+        form.append('file', file);
+        return axios.post(`${R2_WORKER_URL}/upload`, form, {
+            headers: {
+                Accept: 'application/json',
+                Authorization: `${R2_WORKER_API_KEY}`,
+            },
+            onUploadProgress: (e) => {
+                if (e.total && e.total > 0 && config?.onUploadProgress) {
+                    config.onUploadProgress(Math.round((e.loaded / e.total) * 100));
+                }
+            },
+        });
+    },
+
+    list(): Promise<AxiosResponse<{ success: boolean; data: MediaFile[]; message?: string; error?: string }>> {
+        return axios.get(`${R2_WORKER_URL}/files`, {
+            headers: {
+                Accept: 'application/json',
+                Authorization: `${R2_WORKER_API_KEY}`,
+            },
+        });
+    },
+    
+    delete(key: string): Promise<AxiosResponse<{ success: boolean; data?: undefined; message?: string; error?: string }>> {
+        return axios.delete(`${R2_WORKER_URL}/files/${key}`, {
+            headers: {
+                Accept: 'application/json',
+                Authorization: `${R2_WORKER_API_KEY}`,
+            },      
+        });
     },
 };

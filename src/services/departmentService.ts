@@ -1,5 +1,5 @@
 import { type ApiResponse, mockSuccess, delay } from './api';
-import type { Department } from '../data/mockData';
+import type { Department } from '@/types';
 
 /**
  * Service for Department Management

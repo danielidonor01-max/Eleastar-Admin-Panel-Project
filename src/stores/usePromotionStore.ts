@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
 import { promotionService } from '../services/promotionService';
-import type { PromotionRequest, PromotionEligibilityRule, AdminRole } from '../types';
+import type { PromotionRequest, PromotionEligibilityRule, Employee, PerformanceReview, RolesProps, AdminRole } from '../types';
 import { createPersistedStore } from './middleware';
 import { useNotificationStore } from './useNotificationStore';
 import { useAuditStore } from './useAuditStore';
@@ -70,7 +70,7 @@ export const usePromotionStore = create<PromotionState & PromotionActions>()(
                     const req = get().promotionRequests.find((r) => r.id === requestId);
                     if (req) {
                         const { updateEmployee } = useEmployeeStore.getState();
-                        await updateEmployee(req.employeeId, { systemRole: req.newRole as AdminRole, salary: req.proposedSalary, title: req.newRole });
+                        await updateEmployee(req.employeeId as unknown as string, { role_relation: req.newRole as unknown as RolesProps, salary: req.proposedSalary as unknown as string, role: req.newRole as unknown as AdminRole });
                         const { dispatchNotification } = useNotificationStore.getState();
                         dispatchNotification(
                             { title: 'Promotion Approved', message: `Congratulations! Promoted to ${req.newRole}`, type: 'HR', link: '/user/profile' },
@@ -133,7 +133,7 @@ export const usePromotionStore = create<PromotionState & PromotionActions>()(
         evaluateEligibility: (employeeId, newRole) => {
             const { employees } = useEmployeeStore.getState();
             const { performanceReviews } = usePerformanceStore.getState();
-            const employee = employees.find((e: { id: string }) => e.id === employeeId);
+            const employee = employees.find((e: Partial<Employee>) => e.id === employeeId as unknown as number);
             if (!employee) return { isEligible: false, reasons: ['Employee not found'], scores: { performance: 0, tenureMonths: 0 } };
 
             const tenureMonths = employee.joinedAt
@@ -142,7 +142,7 @@ export const usePromotionStore = create<PromotionState & PromotionActions>()(
 
             const reviews = performanceReviews;
             const latestReview = reviews
-                .filter((r: { employeeId: string; status: string }) => r.employeeId === employeeId && r.status === 'Approved')
+                .filter((r: Partial<PerformanceReview>) => r.employeeId === employeeId && r.status === 'Approved')
                 .sort((a: { reviewedAt?: string }, b: { reviewedAt?: string }) => {
                     const aT = a.reviewedAt ? new Date(a.reviewedAt).getTime() : 0;
                     const bT = b.reviewedAt ? new Date(b.reviewedAt).getTime() : 0;

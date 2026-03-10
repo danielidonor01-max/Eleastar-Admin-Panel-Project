@@ -9,7 +9,7 @@ export const LeavePage: React.FC = () => {
     const employees = useEmployeeStore((s) => s.employees);
     const leaveRequests = useLeaveStore((s) => s.leaveRequests);
     const requestLeave = useLeaveStore((s) => s.requestLeave);
-    const currentUser = employees.find(e => e.id === currentUserId);
+    const currentUser = employees.find(e => e.employee_id === currentUserId);
     const myRequests = leaveRequests.filter(r => r.employeeId === currentUserId).sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,7 +36,7 @@ export const LeavePage: React.FC = () => {
             const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
             await requestLeave(currentUserId, {
-                type: formData.type as any,
+                type: formData.type as 'Annual' | 'Sick' | 'Unpaid' | 'Maternity' | 'Paternity' | 'Other',
                 startDate: formData.startDate,
                 endDate: formData.endDate,
                 days: days > 0 ? days : 1, // Fallback
@@ -75,7 +75,7 @@ export const LeavePage: React.FC = () => {
                         <Calendar size={24} />
                     </div>
                     <h3 className="text-lg font-bold text-slate-900">Annual Leave</h3>
-                    <div className="text-3xl font-bold text-blue-700 mt-1">{currentUser.leaveBalance?.annual || 0}</div>
+                    <div className="text-3xl font-bold text-blue-700 mt-1">{currentUser?.leaveBalance?.annual || 0}</div>
                     <p className="text-xs text-slate-400 font-bold uppercase tracking-wide mt-1">Days Remaining</p>
                 </div>
 
@@ -84,7 +84,7 @@ export const LeavePage: React.FC = () => {
                         <Clock size={24} />
                     </div>
                     <h3 className="text-lg font-bold text-slate-900">Sick Leave</h3>
-                    <div className="text-3xl font-bold text-emerald-700 mt-1">{currentUser.leaveBalance?.sick || 0}</div>
+                    <div className="text-3xl font-bold text-emerald-700 mt-1">{currentUser?.leaveBalance?.sick || 0}</div>
                     <p className="text-xs text-slate-400 font-bold uppercase tracking-wide mt-1">Days Remaining</p>
                 </div>
 
@@ -93,7 +93,7 @@ export const LeavePage: React.FC = () => {
                         <CheckCircle size={24} />
                     </div>
                     <h3 className="text-lg font-bold text-slate-900">Total Used</h3>
-                    <div className="text-3xl font-bold text-purple-700 mt-1">{currentUser.leaveBalance?.used || 0}</div>
+                    <div className="text-3xl font-bold text-purple-700 mt-1">{currentUser?.leaveBalance?.used || 0}</div>
                     <p className="text-xs text-slate-400 font-bold uppercase tracking-wide mt-1">Days Taken</p>
                 </div>
             </div>

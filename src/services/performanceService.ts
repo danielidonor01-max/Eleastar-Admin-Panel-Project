@@ -1,5 +1,5 @@
 import { type ApiResponse, mockSuccess, delay } from './api';
-import type { ReviewCycle, PerformanceReview } from '../data/mockData';
+import type { ReviewCycle, PerformanceReview } from '@/types';
 
 /**
  * Service for Performance management

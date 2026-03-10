@@ -19,3 +19,4 @@ export * from './system';
 export * from './cms';
 export * from './dashboard';
 export * from './admin';
+export * from './media';

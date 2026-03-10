@@ -1,8 +1,9 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { Employee, PayrollCycle } from '../data/mockData';
+import type { Adjustment, Employee } from '@/types';
+import type { PayrollCycle } from '@/types';
 
-export const generatePayslipPDF = (employee: Employee, payrollStatus: PayrollCycle) => {
+export const generatePayslipPDF = (employee: Partial<Employee>, payrollStatus: Partial<PayrollCycle>) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
 
@@ -26,30 +27,30 @@ export const generatePayslipPDF = (employee: Employee, payrollStatus: PayrollCyc
     doc.setFontSize(10);
     doc.text(`Name: ${employee.name}`, 15, 52);
     doc.text(`ID: ${employee.id}`, 15, 57);
-    doc.text(`Role: ${employee.title}`, 15, 62);
-    doc.text(`Department: ${employee.department}`, 100, 52);
+    doc.text(`Role: ${employee.role_relation as unknown as string}`, 15, 62);
+    doc.text(`Department: ${employee.department_id as unknown as string}`, 100, 52);
     doc.text(`Payment Date: ${new Date().toLocaleDateString()}`, 100, 57);
 
     // --- Calculations ---
-    const adjustments = payrollStatus.adjustments.filter(adj => adj.empId === employee.id);
-    const bonuses = adjustments.filter(a => a.type === 'Bonus').reduce((sum, a) => sum + a.amount, 0);
-    const grossSalary = employee.salary + bonuses;
+    const adjustments = payrollStatus.adjustments?.filter((adj: Partial<Adjustment>) => adj.empId === employee.id) || [];
+    const bonuses = adjustments.filter((a: Partial<Adjustment>) => a.type === 'Bonus').reduce((sum: number, a: Partial<Adjustment>) => sum + (a.amount as unknown as number), 0);
+    const grossSalary = (employee.salary as unknown as number) + bonuses;
 
     // Deductions
-    const fines = adjustments.filter(a => a.type === 'Fine' || a.type === 'Deduction').reduce((sum, a) => sum + a.amount, 0);
-    const tax = employee.salary * 0.05; // 5% Tax (Example)
-    const pension = employee.salary * 0.08; // 8% Pension (Example)
-    const totalDeductions = fines + tax + pension;
+    const fines = adjustments.filter((a: Partial<Adjustment>) => a.type === 'Fine' || a.type === 'Deduction').reduce((sum: number, a: Partial<Adjustment>) => sum + (a.amount as unknown as number), 0);
+    const tax = (employee.salary as unknown as number) * 0.05; // 5% Tax (Example)
+    const pension = (employee.salary as unknown as number) * 0.08; // 8% Pension (Example)
+    const totalDeductions = (fines as unknown as number) + (tax as unknown as number) + (pension as unknown as number);
 
-    const netPay = grossSalary - totalDeductions;
+    const netPay = (grossSalary as unknown as number) - (totalDeductions as unknown as number);
 
     // --- Earnings Table ---
     autoTable(doc, {
         startY: 70,
         head: [['Earnings', 'Amount (NGN)']],
         body: [
-            ['Basic Salary', employee.salary.toLocaleString()],
-            ['Bonuses / Performance', bonuses.toLocaleString()],
+            ['Basic Salary', (employee.salary as unknown as number).toLocaleString()],
+            ['Bonuses / Performance', (bonuses as unknown as number).toLocaleString()],
             ['Gross Earnings', { content: grossSalary.toLocaleString(), styles: { fontStyle: 'bold' } }],
         ],
         theme: 'striped',
@@ -57,9 +58,9 @@ export const generatePayslipPDF = (employee: Employee, payrollStatus: PayrollCyc
     });
 
     // --- Deductions Table ---
-    // @ts-ignore
-    const finalY = doc.lastAutoTable.finalY + 10;
-
+    // @ts-expect-ignore
+    const finalY = ((doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable as unknown as { finalY: number }).finalY + 10;
+    // @ts-expect-ignore
     autoTable(doc, {
         startY: finalY,
         head: [['Deductions', 'Amount (NGN)']],
@@ -74,8 +75,8 @@ export const generatePayslipPDF = (employee: Employee, payrollStatus: PayrollCyc
     });
 
     // --- Net Pay Summary ---
-    // @ts-ignore
-    const summaryY = doc.lastAutoTable.finalY + 15;
+    // @ts-expect-ignore
+        const summaryY = ((doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable as unknown as { finalY: number }).finalY + 15;
 
     doc.setFillColor(240, 240, 240);
     doc.rect(15, summaryY, pageWidth - 30, 20, 'F');
@@ -94,5 +95,5 @@ export const generatePayslipPDF = (employee: Employee, payrollStatus: PayrollCyc
     doc.text("This is a system generated payslip and does not require a signature.", pageWidth / 2, 280, { align: 'center' });
 
     // Save
-    doc.save(`Payslip_${employee.name.replace(' ', '_')}_${payrollStatus.month}_${payrollStatus.year}.pdf`);
+    doc.save(`Payslip_${employee.name as string || ''}_${payrollStatus.month}_${payrollStatus.year}.pdf`);
 };

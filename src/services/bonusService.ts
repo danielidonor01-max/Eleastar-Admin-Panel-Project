@@ -1,5 +1,5 @@
 import { type ApiResponse, mockSuccess, delay } from './api';
-import type { BonusType, BonusRequest } from '../data/mockData';
+import type { BonusType, BonusRequest } from '@/types';
 
 /**
  * Service for Bonus Management

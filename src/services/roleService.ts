@@ -15,7 +15,7 @@ export const roleService = {
      */
     getAllRoles: async (): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ success?: boolean; data?: unknown; message?: string }>('/roles');
+            const { data } = await api.get('/roles');
             if (data?.success) {
                 return { success: true, data: data.data ?? null, message: data.message };
             }
@@ -30,7 +30,7 @@ export const roleService = {
      */
     createRole: async (rolePayload: unknown): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.post<{ success?: boolean; data?: unknown; message?: string }>('/roles', rolePayload);
+            const { data } = await api.post('/roles', rolePayload);
             if (data?.success) {
                 return { success: true, data: data.data ?? null, message: data.message };
             }
@@ -45,7 +45,7 @@ export const roleService = {
      */
     getRoleById: async (id: string | number): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ success?: boolean; data?: unknown; message?: string }>(`/roles/${id}`);
+            const { data } = await api.get(`/roles/${id}`);
             if (data?.success) {
                 return { success: true, data: data.data ?? null, message: data.message };
             }
@@ -60,7 +60,7 @@ export const roleService = {
      */
     updateRole: async (id: string | number, updates: unknown): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.put<{ success?: boolean; data?: unknown; message?: string }>(`/roles/${id}`, updates);
+            const { data } = await api.put(`/roles/${id}`, updates);
             if (data?.success) {
                 return { success: true, data: data.data ?? null, message: data.message };
             }
@@ -75,7 +75,7 @@ export const roleService = {
      */
     deleteRole: async (id: string | number): Promise<ApiResponse<void>> => {
         try {
-            const { data } = await api.delete<{ success?: boolean; message?: string }>(`/roles/${id}`);
+            const { data } = await api.delete(`/roles/${id}`);
             if (data?.success) {
                 return { success: true, data: undefined, message: data.message };
             }
@@ -90,7 +90,7 @@ export const roleService = {
      */
     assignPermissions: async (id: string | number, permissions: string[]): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.post<{ success?: boolean; data?: unknown; message?: string }>(`/roles/${id}/permissions`, { permissions });
+            const { data } = await api.post(`/roles/${id}/permissions`, { permissions });
             if (data?.success) {
                 return { success: true, data: data.data ?? null, message: data.message };
             }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Shield, Clock } from 'lucide-react';
-import type { Employee } from '../data/mockData';
+import type { Employee } from '@/types';
 
 interface VerificationInfoProps {
     employee: Employee;

@@ -1,18 +1,16 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
 import { cmsService } from '../services/cmsService';
-import { initialFooterContent, initialGlobalContent, initialApiKeys } from '../data/mockData';
 import type { CMSData, FooterContent, FooterSection, GlobalContent, CMSMenu, CMSPageItem } from '../types/cms';
-import type { SystemApiKey, ApiResponse } from '../types/system';
+import type {  ApiResponse } from '../types/system';
 import { createPersistedStore } from './middleware';
 
 interface CMSState {
     isLoading: boolean;
     cmsContent: CMSData | null;
-    footerContent: FooterContent;
-    globalContent: GlobalContent;
+    footerContent: FooterContent | null;
+    globalContent: GlobalContent | null;
     pagesList: CMSPageItem[];
-    apiKeys: SystemApiKey[];
 }
 
 interface CMSActions {
@@ -36,8 +34,7 @@ interface CMSActions {
     updateMenuItemVisibility: (id: string | number, is_visible: boolean) => Promise<void>;
     updateFooterContent: (section: keyof FooterContent, data: Partial<FooterSection>) => Promise<{ success: true }>;
     updateGlobal: <K extends keyof GlobalContent>(section: K, data: GlobalContent[K]) => Promise<{ success: true }>;
-    addApiKey: (apiKey: Omit<SystemApiKey, 'id' | 'tenantId' | 'createdAt' | 'status'>) => void;
-    toggleApiKeyStatus: (id: string) => void;
+
 }
 
 export const useCMSStore = create<CMSState & CMSActions>()(
@@ -45,12 +42,12 @@ export const useCMSStore = create<CMSState & CMSActions>()(
     isLoading: false,
     cmsContent: null,
     pagesList: [],
-    footerContent: initialFooterContent,
-    globalContent: initialGlobalContent,
-    apiKeys: initialApiKeys,
+    footerContent: null,
+    globalContent: null,
+   
 
-    setFooterContent: (content) => {
-        set((s) => ({ footerContent: typeof content === 'function' ? content(s.footerContent) : content }));
+    setFooterContent: (content: FooterContent | ((prev: FooterContent) => FooterContent)) => {
+        set((s) => ({ footerContent: typeof content === 'function' ? content(s.footerContent as FooterContent) : content as FooterContent }));
     },
 
     fetchCMSData: async () => {
@@ -68,7 +65,7 @@ export const useCMSStore = create<CMSState & CMSActions>()(
                 if (headerMenu) {
                     set((s) => ({
                         globalContent: {
-                            ...s.globalContent,
+                            ...s.globalContent as GlobalContent,
                             navigation: (headerMenu.items || []).map((item) => ({
                                 id: String(item.id),
                                 label: item.label,
@@ -99,7 +96,7 @@ export const useCMSStore = create<CMSState & CMSActions>()(
         set({ isLoading: false });
     },
 
-    createCMSPage: async (payload) => {
+    createCMSPage: async (payload: Record<string, unknown>) => {
         set({ isLoading: true });
         const res = await cmsService.createCMSPage(payload);
         if (res.success) {
@@ -111,7 +108,7 @@ export const useCMSStore = create<CMSState & CMSActions>()(
         return res as ApiResponse<CMSPageItem>;
     },
 
-    updateCMSPage: async (slug, payload) => {
+    updateCMSPage: async (slug: string, payload: Record<string, unknown>) => {
         set({ isLoading: true });
         const res = await cmsService.updateCMSPage(slug, payload);
         if (res.success) {
@@ -121,7 +118,7 @@ export const useCMSStore = create<CMSState & CMSActions>()(
         set({ isLoading: false });
         return res as ApiResponse<CMSPageItem>;
     },
-    deleteCMSPage: async (slug) => {
+    deleteCMSPage: async (slug: string): Promise<ApiResponse<null>> => {
         set({ isLoading: true });
         const res = await cmsService.deleteCMSPage(slug);
         if (res.success) {
@@ -131,7 +128,7 @@ export const useCMSStore = create<CMSState & CMSActions>()(
         set({ isLoading: false });
         return res as ApiResponse<null>;
     },
-    updateCMSPageStatus: async (slug, status) => {
+    updateCMSPageStatus: async (slug: string, status: 'live' | 'draft') => {
         set({ isLoading: true });
         const res = await cmsService.updateCMSPageStatus(slug, status);
         if (res.success) {
@@ -142,7 +139,7 @@ export const useCMSStore = create<CMSState & CMSActions>()(
         return res as ApiResponse<CMSPageItem>;
     },
 
-    updateSEOMetadata: async (slug, payload) => {
+    updateSEOMetadata: async (slug: string, payload: Record<string, unknown>) => {
         set({ isLoading: true });
         const res = await cmsService.updateCMSPage(slug, payload);
         if (res.success) {
@@ -153,48 +150,32 @@ export const useCMSStore = create<CMSState & CMSActions>()(
         return res as ApiResponse<CMSPageItem>;
     },
 
-    getPageSections: async (slug) => {
+    getPageSections: async (slug: string) => {
         set({ isLoading: true });
         const res = await cmsService.getPageSections(slug);
         set({ isLoading: false });
         return res as ApiResponse<unknown>;
     },
-    updatePMSContent: async (id, content) => { await cmsService.updateCMSSection(id, content); },
-    createCMSSection: async (payload) => { await cmsService.createCMSSection(payload); },
-    deleteCMSSection: async (sectionId) => { await cmsService.deleteCMSSection(sectionId); },
+    updatePMSContent: async (id: string, content: Record<string, unknown>) => { await cmsService.updateCMSSection(id, content); },
+    createCMSSection: async (payload: Record<string, unknown>) => { await cmsService.createCMSSection(payload); },
+    deleteCMSSection: async (sectionId: string | number) => { await cmsService.deleteCMSSection(sectionId); },
 
     getCMSMenus: async () => cmsService.getCMSMenus() as Promise<ApiResponse<CMSMenu[]>>,
-    getMenuWithItems: async (key) => cmsService.getMenuWithItems(key) as Promise<ApiResponse<CMSMenu>>,
-    createMenuItem: async (payload) => { await cmsService.createMenuItem(payload); },
-    updateMenuItem: async (id, payload) => { await cmsService.updateMenuItem(id, payload); },
-    deleteMenuItem: async (id) => { await cmsService.deleteMenuItem(id); },
-    updateMenuItemVisibility: async (id, is_visible) => { await cmsService.updateMenuItemVisibility(id, is_visible); },
+    getMenuWithItems: async (key: string) => cmsService.getMenuWithItems(key) as Promise<ApiResponse<CMSMenu>>,
+    createMenuItem: async (payload: Record<string, unknown>) => { await cmsService.createMenuItem(payload); },
+    updateMenuItem: async (id: string | number, payload: Record<string, unknown>    ) => { await cmsService.updateMenuItem(id, payload); },
+    deleteMenuItem: async (id: string | number) => { await cmsService.deleteMenuItem(id); },
+    updateMenuItemVisibility: async (id: string | number, is_visible: boolean) => { await cmsService.updateMenuItemVisibility(id, is_visible); },
 
-    updateFooterContent: async (section, data) => {
-        set((s) => ({ footerContent: { ...s.footerContent, [section]: { ...s.footerContent[section], ...data } } }));
+    updateFooterContent: async (section: keyof FooterContent, data: Partial<FooterSection>) => {
+        set((s) => ({ footerContent: { ...s.footerContent as FooterContent, [section]: { ...s.footerContent?.[section], ...data } } }));
         return { success: true };
     },
 
-    updateGlobal: async (section, data) => {
-        set((s) => ({ globalContent: { ...s.globalContent, [section]: data } }));
+    updateGlobal: async (section: keyof GlobalContent, data: GlobalContent[keyof GlobalContent]) => {
+        set((s) => ({ globalContent: { ...s.globalContent as GlobalContent, [section]: data } }));
         return { success: true };
     },
 
-    addApiKey: (apiKey) => {
-        const newKey: SystemApiKey = {
-            ...apiKey,
-            id: `ak_${Date.now()}`,
-            tenantId: 't1',
-            createdAt: new Date().toISOString(),
-            status: 'active',
-        };
-        set((s) => ({ apiKeys: [...s.apiKeys, newKey] }));
-    },
-
-    toggleApiKeyStatus: (id) => {
-        set((s) => ({
-            apiKeys: s.apiKeys.map((k) => k.id === id ? { ...k, status: k.status === 'active' ? 'disabled' : 'active' } : k),
-        }));
-    },
 })
     ));

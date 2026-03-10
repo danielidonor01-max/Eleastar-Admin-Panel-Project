@@ -73,18 +73,18 @@ export const useNotificationStore = create<NotificationState & NotificationActio
             const { employees } = useEmployeeStore.getState();
             const recipients: Employee[] = [];
             if (target.userId) {
-                const user = employees.find((e) => e.id === target.userId);
+                const user = employees.find((e) => e.employee_id === target.userId);
                 if (user) recipients.push(user);
             }
             if (target.roles?.length) {
-                employees.filter((e) => target.roles!.includes(e.systemRole)).forEach((e) => recipients.push(e));
+                employees.filter((e) => target.roles!.includes(e.role_relation?.name as AdminRole)).forEach((e) => recipients.push(e));
             }
             const unique = Array.from(new Set(recipients.map((r) => r.id)))
                 .map((id) => recipients.find((r) => r.id === id)!)
                 .filter(Boolean);
             unique.forEach((r) => {
                 get().sendEmail(
-                    r.email || `${r.id.toLowerCase()}@eleastar.com`,
+                    r.email || `${r.employee_id.toLowerCase()}@eleastar.com`,
                     payload.title,
                     `${payload.message}\n\nView: ${typeof window !== 'undefined' ? window.location.origin : ''}${payload.link}`
                 );

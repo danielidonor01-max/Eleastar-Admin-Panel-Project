@@ -11,16 +11,10 @@ import { Select } from '@/components/Select';
 import type { Adjustment, Employee, PayrollCycle, PayrollEmployee } from '@/types';
 
 export const PayrollPage = () => {
-    const employees = useEmployeeStore((s) => s.employees);
-    const payrollStatus = usePayrollStore((s) => s.payrollStatus);
-    const bulkPayrollAdjustment = usePayrollStore((s) => s.bulkPayrollAdjustment);
-    const cooReviewPayroll = usePayrollStore((s) => s.cooReviewPayroll);
-    const cfoApprovePayroll = usePayrollStore((s) => s.cfoApprovePayroll);
-    const updateEmployeeSalary = useEmployeeStore((s) => s.updateEmployeeSalary);
-    const rolePermissions = useAuthStore((s) => s.rolePermissions);
-    const currentUserRole = useAuthStore((s) => s.currentUserRole);
-    const refreshPayroll = usePayrollStore((s) => s.refreshPayroll);
-    const showConfirm = useConfirmStore((s) => s.showConfirm);
+    const {employees, updateEmployeeSalary} = useEmployeeStore();
+    const {payrollStatus, bulkPayrollAdjustment, cooReviewPayroll, cfoApprovePayroll, refreshPayroll} = usePayrollStore();
+    const {rolePermissions, currentUserRole} = useAuthStore();
+    const {showConfirm} = useConfirmStore();
     const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
     const [editingSalaryEmployee, setEditingSalaryEmployee] = useState<Employee | null>(null);
 
@@ -53,10 +47,9 @@ export const PayrollPage = () => {
     }, [payrollStatus, pastCycles, selectedYear]);
 
     // Set default view cycle when year changes or on mount
-    useMemo(() => {
+    React.useEffect(() => {
         if (availableCycles.length > 0 && !availableCycles.find((c: PayrollCycle) => c.id === viewCycleId)) {
-            // Default to the first available cycle (usually the latest one in that year)
-            setViewCycleId(availableCycles[0].id);
+            setViewCycleId(availableCycles[0]?.id || '');
         }
     }, [availableCycles, viewCycleId]);
 
@@ -79,8 +72,8 @@ export const PayrollPage = () => {
 
 
     // Derived Data
-    const departments = useMemo(() => Array.from(new Set(employees.map((e: Employee) => e.department))), [employees]);
-    const roles = useMemo(() => Array.from(new Set(employees.map((e: Employee) => e.title))), [employees]);
+    const departments = useMemo(() => Array.from(new Set(employees.map((e: Employee) => e.department_id))), [employees]);
+    const roles = useMemo(() => Array.from(new Set(employees.map((e: Employee) => e.role_relation?.name))), [employees]);
 
     // Derived Totals
     const snapshotData = useMemo(() => {
@@ -108,10 +101,10 @@ export const PayrollPage = () => {
         const sourceData = displayEmployees as PayrollEmployee[];
         return sourceData.filter((emp: PayrollEmployee) => {
 
-            const liveEmp = employees.find((e: Employee) => e.id === emp.id);
-            const dept = liveEmp?.department || emp.department || 'Unknown';
-            const role = liveEmp?.title || emp.title || 'Unknown';
-            const type = liveEmp?.employmentType || emp.employmentType || 'Unknown';
+            const liveEmp = employees.find((e: Employee) => e.employee_id === emp.id);
+            const dept = liveEmp?.department_id || 'Unassigned';
+            const role = liveEmp?.role_relation?.name || 'Unknown';
+            const type = liveEmp?.employment_type || 'Full-time';
             // Snapshot employees are by definition eligible at that time.
 
             const matchDept = filterDept === 'All' || dept === filterDept;
@@ -427,7 +420,7 @@ export const PayrollPage = () => {
                                                 {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'HR_ADMIN' || currentUserRole === 'MANAGEMENT_ADMIN') && (
                                                     <button
                                                         onClick={() => {
-                                                            const fullEmployee = employees.find((e: Employee) => e.id === emp.id);
+                                                            const fullEmployee = employees.find((e: Employee) => e.employee_id === emp.id);
                                                             if (fullEmployee) setEditingSalaryEmployee(fullEmployee);
                                                         }}
                                                         className="btn-ghost btn-icon text-slate-400 hover:text-brand-600 hover:bg-brand-50"
@@ -476,7 +469,7 @@ export const PayrollPage = () => {
                         employee={editingSalaryEmployee}
                         onClose={() => setEditingSalaryEmployee(null)}
                         onSave={(newSalary, reason, effectiveDate) => {
-                            updateEmployeeSalary(editingSalaryEmployee.id, newSalary, reason, effectiveDate);
+                            updateEmployeeSalary(editingSalaryEmployee.employee_id, newSalary, reason, effectiveDate);
                             setEditingSalaryEmployee(null);
                         }}
                     />

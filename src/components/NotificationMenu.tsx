@@ -1,12 +1,24 @@
-import React, { useState, useMemo } from 'react';
+import  { useState, useMemo } from 'react';
 import { Bell, Calendar, TrendingUp, Wallet, UserPlus, QrCode, FileText, CheckCheck, Search } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useNotificationStore } from '@/stores/useNotificationStore';
-import type { AdminNotification, NotificationType } from '@/types';
-import { NotificationDetailsModal } from './NotificationDetailsModal';
+import type { AdminNotification, FilterPillProps, NotificationType } from '@/types';
+import NotificationDetailsModal from './NotificationDetailsModal';
 
-export const NotificationMenu: React.FC = () => {
+const FilterPill = ({ label, value, activeFilter, onSelect }: FilterPillProps) => (
+    <button
+        onClick={() => onSelect(value as NotificationType)}
+        className={`px-3 py-1 text-xs font-bold rounded-full border transition-all whitespace-nowrap shrink-0 ${activeFilter === value
+            ? 'bg-slate-900 text-white border-slate-900'
+            : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+            }`}
+    >
+        {label}
+    </button>
+);
+
+export const NotificationMenu = () => {
     const notifications = useNotificationStore((s) => s.notifications);
     const markNotificationAsRead = useNotificationStore((s) => s.markNotificationAsRead);
     const markAllNotificationsAsRead = useNotificationStore((s) => s.markAllNotificationsAsRead);
@@ -95,19 +107,6 @@ export const NotificationMenu: React.FC = () => {
         }
     };
 
-    // Helper: Pill Component
-    const FilterPill = ({ label, value }: { label: string, value: typeof activeFilter }) => (
-        <button
-            onClick={() => setActiveFilter(value)}
-            className={`px-3 py-1 text-xs font-bold rounded-full border transition-all whitespace-nowrap shrink-0 ${activeFilter === value
-                ? 'bg-slate-900 text-white border-slate-900'
-                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                }`}
-        >
-            {label}
-        </button>
-    );
-
     return (
         <div className="relative">
             <button
@@ -160,13 +159,13 @@ export const NotificationMenu: React.FC = () => {
 
                             {/* Filters */}
                             <div className="px-4 pb-3 flex gap-2 overflow-x-auto no-scrollbar mask-gradient pt-1">
-                                <FilterPill label="All" value="All" />
-                                <FilterPill label={`Unread ${unreadCount > 0 ? `(${unreadCount})` : ''}`} value="Unread" />
+                                <FilterPill label="All" value="All" activeFilter={activeFilter} onSelect={setActiveFilter} />
+                                <FilterPill label={`Unread ${unreadCount > 0 ? `(${unreadCount})` : ''}`} value="Unread" activeFilter={activeFilter} onSelect={setActiveFilter} />
                                 <div className="w-px h-4 bg-slate-200 mx-1 self-center shrink-0" />
-                                <FilterPill label="Leave" value="Leave" />
-                                <FilterPill label="Payroll" value="Payroll" />
-                                <FilterPill label="System" value="System" />
-                                <FilterPill label="HR" value="HR" />
+                                <FilterPill label="Leave" value="Leave" activeFilter={activeFilter} onSelect={setActiveFilter} />
+                                <FilterPill label="Payroll" value="Payroll" activeFilter={activeFilter} onSelect={setActiveFilter} />
+                                <FilterPill label="System" value="System" activeFilter={activeFilter} onSelect={setActiveFilter} />
+                                <FilterPill label="HR" value="HR" activeFilter={activeFilter} onSelect={setActiveFilter} />
                             </div>
                         </div>
 

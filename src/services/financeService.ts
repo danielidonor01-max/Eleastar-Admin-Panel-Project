@@ -1,5 +1,5 @@
 import { type ApiResponse, mockSuccess, delay } from './api';
-import type { LedgerEntry } from '../data/mockData';
+import type { LedgerEntry } from '@/types';
 
 /**
  * Service for Internal Finance Ledger (Payroll-related only)

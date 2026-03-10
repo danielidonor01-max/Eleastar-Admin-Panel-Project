@@ -1,9 +1,8 @@
 import { type ApiResponse, mockError } from './api';
 import { api } from '../utils/apiClient';
 import { CMS_PUBLIC_API_KEY } from '../config';
-import type { FooterSection, FooterContent, ServiceCollection } from '../types';
-import { initialServicesCollection } from '../data/mockData';
-import type { CMSData, CMSPageDetail } from '../types/cms';
+import type { FooterSection, FooterContent, ServiceCollection } from '@/types';
+import type { CMSData, CMSPageDetail } from '@/types';
 
 /**
  * Service for Website Content Management (CMS)
@@ -356,7 +355,7 @@ export const cmsService = {
      * Note: If backend adds specific services endpoints, implement them here.
      */
     getServices: async (): Promise<ApiResponse<ServiceCollection>> => {
-        return { data: initialServicesCollection, success: true };
+        return { data: [], success: true };
     },
 
     addService: async (): Promise<ApiResponse<void>> => {

@@ -1,4 +1,4 @@
-import type { PayrollCycle } from '../data/mockData';
+import type { PayrollCycle } from '@/types';
 
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',

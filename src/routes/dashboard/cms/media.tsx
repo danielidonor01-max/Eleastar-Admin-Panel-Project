@@ -1,8 +1,7 @@
-import { toast } from "sonner";
-import { mediaService, type MediaFile, type UploadProgress } from "@/services/mediaService";
+import { useMediaStore } from "@/stores/useMediaStore";
+import type { MediaFile } from "@/types/media";
 import { Check, FileIcon, FileText, Film, Image, ImageOff, Link2, Music, Trash2, Upload } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-
+import { useEffect, useRef, useState } from "react";
 
 const MIME_ICON: Record<string, React.ReactNode> = {
     image: <Image size={20} />,
@@ -16,63 +15,33 @@ const isImage = (type: string) => type.startsWith('image/');
 const fmtSize = (b: number) => b < 1024 ? `${b} B` : b < 1024 * 1024 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1024 / 1024).toFixed(2)} MB`;
 
 const Media = () => {
-    
-    const [files, setFiles] = useState<MediaFile[]>([]);
-    const [uploads, setUploads] = useState<UploadProgress[]>([]);
-    const [loading, setLoading] = useState(false);
+    const {
+        files,
+        uploads,
+        loading,
+        loadFiles,
+        uploadFiles,
+        deleteFile,
+    } = useMediaStore();
+
     const [dragOver, setDragOver] = useState(false);
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
     const [filter, setFilter] = useState<'all' | 'image' | 'document' | 'video'>('all');
     const [search, setSearch] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const loadFiles = useCallback(async () => {
-        setLoading(true);
-        try {
-            const res = await mediaService.listFiles();
-            if (res.success) setFiles(res.data || []);
-        } catch { 
-            toast.error('Error', { description: 'Failed to load files.' });
-        } finally { setLoading(false); }
-    }, []);
+    useEffect(() => {
+        loadFiles();
+    }, [loadFiles]);
 
-    useEffect(() => { loadFiles(); }, [loadFiles]);
-
-    const handleFiles = async (fileList: FileList | null) => {
+    const handleFiles = (fileList: FileList | null) => {
         if (!fileList) return;
-        const toUpload = Array.from(fileList);
-        const newUploads: UploadProgress[] = toUpload.map(f => ({ file: f, progress: 0, status: 'pending' }));
-        setUploads(prev => [...newUploads, ...prev]);
-
-        for (const up of newUploads) {
-            setUploads(prev => prev.map(u => u.file === up.file ? { ...u, status: 'uploading' } : u));
-            try {
-                const res = await mediaService.uploadFile(up.file, (pct) => {
-                    setUploads(prev => prev.map(u => u.file === up.file ? { ...u, progress: pct } : u));
-                });
-                if (res.success) {
-                    setUploads(prev => prev.map(u => u.file === up.file ? { ...u, status: 'done', url: res.data.url, progress: 100 } : u));
-                    toast.success('Uploaded', { description: `${up.file.name} is ready.` });
-                    await loadFiles();
-                } else {
-                    setUploads(prev => prev.map(u => u.file === up.file ? { ...u, status: 'error', error: res.error } : u));
-                    toast.error('Upload Failed', { description: res.error || up.file.name });
-                }
-            } catch (e: unknown) {
-                setUploads(prev => prev.map(u => u.file === up.file ? { ...u, status: 'error', error: e instanceof Error ? e.message : 'Unknown error' } : u));
-            }
-        }
+        uploadFiles(fileList);
     };
 
     const handleDelete = async (key: string) => {
         if (!window.confirm('Delete this file from the media bucket? This cannot be undone.')) return;
-        const res = await mediaService.deleteFile(key);
-        if (res.success) {
-            setFiles(prev => prev.filter(f => f.key !== key));
-            toast.success('Deleted', { description: 'File removed from bucket.' });
-        } else {
-            toast.error('Delete Failed', { description: res.error || 'Unknown error' });
-        }
+        await deleteFile(key);
     };
 
     const copyUrl = (url: string, key: string) => {
@@ -81,7 +50,7 @@ const Media = () => {
         setTimeout(() => setCopiedKey(null), 2000);
     };
 
-    const filtered = files.filter(f => {
+    const filtered = files.filter((f: MediaFile) => {
         const matchFilter = filter === 'all'
             || (filter === 'image' && isImage(f.type))
             || (filter === 'video' && f.type.startsWith('video/'))
@@ -89,6 +58,8 @@ const Media = () => {
         const matchSearch = !search || f.name.toLowerCase().includes(search.toLowerCase());
         return matchFilter && matchSearch;
     });
+
+    const inProgressUploads = uploads.filter((u) => u.status !== 'done');
 
     return (
         <div className="flex flex-col h-full bg-white">
@@ -110,16 +81,20 @@ const Media = () => {
                 {/* Filter bar */}
                 <div className="flex items-center gap-4 mt-4">
                     <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
-                        {(['all', 'image', 'video', 'document'] as const).map(f => (
-                            <button key={f} onClick={() => setFilter(f)}
+                        {(['all', 'image', 'video', 'document'] as const).map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setFilter(f)}
                                 className={`px-3 py-1 text-xs font-bold rounded-md transition-all capitalize ${filter === f ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                                    }`}>
+                                    }`}
+                            >
                                 {f}
                             </button>
                         ))}
                     </div>
                     <input
-                        value={search} onChange={e => setSearch(e.target.value)}
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search files..."
                         className="flex-1 max-w-xs px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                     />
@@ -129,9 +104,9 @@ const Media = () => {
             <div className="flex-1 overflow-auto p-8">
                 {/* Drag and drop zone */}
                 <div
-                    onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                     onDragLeave={() => setDragOver(false)}
-                    onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+                    onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
                     className={`border-2 border-dashed rounded-2xl p-8 mb-6 text-center transition-all cursor-pointer ${dragOver ? 'border-brand-400 bg-brand-50 scale-[1.01]' : 'border-slate-200 hover:border-brand-300 hover:bg-slate-50'
                         }`}
                     onClick={() => fileInputRef.current?.click()}
@@ -145,22 +120,30 @@ const Media = () => {
                         <p className="text-slate-400 text-sm">or click to browse · Images, videos, documents supported</p>
                     </div>
                 </div>
-                <input ref={fileInputRef} type="file" multiple className="hidden"
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
                     accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx"
-                    onChange={e => handleFiles(e.target.files)} />
+                    onChange={(e) => handleFiles(e.target.files)}
+                />
 
                 {/* In-progress uploads */}
-                {uploads.filter(u => u.status !== 'done').length > 0 && (
+                {inProgressUploads.length > 0 && (
                     <div className="mb-6 space-y-2">
                         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Uploading</h3>
-                        {uploads.filter(u => u.status !== 'done').map((u, i) => (
+                        {inProgressUploads.map((u, i) => (
                             <div key={i} className="bg-white rounded-xl border border-slate-200 p-3 flex items-center gap-3">
                                 <div className="text-slate-400">{getMimeIcon(u.file.type)}</div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-slate-700 truncate">{u.file.name}</p>
                                     <div className="mt-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                        <div className={`h-full rounded-full transition-all duration-300 ${u.status === 'error' ? 'bg-red-400' : 'bg-brand-500'
-                                            }`} style={{ width: `${u.progress}%` }} />
+                                        <div
+                                            className={`h-full rounded-full transition-all duration-300 ${u.status === 'error' ? 'bg-red-400' : 'bg-brand-500'
+                                                }`}
+                                            style={{ width: `${u.progress}%` }}
+                                        />
                                     </div>
                                 </div>
                                 <span className={`text-xs font-bold ${u.status === 'error' ? 'text-red-500' : 'text-slate-400'
@@ -186,20 +169,22 @@ const Media = () => {
                         </p>
                         {files.length === 0 && (
                             <p className="text-xs text-amber-500 bg-amber-50 border border-amber-100 px-4 py-2 rounded-lg mt-2">
-                                ⚡ R2 endpoints are being configured — uploads will be stored to Cloudflare R2 once connected
+                                ⚡ Uploads are stored in Cloudflare R2 — ensure your backend /media/* endpoints are configured
                             </p>
                         )}
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-                        {filtered.map(file => (
+                        {filtered.map((file) => (
                             <div key={file.key} className="group relative bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md hover:border-brand-200 transition-all">
                                 {/* Thumbnail */}
                                 <div className="h-32 bg-slate-50 flex items-center justify-center">
                                     {isImage(file.type) ? (
-                                        <img src={file.url} alt={file.name}
+                                        <img
+                                            src={file.url}
+                                            alt={file.name}
                                             className="w-full h-full object-cover"
-                                            onError={e => { (e.target as HTMLImageElement).src = ''; }}
+                                            onError={(e) => { (e.target as HTMLImageElement).src = ''; }}
                                         />
                                     ) : (
                                         <div className="text-slate-300 text-4xl">
@@ -238,6 +223,4 @@ const Media = () => {
     );
 };
 
-
 export default Media;
-

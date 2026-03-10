@@ -205,12 +205,12 @@ export function BonusPage() {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {bonusRequests.map((req: BonusRequest) => {
-                                const employee = employees.find((e: Employee) => e.id === req.employeeId);
+                                const employee = employees.find((e: Employee) => e.employee_id === req.employeeId);
                                 return (
                                     <tr key={req.id} className="hover:bg-slate-50">
                                         <td className="px-6 py-4">
                                             <div className="font-medium text-slate-900">{employee?.name || req.employeeId}</div>
-                                            <div className="text-xs text-slate-500">{employee?.title || 'Unknown Role'}</div>
+                                            <div className="text-xs text-slate-500">{employee?.role_relation?.name || 'Unknown Role'}</div>
                                         </td>
                                         <td className="px-6 py-4 font-medium text-slate-900">
                                             ₦{req.amount.toLocaleString()}
@@ -377,7 +377,7 @@ function AwardBonusPanel({ employees, bonusTypes, onRequestBonus }: {
         if (selectedEmployees.length === filteredEmployees.length) {
             setSelectedEmployees([]);
         } else {
-            setSelectedEmployees(filteredEmployees.map(e => e.id));
+            setSelectedEmployees(filteredEmployees.map(e => e.employee_id));
         }
     };
 
@@ -391,9 +391,9 @@ function AwardBonusPanel({ employees, bonusTypes, onRequestBonus }: {
         for (const empId of selectedEmployees) {
             let finalAmount = amount;
             if (bonusMode === 'percentage') {
-                const emp = employees.find((e: Employee) => e.id === empId);
+                const emp = employees.find((e: Employee) => e.employee_id === empId);
                 const salary = emp?.salary || 0;
-                finalAmount = (salary * percentage) / 100;
+                finalAmount = (Number(salary) * percentage) / 100;
             }
 
             if (finalAmount > 0) {
@@ -411,8 +411,8 @@ function AwardBonusPanel({ employees, bonusTypes, onRequestBonus }: {
             return selectedEmployees.length * amount;
         }
         return selectedEmployees.reduce((sum, empId) => {
-            const emp = employees.find((e: Employee) => e.id === empId);
-            return sum + ((emp?.salary || 0) * percentage / 100);
+            const emp = employees.find((e: Employee) => e.employee_id === empId);
+            return sum + ((Number(emp?.salary) || 0) * percentage / 100);
         }, 0);
     }, [bonusMode, amount, percentage, selectedEmployees, employees]);
 
@@ -461,22 +461,22 @@ function AwardBonusPanel({ employees, bonusTypes, onRequestBonus }: {
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {filteredEmployees.map((emp: Employee) => {
-                                    const estAmount = bonusMode === 'percentage' ? (emp.salary || 0) * percentage / 100 : 0;
+                                    const estAmount = bonusMode === 'percentage' ? (Number(emp.salary) || 0) * percentage / 100 : 0;
 
                                     return (
-                                        <tr key={emp.id} className={`hover:bg-slate-50 transition ${selectedEmployees.includes(emp.id) ? 'bg-brand-50/30' : ''}`}>
+                                        <tr key={emp.employee_id} className={`hover:bg-slate-50 transition ${selectedEmployees.includes(emp.employee_id) ? 'bg-brand-50/30' : ''}`}>
                                             <td className="px-4 py-3">
                                                 <input
                                                     type="checkbox"
-                                                    checked={selectedEmployees.includes(emp.id)}
-                                                    onChange={() => handleToggleEmployee(emp.id)}
+                                                    checked={selectedEmployees.includes(emp.employee_id)}
+                                                    onChange={() => handleToggleEmployee(emp.employee_id)}
                                                     className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                                                     aria-label={`Select ${emp.name}`}
                                                 />
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="font-medium text-slate-900">{emp.name}</div>
-                                                <div className="text-xs text-slate-500">{emp.title}</div>
+                                                <div className="text-xs text-slate-500">{emp.role_relation?.name}</div>
                                             </td>
                                             {bonusMode === 'percentage' && (
                                                 <td className="px-4 py-3 text-right text-sm font-medium text-slate-600">

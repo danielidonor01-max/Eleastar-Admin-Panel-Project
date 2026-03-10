@@ -7,7 +7,7 @@
  * Convert array of objects to CSV format
  */
 export function exportToCSV(
-    data: any[],
+    data: Record<string, unknown>[],
     filename: string = 'export'
 ): void {
     if (data.length === 0) {
@@ -50,7 +50,7 @@ export function exportToCSV(
  * Export data as PDF (simple implementation)
  * Note: For production, consider using jsPDF with autoTable plugin
  */
-export function exportToPDF(data: any[], title: string, _filename: string): void {
+export function exportToPDF(data: Record<string, unknown>[], title: string): void {
     if (data.length === 0) {
         console.warn('No data to export');
         return;
@@ -114,7 +114,7 @@ export function exportToPDF(data: any[], title: string, _filename: string): void
  * Generate attestation pack (ZIP file)
  * Note: For production, integrate JSZip library
  */
-export function generateAttestationPack(reports: { name: string; data: any[] }[], period: { start: string; end: string }): void {
+export function generateAttestationPack(reports: { name: string; data: Record<string, unknown>[] }[], period: { start: string; end: string }): void {
     // Simplified implementation - exports each report as CSV
     console.log('Generating attestation pack for period:', period);
 

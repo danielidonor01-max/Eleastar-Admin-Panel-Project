@@ -28,17 +28,18 @@ export const UserProfilePage: React.FC = () => {
     const [message, setMessage] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const currentUser = employees.find(e => e.id === currentUserId);
+    const currentUser = employees.find(e => e.employee_id === currentUserId);
 
     useEffect(() => {
         if (currentUser) {
-            setFormData({
+            setFormData(prev => ({
+                ...prev,
                 phoneNumber: currentUser.phoneNumber || '',
                 linkedin: currentUser.socialLinks?.linkedin || '',
                 facebook: currentUser.socialLinks?.facebook || '',
                 instagram: currentUser.socialLinks?.instagram || '',
                 photoUrl: currentUser.photoUrl || ''
-            });
+            }));
         }
     }, [currentUser]);
 
@@ -118,24 +119,24 @@ export const UserProfilePage: React.FC = () => {
                         </div>
                         <div className="pt-16 pb-6 px-6 text-center">
                             <h2 className="text-xl font-bold text-slate-900">{currentUser.name}</h2>
-                            <p className="text-brand-600 font-medium">{currentUser.title}</p>
+                            <p className="text-brand-600 font-medium">{currentUser.role_relation?.name}</p>
 
                             <div className="mt-6 flex flex-col gap-2 text-sm text-slate-500 text-left border-t border-slate-100 pt-4">
                                 <div className="flex justify-between">
                                     <span>Employee ID:</span>
-                                    <span className="font-mono text-slate-900">{currentUser.id}</span>
+                                    <span className="font-mono text-slate-900">{currentUser.employee_id}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Department:</span>
-                                    <span className="text-slate-900">{currentUser.department}</span>
+                                    <span className="text-slate-900">{currentUser.department_id}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Joined:</span>
-                                    <span className="text-slate-900">{new Date(currentUser.joinedAt).toLocaleDateString()}</span>
+                                    <span className="text-slate-900">{new Date(currentUser.created_at).toLocaleDateString()}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Employment:</span>
-                                    <span className="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-700 font-medium">{currentUser.employmentType}</span>
+                                    <span className="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-700 font-medium">{currentUser.employment_type}</span>
                                 </div>
                             </div>
                         </div>

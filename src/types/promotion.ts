@@ -19,7 +19,9 @@ export interface PromotionRequest {
     requestedBy: string;
     requestedAt: string;
     /** COO who approved */
+    reviewedBy?: string;
     approvedBy?: string;
+    reviewedAt?: string;
     approvedAt?: string;
     rejectionReason?: string;
     eligibilitySnapshot?: {

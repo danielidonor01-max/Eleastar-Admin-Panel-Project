@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { X, Filter, Check, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
-import type { Employee } from '../data/mockData';
+import type { Employee } from '@/types';
 
 interface PayrollAdjustmentModalProps {
     isOpen: boolean;
@@ -41,13 +41,13 @@ export const PayrollAdjustmentModal: React.FC<PayrollAdjustmentModalProps> = ({ 
     });
 
     // Derived Data for Filters
-    const departments = useMemo(() => Array.from(new Set(employees.map(e => e.department))), [employees]);
+    const departments = useMemo(() => Array.from(new Set(employees.map(e => e.department_id))), [employees]);
 
     // Filtering Logic
     const filteredEmployees = useMemo(() => {
         return employees.filter(emp => {
-            const matchDept = filterDept === 'All' || emp.department === filterDept;
-            const matchType = filterType === 'All' || emp.employmentType === filterType;
+            const matchDept = filterDept === 'All' || emp.department_id === filterDept;
+            const matchType = filterType === 'All' || emp.employment_type === filterType;
 
             let matchService = true;
             if (filterService !== 'All' && emp.joinedAt) {
@@ -67,12 +67,12 @@ export const PayrollAdjustmentModal: React.FC<PayrollAdjustmentModalProps> = ({ 
     // Logic for "Targeted Employees"
     const targetedEmployees = useMemo(() => {
         if (selectionMode === 'all_filtered') return filteredEmployees;
-        return employees.filter(e => selectedIds.includes(e.id));
+        return employees.filter(e => selectedIds.includes(e.employee_id));
     }, [selectionMode, filteredEmployees, selectedIds, employees]);
 
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
-            setSelectedIds(filteredEmployees.map(e => e.id));
+            setSelectedIds(filteredEmployees.map(e => e.employee_id));
         } else {
             setSelectedIds([]);
         }
@@ -87,7 +87,7 @@ export const PayrollAdjustmentModal: React.FC<PayrollAdjustmentModalProps> = ({ 
     };
 
     const handleConfirm = () => {
-        onApply(targetedEmployees.map(e => e.id), adjustment.type, adjustment.amount, adjustment.reason);
+        onApply(targetedEmployees.map(e => e.employee_id), adjustment.type, adjustment.amount, adjustment.reason);
         onClose();
     };
 
@@ -139,7 +139,7 @@ export const PayrollAdjustmentModal: React.FC<PayrollAdjustmentModalProps> = ({ 
                                     <option value="Full-time">Full-time</option>
                                     <option value="Intern">Intern</option>
                                 </select>
-                                <select aria-label="Filter by service length" value={filterService} onChange={e => setFilterService(e.target.value as any)} className="text-sm border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-brand-500">
+                                <select aria-label="Filter by service length" value={filterService} onChange={e => setFilterService(e.target.value as FilterServiceLength)} className="text-sm border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-brand-500">
                                     <option value="All">Any Service Length</option>
                                     <option value="< 1 Year">Less than 1 Year</option>
                                     <option value="1 - 3 Years">1 - 3 Years</option>
@@ -187,7 +187,7 @@ export const PayrollAdjustmentModal: React.FC<PayrollAdjustmentModalProps> = ({ 
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                         {filteredEmployees.map(emp => {
-                                            const isSelected = selectionMode === 'all_filtered' || selectedIds.includes(emp.id);
+                                            const isSelected = selectionMode === 'all_filtered' || selectedIds.includes(emp.employee_id);
                                             return (
                                                 <tr key={emp.id} className={`hover:bg-slate-50 transition-colors ${isSelected ? 'bg-brand-50/30' : ''}`}>
                                                     <td className="px-6 py-3">
@@ -195,7 +195,7 @@ export const PayrollAdjustmentModal: React.FC<PayrollAdjustmentModalProps> = ({ 
                                                             type="checkbox"
                                                             aria-label={`Select ${emp.name}`}
                                                             checked={isSelected}
-                                                            onChange={e => handleSelectOne(emp.id, e.target.checked)}
+                                                            onChange={e => handleSelectOne(emp.employee_id, e.target.checked)}
                                                             disabled={selectionMode === 'all_filtered'}
                                                             className="rounded border-slate-300 text-brand-600 focus:ring-brand-500 disabled:opacity-50"
                                                         />
@@ -207,11 +207,11 @@ export const PayrollAdjustmentModal: React.FC<PayrollAdjustmentModalProps> = ({ 
                                                             </div>
                                                             <div>
                                                                 <div>{emp.name}</div>
-                                                                <div className="text-xs text-slate-500">{emp.department}</div>
+                                                                <div className="text-xs text-slate-500">{emp.department_id}</div>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-3 text-sm text-slate-500">{emp.title}</td>
+                                                    <td className="px-6 py-3 text-sm text-slate-500">{emp.role}</td>
                                                     <td className="px-6 py-3 text-sm text-slate-500">
                                                         {emp.joinedAt ? new Date(emp.joinedAt).toLocaleDateString() : '-'}
                                                     </td>
@@ -241,7 +241,7 @@ export const PayrollAdjustmentModal: React.FC<PayrollAdjustmentModalProps> = ({ 
                                         <select
                                             id="adj-type"
                                             value={adjustment.type}
-                                            onChange={e => setAdjustment({ ...adjustment, type: e.target.value as any })}
+                                            onChange={e => setAdjustment({ ...adjustment, type: e.target.value as 'Bonus' | 'Fine' | 'Deduction' })}
                                             className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500"
                                         >
                                             <option value="Bonus">Bonus (+)</option>

@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { Plus, Edit2, Check, X, Clock, ShieldCheck } from 'lucide-react';
-import type { BonusType, BonusRequest } from '../../data/mockData';
+import type { BonusType, BonusRequest } from '@/types';
 import { BonusApprovalModal } from '../../components/BonusApprovalModal';
 
 export function BonusPage() {

@@ -91,6 +91,7 @@ export interface Employee {
     employee_id: string;
     department_id: string;
     role_id: string;
+    role: AdminRole;
     role_relation: RolesProps;
     employment_type: EmploymentType ;
     salary: string;

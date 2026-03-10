@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import  { useMemo } from 'react';
 import { X, ExternalLink, Calendar, TrendingUp, Wallet, UserPlus, FileText, QrCode, Bell, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import type { AdminNotification, NotificationType } from '../services/notificationTypes';
+import type { AdminNotification, NotificationType } from '@/types';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 interface NotificationDetailsModalProps {
@@ -9,41 +9,35 @@ interface NotificationDetailsModalProps {
     onClose: () => void;
     notification: AdminNotification | null;
 }
+const getIcon = (type: NotificationType) => {
+    switch (type) {
+        case 'Leave': return <Calendar size={24} className="text-orange-600" />;
+        case 'Performance': return <TrendingUp size={24} className="text-indigo-600" />;
+        case 'Payroll': return <Wallet size={24} className="text-emerald-600" />;
+        case 'Recruitment': return <UserPlus size={24} className="text-blue-600" />;
+        case 'HR': return <FileText size={24} className="text-slate-600" />;
+        case 'QR': return <QrCode size={24} className="text-violet-600" />;
+        case 'System':
+        default: return <Bell size={24} className="text-slate-500" />;
+    }
+};
 
-export const NotificationDetailsModal: React.FC<NotificationDetailsModalProps> = ({ isOpen, onClose, notification }) => {
+
+const NotificationDetailsModal = ({ isOpen, onClose, notification }: NotificationDetailsModalProps) => {
     const navigate = useNavigate();
+    const { currentUserRole } = useAuthStore();
 
-    if (!isOpen || !notification) return null;
-
-    // Helper: Icon Map (Duplicated from Menu for self-containment/consistency)
-    const getIcon = (type: NotificationType) => {
-        switch (type) {
-            case 'Leave': return <Calendar size={24} className="text-orange-600" />;
-            case 'Performance': return <TrendingUp size={24} className="text-indigo-600" />;
-            case 'Payroll': return <Wallet size={24} className="text-emerald-600" />;
-            case 'Recruitment': return <UserPlus size={24} className="text-blue-600" />;
-            case 'HR': return <FileText size={24} className="text-slate-600" />;
-            case 'QR': return <QrCode size={24} className="text-violet-600" />;
-            case 'System':
-            default: return <Bell size={24} className="text-slate-500" />;
-        }
-    };
-
-    const currentUserRole = useAuthStore((s) => s.currentUserRole);
-
-    // Routing Logic
     const actionConfig = useMemo(() => {
-        // Default to safe values
+        if (!notification) return { label: 'View Details', path: '#', disabled: true, warning: '' };
+
         let label = "View Details";
         let path = notification.link;
         let disabled = false;
         let warning = "";
 
-        // Specific Routing Rules
         switch (notification.type) {
             case 'HR':
                 if (notification.title.includes("Onboarding")) {
-                    // Keep general link unless detailed ID provided in future
                     if (!path || path === '#') {
                         path = currentUserRole === 'USER' ? '/user/dashboard' : '/admin/employees';
                     }
@@ -51,16 +45,13 @@ export const NotificationDetailsModal: React.FC<NotificationDetailsModalProps> =
                 break;
             case 'System':
                 if (!path || path === '#') {
-                    path = currentUserRole === 'USER' ? '/user/dashboard' : '/admin/dashboard';
+                    path = currentUserRole === 'USER' ? '/user/dashboard' : '/admin';
                 }
                 break;
             default:
-                // Trust the link provided in the notification object
-                // If it's missing, fallback logic handled below
                 break;
         }
 
-        // Validity Check (Simple heuristic: if link is '#' or empty)
         if (!path || path === '#' || path === '') {
             disabled = true;
             label = "Action Unavailable";
@@ -75,6 +66,8 @@ export const NotificationDetailsModal: React.FC<NotificationDetailsModalProps> =
         onClose();
         navigate(actionConfig.path);
     };
+
+    if (!isOpen || !notification) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -146,3 +139,5 @@ export const NotificationDetailsModal: React.FC<NotificationDetailsModalProps> =
         </div>
     );
 };
+
+export default NotificationDetailsModal

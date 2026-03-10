@@ -3,7 +3,7 @@ import { Bell, Calendar, TrendingUp, Wallet, UserPlus, QrCode, FileText, CheckCh
 import { useNotificationStore } from '@/stores/useNotificationStore';
 import { useAuthStore } from '@/stores/useAuthStore';
 import type { AdminNotification, NotificationType, FilterPillProps } from '@/types';
-import { NotificationDetailsModal } from '@/components/NotificationDetailsModal';
+import NotificationDetailsModal from '@/components/NotificationDetailsModal';
 
 
 const FilterPill = ({ label, value, activeFilter, onSelect }: FilterPillProps) => (

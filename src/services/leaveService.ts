@@ -13,7 +13,7 @@ function getError(error: unknown): string {
 export const leaveService = {
     getAllLeaveRequests: async (params?: { page?: number; per_page?: number; status?: string; employee_id?: number }): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ success?: boolean; status?: boolean; data?: unknown; message?: string }>('/leaves', { params });
+            const { data } = await api.get('/leaves', { params });
             if (data?.success || data?.status) {
                 return { success: true, data: data.data ?? null };
             }
@@ -25,7 +25,7 @@ export const leaveService = {
 
     requestLeave: async (userId: string, requestPayload: Omit<LeaveRequest, 'id' | 'tenantId' | 'employeeId' | 'status' | 'requestedAt'>): Promise<ApiResponse<LeaveRequest>> => {
         try {
-            const { data } = await api.post<{ success?: boolean; status?: boolean; data?: LeaveRequest; message?: string }>('/leaves/apply', {
+            const { data } = await api.post('/leaves/apply', {
                 employee_id: userId,
                 ...requestPayload,
             });
@@ -40,7 +40,7 @@ export const leaveService = {
 
     updateLeaveStatus: async (requestId: string | number, status: 'Approved' | 'Rejected', reason?: string): Promise<ApiResponse<void>> => {
         try {
-            const { data } = await api.put<{ success?: boolean; status?: boolean; message?: string }>(`/leaves/${requestId}/status`, { status, rejection_reason: reason });
+            const { data } = await api.put(`/leaves/${requestId}/status`, { status, rejection_reason: reason });
             if (data?.success || data?.status) {
                 return { success: true, data: undefined, message: data?.message };
             }
@@ -60,7 +60,7 @@ export const leaveService = {
 
     getLeaves: async (params?: { page?: number; per_page?: number; status?: string; type?: string; search?: string }): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ success?: boolean; data?: unknown; message?: string }>('/leaves', { params });
+            const { data } = await api.get('/leaves', { params });
             if (data?.success) {
                 return { success: true, data: data.data ?? null };
             }
@@ -72,7 +72,7 @@ export const leaveService = {
 
     applyLeave: async (payload: unknown): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.post<{ success?: boolean; status?: boolean; data?: unknown; message?: string }>('/leaves/apply', payload);
+            const { data } = await api.post('/leaves/apply', payload);
             if (data?.success || data?.status) {
                 return { success: true, data: data.data ?? null, message: data?.message };
             }
@@ -84,7 +84,7 @@ export const leaveService = {
 
     approveLeaveRequest: async (id: string | number): Promise<ApiResponse<void>> => {
         try {
-            const { data } = await api.patch<{ success?: boolean; status?: boolean; message?: string }>(`/leaves/${id}/approve`);
+            const { data } = await api.patch(`/leaves/${id}/approve`);
             if (data?.success || data?.status) {
                 return { success: true, data: undefined, message: data?.message };
             }
@@ -96,7 +96,7 @@ export const leaveService = {
 
     rejectLeaveRequest: async (id: string | number, reason?: string): Promise<ApiResponse<void>> => {
         try {
-            const { data } = await api.patch<{ success?: boolean; status?: boolean; message?: string }>(`/leaves/${id}/reject`, { reason });
+            const { data } = await api.patch(`/leaves/${id}/reject`, { reason });
             if (data?.success || data?.status) {
                 return { success: true, data: undefined, message: data?.message };
             }
@@ -108,7 +108,7 @@ export const leaveService = {
 
     getLeaveStatistics: async (): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ success?: boolean; status?: boolean; data?: unknown; message?: string }>('/leaves/statistics');
+            const { data } = await api.get('/leaves/statistics');
             if (data?.success || data?.status) {
                 return { success: true, data: data.data ?? null, message: data?.message };
             }
@@ -120,7 +120,7 @@ export const leaveService = {
 
     getMyLeaves: async (params?: { status?: string }): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ success?: boolean; status?: boolean; data?: unknown; message?: string }>('/leaves/my-leaves', { params });
+            const { data } = await api.get('/leaves/my-leaves', { params });
             if (data?.success || data?.status) {
                 return { success: true, data: data.data ?? null, message: data?.message };
             }
@@ -132,7 +132,7 @@ export const leaveService = {
 
     getLeaveTypes: async (): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ success?: boolean; status?: boolean; data?: unknown; message?: string }>('/leaves/types');
+            const { data } = await api.get('/leaves/types');
             if (data?.success || data?.status) {
                 return { success: true, data: data.data ?? null };
             }

@@ -16,7 +16,7 @@ export const jobService = {
      */
     getAllJobs: async (params?: { page?: number; per_page?: number; status?: string; department?: string; search?: string }): Promise<ApiResponse<unknown>> => {
         try {
-            const { data } = await api.get<{ success?: boolean; data?: unknown; message?: string }>('/jobs', { params });
+                const { data } = await api.get('/jobs', { params });
             if (data?.success) {
                 return { success: true, data: data.data ?? null };
             }
@@ -31,7 +31,7 @@ export const jobService = {
      */
     createJob: async (jobPayload: unknown): Promise<ApiResponse<Job>> => {
         try {
-            const { data } = await api.post<{ success?: boolean; data?: Job; message?: string }>('/jobs', jobPayload);
+            const { data } = await api.post('/jobs', jobPayload);
             if (data?.success) {
                 return { success: true, data: data.data!, message: data.message };
             }
@@ -46,7 +46,7 @@ export const jobService = {
      */
     updateJob: async (id: string | number, updates: Partial<Job>): Promise<ApiResponse<Job>> => {
         try {
-            const { data } = await api.put<{ success?: boolean; data?: Job; message?: string }>(`/jobs/${id}`, updates);
+            const { data } = await api.put(`/jobs/${id}`, updates);
             if (data?.success) {
                 return { success: true, data: data.data!, message: data.message };
             }
@@ -61,7 +61,7 @@ export const jobService = {
      */
     deleteJob: async (id: string | number): Promise<ApiResponse<void>> => {
         try {
-            const { data } = await api.delete<{ success?: boolean; message?: string }>(`/jobs/${id}`);
+            const { data } = await api.delete(`/jobs/${id}`);
             if (data?.success) {
                 return { success: true, data: undefined, message: data.message };
             }

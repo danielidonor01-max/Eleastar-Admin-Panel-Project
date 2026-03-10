@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Loader2, RefreshCw, ExternalLink } from 'lucide-react';
-import type { CMSSection, GlobalContent, FooterContent, ServiceCollection } from '../../data/mockData';
+import type { CMSSection, GlobalContent, FooterContent, ServiceCollection } from '@/types';
 
 interface CMSPreviewPaneProps {
     url: string;
